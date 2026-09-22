@@ -1,0 +1,13 @@
+{% comment %}Reusable service card. Expects: service{% endcomment %}
+<article class="service-card reveal">
+  <div class="service-card__icon">
+    <svg aria-hidden="true"><use href="#i-{{ service.icon|default:'wrench' }}"></use></svg>
+  </div>
+  <h3><a href="{{ service.get_absolute_url }}">{{ service.name }}</a></h3>
+  <p class="service-card__desc">{{ service.short_description }}</p>
+  <div class="service-card__cta">
+    <a href="{% url 'quotes:form_for_service' service.slug %}">Get Quote</a>
+    <span class="sep">|</span>
+    <a href="{{ service.get_absolute_url }}">Learn More</a>
+  </div>
+</article>

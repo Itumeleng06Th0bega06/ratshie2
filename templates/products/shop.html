@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Shop — Spare Parts & Lubricants{% endblock %}
+{% block meta_description %}Shop Ratshie's unified catalogue of quality spare parts and lubricants with realistic demo pricing, secure PayFast checkout and mobile delivery around Kuruman.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+<section class="shop-hero">
+  <div class="grid-lines" aria-hidden="true"></div>
+  <div class="container shop-hero__inner">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      <span class="sep">/</span>
+      <span>Shop</span>
+    </nav>
+    <div class="shop-hero__content" style="text-align:center;">
+      <div class="shop-hero__text" style="max-width:720px; margin:0 auto;">
+        <span class="eyebrow" style="justify-content:center;">Automotive Shop</span>
+        <h1 style="margin-top:14px; text-align:center;">Quality automotive products,<br>parts and lubricants.</h1>
+        <p class="shop-hero__lead" style="margin-top:18px; text-align:center;">Secure online payments powered by PayFast</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--cream" id="shop-products">
+  <div class="container">
+    {% if products %}
+    <div class="products-grid" data-stagger style="margin-top:0">
+      {% for p in products %}
+        {% include "includes/product_card.html" with product=p cart_qtys=cart_quantities %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="margin-top:0">
+      <svg class="svg-art" aria-hidden="true"><use href="#i-wrench"></use></svg>
+      <h3>No products available right now</h3>
+      <p>We may still be able to source the item you need. Send us an enquiry and we'll help.</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+        <a class="btn btn--gold" href="{% url 'products:enquiry' %}">Make an Enquiry</a>
+        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">WhatsApp Us</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="container cta-band__inner">
+    <div>
+      <h2>Can't find the part or lubricant you need?</h2>
+      <p>Send us a product enquiry or message us on WhatsApp and we'll source the correct item for your vehicle.</p>
+    </div>
+    <div style="display:flex; gap:14px; flex-wrap:wrap">
+      <a class="btn cb" href="{% url 'products:enquiry' %}">Make an Enquiry</a>
+      <a class="btn cb-outline" href="{{ whatsapp_link }}" target="_blank" rel="noopener">WhatsApp Us</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

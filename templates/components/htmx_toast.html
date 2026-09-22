@@ -1,0 +1,7 @@
+{% comment %}
+HTMX toast fragment. Returned by views that handle partial swaps (no
+redirect is performed just to surface a message). ui.js converts the
+`data-toast-message` node into a toast and removes the node afterwards.
+Expects: message (text), kind (success|info|warning|error), optional sticky.
+{% endcomment %}
+<div class="htmx-toast" data-toast-message="{{ message|escape }}" data-toast-kind="{{ kind|default:'info' }}"{% if sticky %} data-toast-sticky{% endif %}></div>

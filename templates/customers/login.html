@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sign In{% endblock %}
+{% block content %}
+<section class="auth-hero">
+  <div class="auth-hero__inner">
+    <div class="auth-brand-panel">
+      <div class="auth-brand-panel__logo">
+        <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo">
+      </div>
+      <div class="auth-brand-panel__copy">
+        <span class="eyebrow">Member Portal</span>
+        <h1>Automotive solutions<br>you can trust.</h1>
+        <p>Sign in to purchase members-only sale products, track your orders and manage your account.</p>
+      </div>
+      <ul class="auth-brand-panel__points">
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Members-only sale pricing</li>
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Order history &amp; tracking</li>
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Fast, secure checkout</li>
+      </ul>
+    </div>
+
+    <div class="auth-card-panel">
+      <div class="auth-card">
+        <h2>Welcome back</h2>
+        <p class="auth-card__lead">Sign in to your account to continue.</p>
+        <div id="authFormContainer">
+          {% include "customers/login_form.html" %}
+        </div>
+        <p class="auth-forgot"><a href="{% url 'customers:password_reset' %}">Forgot your password?</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

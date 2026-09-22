@@ -1,0 +1,33 @@
+{% comment %}
+Reusable form field renderer with field-specific validation.
+Expects: field (bound form field). Optionally can hide the label (show_label=False).
+Usage: {% include "components/form_field.html" with field=form.email %}
+ARIA (aria-invalid / aria-describedby) is wired automatically by the shared
+"form-auto-aria" JS in static/js/main.js once the partial is in the DOM.
+{% endcomment %}
+<div class="field{% if field.errors %} field--error{% endif %}">
+  {% if field.field.widget.input_type == "checkbox" %}
+    <label class="checkbox">
+      {{ field }}
+      <span>{{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}</span>
+    </label>
+  {% else %}
+    {% if field.label %}
+      <label for="{{ field.id_for_label }}">
+        {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
+      </label>
+    {% endif %}
+    <div class="field-input-wrap">
+      {{ field }}
+      {% if not field.errors and field.field.widget.input_type == "password" %}
+      <button type="button" class="password-toggle" data-password-toggle="{{ field.id_for_label }}" aria-label="Show password">Show</button>
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if field.help_text and not field.errors %}
+    <p class="field-hint">{{ field.help_text }}</p>
+  {% endif %}
+  {% for error in field.errors %}
+    <p class="field-error" id="{{ field.id_for_label }}-error">{{ error }}</p>
+  {% endfor %}
+</div>

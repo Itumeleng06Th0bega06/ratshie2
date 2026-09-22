@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ service.name }}{% endblock %}
+{% block meta_description %}{{ service.short_description }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=service.name lead=service.short_description crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="split">
+      <div class="split__media reveal">
+        <div class="split__media-card">
+          <svg class="svg-art" aria-hidden="true"><use href="#i-{{ service.icon|default:'wrench' }}"></use></svg>
+        </div>
+      </div>
+      <div class="reveal">
+        <span class="eyebrow">About This Service</span>
+        <div class="flow" style="margin-top:16px">
+          <p style="color:var(--muted); font-size:17px">
+            {{ service.description|default:service.short_description|default:"Contact us to discuss how this service applies to your vehicle." }}
+          </p>
+          {% if service.price is not None %}
+          <div style="margin-top:12px"><strong>Price:</strong> {{ service.display_price }}</div>
+          {% else %}
+          <div style="margin-top:12px"><strong>Pricing available on request.</strong></div>
+          {% endif %}
+        </div>
+        <div class="split__cta">
+          <a class="btn btn--gold" href="{% url 'quotes:form_for_service' service.slug %}">Get a Quote</a>
+          <a class="btn btn--dark" href="{% url 'bookings:form_for_service' service.slug %}">Book this Service</a>
+          <a class="btn btn--whatsapp" href="{{ whatsapp_link }}?text={{ wa_quote_msg|urlencode }}" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if related %}
+<section class="section section--ink" style="background:var(--ink);color:#f3f3f3">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Related</span>
+      <h2 class="section-title" style="color:#fff">More Services</h2>
+    </div>
+    <div class="services-grid" style="margin-top:40px">
+      {% for service in related %}
+        {% include "includes/service_card.html" with service=service %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="cta-band">
+  <div class="container cta-band__inner">
+    <div>
+      <h2>Need help with your vehicle?</h2>
+      <p>Get a fast, transparent quote for {{ service.name|lower }}.</p>
+    </div>
+    <a class="btn cb" href="{% url 'quotes:form_for_service' service.slug %}">Get a Quote</a>
+  </div>
+</section>
+
+<section class="section section--cream">
+  <div class="container split" style="align-items:center">
+    <div class="reveal">
+      <span class="eyebrow">While you're at it</span>
+      <h3 class="split-title" style="margin-top:10px">Need parts or lubricants too?</h3>
+      <p style="color:var(--muted);margin-top:12px">Browse our shop for oil, filters, brake parts and more — with secure checkout and delivery within {{ site_config.service_radius_km }} km.</p>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+      <a class="btn btn--dark" href="{% url 'products:shop' %}">Shop Products</a>
+      <a class="btn btn--gold" href="{% url 'products:enquiry' %}">Product Enquiry</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

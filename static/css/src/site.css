@@ -1,0 +1,30 @@
+/* =========================================================================
+   Ratshie public site — Tailwind layer
+   This is ADDITIVE to main.css / ui.css. It deliberately excludes the
+   Tailwind preflight (base) reset so existing element-level styling in
+   main.css (headings, lists, links, paragraphs) is preserved. Only component
+   and utility classes generated here are applied, via explicit class names
+   in templates.
+   ========================================================================= */
+
+/* Components custom to the Ratshie public refinements */
+@tailwind components;
+
+@layer components {
+}
+
+/* Utilities */
+@tailwind utilities;
+
+/* =========================================================================
+   Guard rails — restore expected public-site semantics that Tailwind
+   utilities would otherwise override (since utility CSS loads last).
+
+   1. `.container`: main.css defines the site container (max-width 1240px,
+      centred, 24px side padding). Tailwind's generated `.container` (with
+      responsive max-width steps) must not clobber it.
+   2. `.visible` / `.collapse`: main.css relies on `.visible` for scroll
+      reveal; Tailwind's `.visibility` utility would change it.
+   ========================================================================= */
+.container { width: 100%; max-width: var(--maxw, 1240px); margin: 0 auto; padding: 0 24px; }
+.container--wide { max-width: 1440px; }

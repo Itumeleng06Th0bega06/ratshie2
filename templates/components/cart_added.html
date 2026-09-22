@@ -1,0 +1,4 @@
+{% comment %}HTMX response after a successful add-to-cart that only updates the
+cart count badge and the target button state — not the whole page.{% endcomment %}
+{% load static %}
+<span id="cartCount" class="cart-badge js-cart-count">{{ cart_count }}</span>

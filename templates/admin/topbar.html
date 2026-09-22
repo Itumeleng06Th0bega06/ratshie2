@@ -1,0 +1,70 @@
+{% load i18n static %}
+<header class="rui-topbar" id="ruiTopbar">
+  <button type="button" class="rui-icon-btn lg:hidden" id="ruiSidebarToggle" aria-label="Toggle navigation">
+    <svg class="h-5 w-5" aria-hidden="true"><use href="#i-menu"></use></svg>
+  </button>
+
+  <div class="ml-auto flex items-center gap-2 sm:gap-3">
+    <div class="rui-mega relative" data-popup-wrap>
+      <button type="button" class="rui-btn rui-btn-primary" data-popup-toggle aria-expanded="false">{% translate 'Quick menu' %}</button>
+      <div class="rui-popup rui-popup--create" data-popup>
+        <a href="/admin/orders/order/add/" class="rui-popup-item">{% translate 'New order' %}</a>
+        <a href="/admin/customers/customer/add/" class="rui-popup-item">{% translate 'Add customer' %}</a>
+        <a href="/admin/core/faq/add/" class="rui-popup-item">{% translate 'Add FAQ' %}</a>
+      </div>
+    </div>
+
+    <div class="rui-mega relative" data-popup-wrap>
+      <button type="button" class="rui-icon-btn relative" data-popup-toggle aria-label="{% translate 'Notifications' %}" aria-expanded="false">
+        <svg class="h-5 w-5" aria-hidden="true"><use href="#i-bell"></use></svg>
+        {% if unread_count %}<span class="rui-bell-dot">{{ unread_count }}</span>{% endif %}
+      </button>
+      <div class="rui-popup rui-popup--notif rui-popup--bell" data-popup>
+        <div class="roui-popup-head flex items-center justify-between border-b border-ink-100 px-4 py-3">
+          <span class="text-sm font-semibold text-ink-900">{% translate 'Notifications' %}</span>
+          {% if unread_count %}<button type="button" class="text-xs font-semibold text-brand-600 hover:text-brand-700" data-mark-all-read>{% translate 'Mark all read' %}</button>{% endif %}
+        </div>
+        <div class="max-h-80 overflow-y-auto" id="ruiNotifList">
+          {% for n in notifications %}
+          <a href="{{ n.url }}" class="rui-popup-item flex gap-3 {% if not n.is_read %}rui-notif-unread{% endif %}" {% if not n.is_read %}data-mark-read="{{ n.pk }}"{% endif %}>
+            <span class="mt-1.5 h-2 w-2 flex-none rounded-full {% if n.is_read %}bg-ink-200{% else %}bg-brand-500{% endif %}"></span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-ink-900">{{ n.title }}</span>
+              <span class="block text-xs text-ink-500">{{ n.text }}</span>
+            </span>
+          </a>
+          {% empty %}
+          <div class="px-4 py-8 text-center text-sm text-ink-500">{% translate "You're all caught up." %}</div>
+          {% endfor %}
+        </div>
+        <div class="border-t border-ink-100 px-4 py-3">
+          <a href="/admin/core/notification/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">{% translate 'View all notifications →' %}</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="rui-mega relative" data-popup-wrap>
+      <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-ink-100" data-popup-toggle aria-label="{% translate 'Account menu' %}" aria-expanded="false">
+        <span class="rui-avatar">{{ user.get_username|first|upper }}</span>
+        <span class="text-sm font-medium text-ink-700">{{ user.get_short_name|default:user.get_username }}</span>
+        <svg class="h-4 w-4 text-ink-400" aria-hidden="true"><use href="#i-chevron-left" transform="rotate(-90)"/></svg>
+      </button>
+      <div class="rui-popup rui-popup--right rui-popup--account" data-popup>
+        <div class="px-4 py-3 border-b border-ink-100">
+          <div class="text-sm font-semibold text-ink-900">{{ user.get_username }}</div>
+          <div class="text-xs text-ink-500">{% translate 'Administrator' %}</div>
+        </div>
+        {% if site_url %}
+        <a href="{{ site_url }}" target="_blank" rel="noopener" class="rui-popup-item">{% translate 'View site' %}</a>
+        {% endif %}
+        {% if user.has_usable_password %}
+        <a href="{% url 'admin:password_change' %}" class="rui-popup-item">{% translate 'Change password' %}</a>
+        {% endif %}
+        <form method="post" action="{% url 'admin:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="rui-popup-item w-full text-left text-red-600 hover:bg-red-50">{% translate 'Log out' %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</header>

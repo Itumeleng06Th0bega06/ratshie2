@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Frequently Asked Questions{% endblock %}
+{% block meta_description %}Common questions about Ratshie vehicle repairs, diagnostics, spare parts, lubricants, quotes and bookings.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title="Frequently Asked Questions" lead="Answers to common questions about our services, spare parts, lubricants, quotes and bookings." crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    {% if faqs %}
+    <div class="faq-list" data-stagger>
+      {% for faq in faqs %}
+      <div class="faq-item">
+        <button class="faq-item__q" aria-expanded="false">{{ faq.question }}<span class="plus">+</span></button>
+        <div class="faq-item__a"><div class="faq-item__a-inner">{{ faq.answer }}</div></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <svg class="svg-art" aria-hidden="true"><use href="#i-question"></use></svg>
+      <h3>No FAQs yet</h3>
+      <p>Questions will appear here as we add them. Meanwhile, feel free to ask us anything.</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">Ask on WhatsApp</a>
+        <a class="btn btn--dark" href="{% url 'contact' %}">Contact Us</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section section--dark">
+  <div class="container center">
+    <h2 class="section-title" style="color:#fff">Still have questions?</h2>
+    <p style="color:var(--muted-on-dark);margin-top:14px;max-width:520px;margin-left:auto;margin-right:auto">We're happy to help with quotes, parts, lubricants and bookings.</p>
+    <div style="margin-top:28px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a class="btn btn--gold" href="{% url 'quotes:form' %}">Get a Quote</a>
+      <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">WhatsApp Us</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

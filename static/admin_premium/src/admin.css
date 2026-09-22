@@ -1,0 +1,265 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Design tokens — single source of truth for the light premium theme.
+       Brand accent is the Ratshie gold (#f0a000). For UI accessibility we
+       use a darker gold for text/links and the bright gold with dark text
+       for filled buttons. */
+    --brand: #f0a000;
+    --brand-soft: #fff4d6;
+
+    /* Admin surfaces */
+    --admin-bg: #f7f8fa;            /* page background  */
+    --admin-surface: #ffffff;       /* cards / panels   */
+    --admin-surface-muted: #f1f4f7; /* secondary surfaces (sidebar, toolbar) */
+    --admin-surface-hover: #f4f6f9;
+    --admin-border: #e5e7eb;
+    --admin-border-strong: #d7dbe3;
+
+    /* Text */
+    --admin-text: #172033;
+    --admin-text-muted: #667085;
+
+    /* Accent */
+    --admin-accent: #f0a000;
+    --admin-accent-strong: #d19000;   /* hover / darker accent */
+    --admin-accent-deep: #a96f00;     /* accessible accent text */
+    --admin-accent-soft: rgba(240, 160, 0, 0.10);
+    --admin-accent-border: rgba(240, 160, 0, 0.32);
+    --admin-accent-glow: rgba(240, 160, 0, 0.14);
+
+    /* Semantic */
+    --admin-success: #16a34a;
+    --admin-success-bg: #ecfdf5;
+    --admin-warning: #b45309;
+    --admin-warning-bg: #fffbeb;
+    --admin-danger: #dc2626;
+    --admin-danger-bg: #fef2f2;
+    --admin-info: #0284c7;
+    --admin-info-bg: #f0f9ff;
+  }
+
+  body {
+    @apply bg-ink-50 text-ink-900 antialiased;
+    background-color: var(--admin-bg);
+    color: var(--admin-text);
+  }
+  /* Django admin uses classes like .vTextField, .module, etc. Normalise them to the new look. */
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="url"], input[type="search"], input[type="tel"], textarea, select {
+    @apply rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 shadow-sm outline-none transition;
+    border-color: var(--admin-border);
+    background-color: var(--admin-surface);
+    color: var(--admin-text);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus,
+  input[type="number"]:focus, input[type="url"]:focus, input[type="search"]:focus,
+  input[type="tel"]:focus, textarea:focus, select:focus {
+    @apply border-brand-500 ring-2 ring-brand-500/30;
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 3px var(--admin-accent-soft);
+  }
+}
+
+@layer components {
+  /* ---------- Admin shell ---------- */
+  .rui-shell { @apply flex min-h-screen; }
+
+  .rui-sidebar {
+    @apply fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-ink-200 transition-all duration-200;
+    background-color: var(--admin-surface-muted);
+    border-color: var(--admin-border);
+    box-shadow: 1px 0 0 rgba(16,24,40,.02);
+  }
+  .rui-sidebar.rui-collapsed { @apply w-[72px]; }
+  .rui-sidebar.rui-collapsed .rui-sidebar-label { @apply hidden; }
+  .rui-sidebar.rui-collapsed .rui-sidebar-group-title { @apply hidden; }
+
+  .rui-sidebar-brand {
+    @apply flex h-16 items-center gap-3 border-b px-4;
+    border-color: var(--admin-border);
+    background: linear-gradient(180deg, rgba(240,160,0,.06), rgba(255,255,255,0));
+  }
+  .rui-sidebar-brand img { @apply h-9 w-auto max-w-[140px] object-contain; }
+
+  .rui-sidebar-scroll { @apply flex-1 overflow-y-auto px-3 py-4; }
+  .rui-sidebar-nav { @apply space-y-6; }
+  .rui-sidebar-group { @apply space-y-1; }
+  .rui-sidebar-group-title { @apply px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider; color: var(--admin-text-muted); }
+  .rui-sidebar-link {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-150 ease-out hover:bg-ink-100/70;
+    color: #475467;
+  }
+  .rui-sidebar-link:hover { color: var(--admin-accent-deep); background: var(--admin-accent-soft); }
+  .rui-sidebar-link.rui-active {
+    @apply bg-brand-50 text-brand-700;
+    background: linear-gradient(90deg, var(--admin-accent-soft), var(--admin-accent-soft) 60%, rgba(240,160,0,0));
+    color: var(--admin-accent-deep);
+    font-weight: 600;
+  }
+  .rui-sidebar-link.rui-active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full;
+    background: linear-gradient(180deg, var(--admin-accent), var(--admin-accent-strong));
+  }
+  .rui-sidebar-link svg { @apply h-5 w-5 flex-none; }
+  .rui-sidebar-link:hover svg { color: var(--admin-accent-strong); }
+  .rui-sidebar-link.rui-active svg { @apply text-brand-600; color: var(--admin-accent-strong); }
+  .rui-sidebar-count { @apply ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold; background: var(--admin-border); color: var(--admin-text-muted); }
+  .rui-sidebar-link.rui-active .rui-sidebar-count { background: rgba(240,160,0,.18); color: var(--admin-accent-deep); }
+  .rui-sidebar.rui-collapsed .rui-sidebar-count { @apply hidden; }
+
+  .rui-sidebar-footer { @apply border-t p-3; border-color: var(--admin-border); }
+
+  /* ---------- Main ---------- */
+  .rui-main { @apply flex-1; }
+  .rui-main.rui-shifted { @apply ml-64; }
+  .rui-main:not(.rui-shifted) { @apply ml-[72px]; }
+  @media (max-width: 900px) {
+    .rui-main.rui-shifted, .rui-main:not(.rui-shifted) { @apply ml-0; }
+    .rui-sidebar { @apply -translate-x-full shadow-2xl; }
+    .rui-sidebar.rui-open { @apply translate-x-0; }
+  }
+  .rui-backdrop { @apply fixed inset-0 z-30 hidden bg-black/30; }
+  .rui-backdrop.rui-open { @apply block; }
+
+  /* ---------- Topbar ---------- */
+  .rui-topbar {
+    @apply sticky top-0 z-20 flex h-16 items-center gap-4 border-b px-4 sm:px-6;
+    background: #ffffff;
+    border-color: var(--admin-border);
+  }
+
+  /* ---------- Buttons ---------- */
+  .rui-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .rui-btn-primary {
+    background: linear-gradient(180deg, var(--admin-accent), var(--admin-accent-strong));
+    color: #1a1a1a;
+    box-shadow: 0 1px 2px rgba(240,160,0,.3);
+  }
+  .rui-btn-primary:hover { filter: brightness(1.05); box-shadow: 0 4px 12px -2px rgba(240,160,0,.45); }
+  .rui-btn-secondary { @apply border border-ink-200 shadow-sm; background: var(--admin-surface); color: #344054; }
+  .rui-btn-secondary:hover { border-color: var(--admin-border-strong); background: var(--admin-surface-muted); }
+  .rui-btn-ghost { @apply text-ink-600; color: var(--admin-text-muted); }
+  .rui-btn-ghost:hover { color: var(--admin-accent-deep); background: var(--admin-accent-soft); }
+  .rui-btn-danger { @apply bg-red-500 text-white hover:bg-red-600; }
+  .rui-btn-sm { @apply px-3 py-1.5 text-xs; }
+
+  .rui-icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg border transition duration-150 ease-out focus:outline-none focus:ring-2 focus:ring-brand-500/40;
+    background: var(--admin-surface);
+    border-color: var(--admin-border);
+    color: var(--admin-text-muted);
+  }
+  .rui-icon-btn:hover { color: var(--admin-accent-deep); background: var(--admin-accent-soft); border-color: var(--admin-accent-border); }
+
+  /* ---------- Cards ---------- */
+  .rui-card {
+    @apply rounded-xl border bg-white shadow-card transition duration-200 ease-out;
+    background-color: var(--admin-surface);
+    border-color: var(--admin-border);
+  }
+  .rui-card:hover { border-color: var(--admin-border-strong); box-shadow: 0 8px 20px -6px rgba(16,24,40,.10); }
+  .rui-card-header { @apply flex items-center justify-between border-b px-5 py-4; border-color: var(--admin-border); }
+  .rui-card-title { @apply text-sm font-semibold; color: var(--admin-text); }
+  .rui-card-body { @apply p-5; }
+
+  /* ---------- KPI ---------- */
+  .rui-kpi {
+    @apply relative rounded-xl border bg-white p-5 shadow-card transition duration-200 ease-out;
+    background-color: var(--admin-surface);
+    border-color: var(--admin-border);
+    overflow: hidden;
+  }
+  /* Featured KPI: darker analytical panel w/ accent line + soft glow */
+  .rui-kpi-featured {
+    background:
+      radial-gradient(220px 120px at 85% -20%, var(--admin-accent-glow), transparent 70%),
+      linear-gradient(180deg, #1e1b16, #14120d);
+    border-color: rgba(240,160,0,.25);
+    color: #fffbeb;
+  }
+  .rui-kpi-featured .rui-kpi-label { color: #e7d9b0; }
+  .rui-kpi-featured .rui-kpi-value { color: #fff; }
+  .rui-kpi::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 12px; right: auto;
+    width: 34px; height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: linear-gradient(90deg, var(--admin-accent), var(--admin-accent-strong));
+    opacity: .85;
+  }
+  .rui-kpi:hover { border-color: var(--admin-accent-border); box-shadow: 0 8px 22px -6px rgba(240,160,0,.18); }
+  .rui-kpi-label { @apply text-xs font-medium uppercase tracking-wide; color: var(--admin-text-muted); }
+  .rui-kpi-value { @apply mt-2 text-2xl font-bold; color: var(--admin-text); }
+  .rui-kpi-delta { @apply mt-1 flex items-center gap-1 text-xs font-semibold; }
+  .rui-kpi-delta.up { @apply text-emerald-600; }
+  .rui-kpi-delta.down { @apply text-red-600; }
+
+  /* ---------- Status badges ---------- */
+  .rui-badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold; }
+  .rui-badge-green { @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200; }
+  .rui-badge-amber { @apply bg-amber-50 text-amber-700 ring-1 ring-amber-200; }
+  .rui-badge-red { @apply bg-red-50 text-red-700 ring-1 ring-red-200; }
+  .rui-badge-blue { @apply bg-sky-50 text-sky-700 ring-1 ring-sky-200; }
+  .rui-badge-slate { @apply bg-ink-100 text-ink-600 ring-1 ring-ink-200; }
+  .rui-badge-purple { @apply bg-violet-50 text-violet-700 ring-1 ring-violet-200; }
+
+  /* ---------- Table ---------- */
+  .rui-table-wrap {
+    @apply overflow-x-auto rounded-xl border bg-white shadow-card;
+    background-color: var(--admin-surface);
+    border-color: var(--admin-border);
+  }
+  .rui-table { @apply w-full min-w-[640px] border-collapse text-left text-sm; }
+  .rui-table thead th { @apply border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide; background-color: var(--admin-surface-muted); color: var(--admin-text-muted); border-color: var(--admin-border); }
+  .rui-table tbody td { @apply border-b px-4 py-3 align-middle; border-color: var(--admin-border); color: var(--admin-text); }
+  .rui-table tbody tr:hover { @apply bg-ink-50/60; background: var(--admin-surface-hover); }
+  .rui-table tbody tr:last-child td { @apply border-b-0; }
+
+  /* ---------- Forms / Django overrides ---------- */
+  .module {
+    @apply rounded-xl border overflow-hidden shadow-card;
+    background-color: var(--admin-surface);
+    border-color: var(--admin-border);
+  }
+  .module h2, .module caption { @apply border-b px-5 py-3 text-sm font-semibold; background-color: var(--admin-surface-muted); color: var(--admin-text); border-color: var(--admin-border); }
+  .form-row { @apply flex flex-wrap items-center gap-3 px-5 py-3 border-b; border-color: var(--admin-border); }
+  .form-row label { @apply w-[180px] flex-none text-sm font-medium; color: var(--admin-text); }
+  .form-row .fieldBox { @apply flex flex-wrap gap-3 items-center; }
+  .help, .helptext { @apply text-xs; color: var(--admin-text-muted); }
+  .errorlist { @apply list-none p-0 m-0 text-xs text-red-600; }
+
+  /* ---------- Misc ---------- */
+  .rui-muted { color: var(--admin-text-muted); }
+  .rui-section-title { @apply text-xl font-bold; color: var(--admin-text); }
+  .rui-subtitle { @apply text-sm; color: var(--admin-text-muted); }
+
+  /* ---------- Premium decorative + contextual helpers ---------- */
+  /* Accent hairline under page headings */
+  .rui-accent-line { height: 3px; width: 40px; border-radius: 3px; background: linear-gradient(90deg, var(--admin-accent), var(--admin-accent-strong)); }
+  /* Soft accent glow backdrop behind the dashboard hero */
+  .rui-accent-glow {
+    background:
+      radial-gradient(600px 260px at 20% -10%, var(--admin-accent-glow), transparent 60%),
+      radial-gradient(500px 260px at 100% 0%, rgba(240,160,0,.06), transparent 55%);
+  }
+  /* Contextual rule: content inside a dark surface is always light */
+  .dark-surface { background: linear-gradient(180deg, #1e1b16, #14120d); color: #f5efe0; }
+  .dark-surface .rui-kpi-label, .dark-surface .rui-kpi-delta.up { color: #ffe9b8; }
+  .dark-surface .rui-kpi-value, .dark-surface .rui-kpi-delta { color: #fff; }
+  .dark-surface .rui-kpi-delta.down { color: #fca5a5; }
+  .dark-surface .rui-kpi-delta.up { color: #86efac; }
+  /* Chart (SVG) stroke + gradient fill */
+  .rui-chart-line { stroke: var(--admin-accent); }
+  .rui-chart-area { fill: url(#ruiChartGrad); }
+  .rui-chart-grid { stroke: rgba(255,255,255,.10); }
+  .rui-chart-axis { fill: #d6c9a6; }
+}

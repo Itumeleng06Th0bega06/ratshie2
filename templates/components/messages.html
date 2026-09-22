@@ -1,0 +1,21 @@
+{% comment %}
+Reusable toast component for Django messages.
+Pages must include the SVG sprite (public base.html already does). Messages
+without a scope render everywhere; messages tagged `scope:<url_name>` render
+only on their page. The admin uses the same partial for its override of the
+Django `messages` block.
+{% endcomment %}
+{% load ui_tags %}
+{% if messages %}
+<div class="toast-stack" role="region" aria-label="Notifications">
+  {% for message in messages|render_messages:request %}
+  <div class="toast toast--{{ message.level_tag|toast_kind }}" role="status">
+    <svg class="toast__icon" aria-hidden="true"><use href="#{{ message.level_tag|toast_icon }}"></use></svg>
+    <span class="toast__body">{{ message }}</span>
+    <button type="button" class="toast__close" data-toast-close aria-label="Dismiss notification">
+      <svg width="15" height="15" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

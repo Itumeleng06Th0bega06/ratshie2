@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Access Denied{% endblock %}
+
+{% block content %}
+<section class="section section--cream">
+  <div class="container result-state">
+    <div class="big-icon pend"><svg aria-hidden="true"><use href="#i-lock"></use></svg></div>
+    <h1>Access Denied</h1>
+    <p>You don't have permission to view this page. If you think this is a mistake, please contact us.</p>
+    <div class="actions">
+      <a class="btn btn--gold" href="{% url 'home' %}">Back to Home</a>
+      <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">Contact Us</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

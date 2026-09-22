@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block meta_description %}Complete your order with Ratshie — choose collection or delivery and pay securely via PayFast.{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title="Checkout" lead="Review your items, choose collection or delivery, and pay securely via PayFast." crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="split" style="align-items:start">
+      <!-- Order summary -->
+      <div style="display:grid;gap:16px">
+        <div class="form-card" style="max-width:none">
+          <h3 style="margin-bottom:16px">Order Summary</h3>
+          {% for line in lines %}
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid #ece8e0">
+            <div>
+              <strong>{{ line.product.name }}</strong>
+              <div style="color:var(--muted);font-size:14px">Qty: {{ line.qty }}</div>
+            </div>
+            <div style="font-weight:700">R {{ line.line_total|floatformat:2 }}</div>
+          </div>
+          {% endfor %}
+          <div style="display:flex;justify-content:space-between;margin-top:16px;font-weight:700">
+            <span>Subtotal</span><span>R {{ subtotal|floatformat:2 }}</span>
+          </div>
+          {% if discount_total and discount_total > 0 %}
+          <div style="display:flex;justify-content:space-between;color:var(--green,#1a7f37);font-size:14px;margin-top:6px">
+            <span>Discount</span><span>-R {{ discount_total|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px">
+            <span>Delivery</span><span>R 0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:18px;font-weight:700">
+            <span>Total</span><span>R {{ total|floatformat:2 }}</span>
+          </div>
+          <div class="pay-note" style="margin-top:16px">
+            <svg aria-hidden="true"><use href="#i-lock"></use></svg>
+            <span>Payment is securely processed by PayFast. We never store your card details.</span>
+          </div>
+        </div>
+
+        <!-- Secure Payment -->
+        <div class="form-card pf-panel" style="max-width:none">
+          <div class="pf-panel__head">
+            <span class="eyebrow">Secure Payment</span>
+            <h3 style="margin-top:8px">Pay securely with PayFast</h3>
+            <p style="color:var(--muted);margin-top:8px;font-size:14px">Complete your payment securely through PayFast.</p>
+          </div>
+          <div class="pay-brands pf-panel__brands">
+            <div class="pay-brand pay-brand--main">PAYFAST</div>
+            <div class="pay-brand__row">
+              {% for m in payment_methods %}
+              <span class="pay-badge">{{ m.name }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="pf-panel__note">
+            {% if payfast_enabled %}
+            <svg aria-hidden="true"><use href="#i-shield"></use></svg>
+            <span>Your payment is securely processed by PayFast.</span>
+            {% else %}
+            <svg aria-hidden="true"><use href="#i-shield"></use></svg>
+            <span>Online payment is currently being configured. You can still place your order below — we'll arrange payment with you.</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Details form -->
+      <div class="form-card" style="max-width:none">
+        <form method="post" action="{% url 'orders:checkout_submit' %}">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="field">
+              <label for="full_name">Full Name <span class="req">*</span></label>
+              <input type="text" id="full_name" name="full_name" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="phone" name="phone" required autocomplete="tel">
+            </div>
+          </div>
+          <div class="field">
+            <label for="email">Email <span class="req">*</span></label>
+            <input type="email" id="email" name="email" required autocomplete="email">
+          </div>
+
+          <div class="field">
+            <label>How would you like to receive your order? <span class="req">*</span></label>
+            <div style="display:grid;gap:10px;margin-top:8px">
+              <label style="display:flex;gap:10px;align-items:center">
+                <input type="radio" name="delivery_option" value="collection" checked>
+                <span><strong>Collect at Workshop</strong> — Kuruman, Northern Cape</span>
+              </label>
+              <label style="display:flex;gap:10px;align-items:center">
+                <input type="radio" name="delivery_option" value="delivery">
+                <span><strong>Delivery</strong> — within {{ site_config.service_radius_km }} km (fee arranged)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field" id="delivery-address-field" style="display:none">
+            <label for="delivery_address">Delivery Address</label>
+            <textarea id="delivery_address" name="delivery_address" placeholder="Street address, suburb, town..."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="notes">Order Notes</label>
+            <textarea id="notes" name="notes" placeholder="Vehicle details, collection time, anything important..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--gold btn--lg btn--block">Continue to Secure Payment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name="delivery_option"]');
+    var field = document.getElementById('delivery-address-field');
+    function toggle() {
+      var value = document.querySelector('input[name="delivery_option"]:checked');
+      if (field && value && value.value === 'delivery') {
+        field.style.display = 'block';
+      } else if (field) {
+        field.style.display = 'none';
+      }
+    }
+    radios.forEach(function (r) { r.addEventListener('change', toggle); });
+    toggle();
+  })();
+</script>
+{% endblock %}

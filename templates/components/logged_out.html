@@ -1,0 +1,8 @@
+{% comment %}HTMX response after logout - replaces the account menu with the
+anonymous sign-in state and shows a confirmation.{% endcomment %}
+{% load static %}
+<div id="accountArea" class="account-area account-area--anon">
+  <a class="account-link" href="{% url 'customers:login' %}">Sign In</a>
+  <a class="btn btn--gold btn--sm" href="{% url 'customers:register' %}">Create Account</a>
+</div>
+<div class="alert alert--success" id="logoutNotice" role="status">You have been signed out.</div>

@@ -1,0 +1,660 @@
+{% extends "base.html" %}
+{% block title %}Contact Us{% endblock %}
+{% block meta_description %}Contact Ratshie - call, WhatsApp or email us for vehicle repairs, diagnostics, spare parts and lubricants in Kuruman, Northern Cape.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+<!-- Contact Info & Form -->
+<section class="section section--cream">
+  <div class="container">
+    <div class="contact-layout">
+      <!-- Left: Contact Information -->
+      <aside class="contact-info">
+        <div class="contact-info__header">
+          <span class="eyebrow">Get in Touch</span>
+          <h2>We're here to help</h2>
+          <p class="contact-info__desc">Choose the most convenient way to reach us. We typically respond within a few hours during business hours.</p>
+        </div>
+
+        <div class="contact-cards">
+          <!-- Call -->
+          <a class="contact-card" href="tel:{{ cfg.phone|cut:' '|cut:'('|cut:')'|cut:'-' }}">
+            <div class="contact-card__icon"><svg aria-hidden="true"><use href="#i-phone"></use></svg></div>
+            <div class="contact-card__content">
+              <h3>Call Us</h3>
+              <p class="contact-card__value"><strong>{{ cfg.phone_display }}</strong></p>
+              <p class="contact-card__desc">Speak directly with our team</p>
+            </div>
+            <svg class="contact-card__arrow" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          </a>
+
+          <!-- WhatsApp -->
+          <a class="contact-card contact-card--highlight" href="{{ whatsapp_link }}" target="_blank" rel="noopener">
+            <div class="contact-card__icon contact-card__icon--wa"><svg aria-hidden="true"><use href="#i-whatsapp"></use></svg></div>
+            <div class="contact-card__content">
+              <h3>WhatsApp</h3>
+              <p class="contact-card__value"><strong>{{ cfg.whatsapp_display }}</strong></p>
+              <p class="contact-card__desc">Instant quotes & product enquiries</p>
+            </div>
+            <svg class="contact-card__arrow" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          </a>
+
+          <!-- Email -->
+          <a class="contact-card" href="mailto:{{ cfg.email }}">
+            <div class="contact-card__icon"><svg aria-hidden="true"><use href="#i-mail"></use></svg></div>
+            <div class="contact-card__content">
+              <h3>Email</h3>
+              <p class="contact-card__value"><strong>{{ cfg.email }}</strong></p>
+              <p class="contact-card__desc">For detailed enquiries & documents</p>
+            </div>
+            <svg class="contact-card__arrow" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          </a>
+
+          <!-- Address -->
+          {% if cfg.address %}
+          <a class="contact-card" href="https://maps.google.com/?q={{ cfg.address|urlencode }}" target="_blank" rel="noopener">
+            <div class="contact-card__icon"><svg aria-hidden="true"><use href="#i-pin"></use></svg></div>
+            <div class="contact-card__content">
+              <h3>Visit Us</h3>
+              <p class="contact-card__value"><strong>{{ cfg.address }}</strong></p>
+              <p class="contact-card__desc">Get directions to our workshop</p>
+            </div>
+            <svg class="contact-card__arrow" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Opening Hours -->
+        <div class="contact-hours">
+          <h3>Opening Hours</h3>
+          <dl class="hours-list">
+            <dt>Monday – Friday</dt>
+            <dd>08:00 – 17:00</dd>
+            <dt>Saturday</dt>
+            <dd>08:00 – 13:00</dd>
+            <dt>Sunday</dt>
+            <dd>Closed</dd>
+          </dl>
+          <p class="hours-note">Mobile spares delivery within {{ cfg.service_radius_km }} km of Kuruman</p>
+        </div>
+      </aside>
+
+      <!-- Right: Contact Form -->
+      <div class="contact-form-wrap">
+        <form class="contact-form" method="post" action="{% url 'contact_submit' %}">
+          {% csrf_token %}
+          <div class="contact-form__header">
+            <span class="eyebrow">Send an Enquiry</span>
+            <h2>How can we help?</h2>
+            <p>Fill in the details below and we'll get back to you as soon as possible.</p>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="id_full_name">Full Name <span class="req">*</span></label>
+              <input type="text" id="id_full_name" name="full_name" required>
+            </div>
+            <div class="field">
+              <label for="id_phone">Phone Number <span class="req">*</span></label>
+              <input type="tel" id="id_phone" name="phone" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_email">Email <span class="req">*</span></label>
+            <input type="email" id="id_email" name="email" required>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="id_vehicle_make">Vehicle Make</label>
+              <input type="text" id="id_vehicle_make" name="vehicle_make" placeholder="e.g. Toyota">
+            </div>
+            <div class="field">
+              <label for="id_vehicle_model">Vehicle Model</label>
+              <input type="text" id="id_vehicle_model" name="vehicle_model" placeholder="e.g. Hilux">
+            </div>
+            <div class="field">
+              <label for="id_vehicle_year">Year</label>
+              <input type="number" id="id_vehicle_year" name="vehicle_year" placeholder="2020" min="1990" max="2026">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="id_enquiry_type">Enquiry Type <span class="req">*</span></label>
+            <select id="id_enquiry_type" name="enquiry_type" required>
+              <option value="">Select enquiry type</option>
+              <option value="general">General Enquiry</option>
+              <option value="service">Service</option>
+              <option value="repair">Repair</option>
+              <option value="diagnostic">Diagnostic</option>
+              <option value="product">Product</option>
+              <option value="spare_part">Spare Part</option>
+              <option value="lubricant">Lubricant</option>
+              <option value="quote">Quote</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="id_message">Message <span class="req">*</span></label>
+            <textarea id="id_message" name="message" rows="5" placeholder="Tell us about your vehicle issue, the part you need, or any other details..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--gold btn--lg btn--block">Send Enquiry</button>
+
+          <p class="contact-form__note">By submitting this form, you agree to our <a href="#">Privacy Policy</a> and <a href="#">Terms & Conditions</a>.</p>
+        </form>
+      </div>
+    </div>
+
+    <!-- WhatsApp CTA Section -->
+    <div class="contact-whatsapp-cta">
+      <div class="contact-whatsapp__content">
+        <div class="contact-whatsapp__icon">
+          <svg aria-hidden="true"><use href="#i-whatsapp"></use></svg>
+        </div>
+        <div>
+          <h2>Need a Quick Answer?</h2>
+          <p>For a faster response, contact us directly on WhatsApp. We typically reply within minutes during business hours.</p>
+        </div>
+      </div>
+      <a class="btn btn--whatsapp btn--lg" href="{{ whatsapp_link }}" target="_blank" rel="noopener">
+        <svg class="ico" aria-hidden="true"><use href="#i-whatsapp"></use></svg>
+        Chat on WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Map Section -->
+{% if cfg.address %}
+<section class="section">
+  <div class="container">
+    <div class="map-section">
+      <div class="map-section__header">
+        <h2>Find Our Workshop</h2>
+        <p>{{ cfg.address }}</p>
+      </div>
+      <div class="map-section__map">
+        {% if maps_api_key %}
+        <iframe 
+          src="https://www.google.com/maps/embed/v1/place?key={{ maps_api_key|urlencode }}&q={{ cfg.address|urlencode }}"
+          width="100%" 
+          height="400" 
+          style="border:0; border-radius: var(--radius-lg);" 
+          allowfullscreen="" 
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+        {% endif %}
+        <p class="map-note">Click for directions or open in Google Maps</p>
+      </div>
+      <div style="text-align:center; margin-top:16px">
+        <a class="btn btn--gold" href="https://maps.google.com/?q={{ cfg.address|urlencode }}" target="_blank" rel="noopener">
+          <svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+          Get Directions
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Our Workshop Strip -->
+<section class="section workshop-strip">
+  <div class="container">
+    <div class="contact-visual workshop-strip__visual">
+      <div class="contact-visual__image">
+        <svg class="svg-art" aria-hidden="true"><use href="#i-tools"></use></svg>
+      </div>
+      <div class="contact-visual__content">
+        <span class="eyebrow">Our Workshop</span>
+        <h2>Quality workmanship, every time</h2>
+        <p>Our fully equipped workshop uses the latest diagnostic equipment and genuine parts. Whether it's a routine service, complex repair, or performance upgrade, your vehicle is in expert hands.</p>
+        <div class="contact-visual__features">
+          <div class="feature">
+            <svg class="feature__icon" aria-hidden="true"><use href="#i-shield"></use></svg>
+            <span>Genuine parts</span>
+          </div>
+          <div class="feature">
+            <svg class="feature__icon" aria-hidden="true"><use href="#i-check"></use></svg>
+            <span>Certified technicians</span>
+          </div>
+          <div class="feature">
+            <svg class="feature__icon" aria-hidden="true"><use href="#i-truck"></use></svg>
+            <span>Mobile delivery</span>
+          </div>
+        </div>
+        <div style="margin-top:24px">
+          <a class="btn btn--gold" href="{% url 'bookings:form' %}">Book a Service</a>
+          <a class="btn btn--outline-gold" href="{% url 'quotes:form' %}">Get a Quote</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==========================================================================
+   CONTACT PAGE STYLES
+   ========================================================================== */
+
+/* Contact Hero */
+.contact-hero {
+  background: var(--paper);
+  padding: 80px 0 60px;
+  border-bottom: 1px solid var(--line);
+}
+.contact-hero__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+.contact-hero__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.contact-hero__text h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.contact-hero__lead {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 520px;
+  margin-bottom: 28px;
+}
+.contact-hero__ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.contact-hero__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.contact-hero__image {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4/3;
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.contact-hero__image .svg-art {
+  width: 180px;
+  height: 180px;
+  color: var(--gold);
+}
+
+/* Contact Layout */
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+/* Contact Info */
+.contact-info__header {
+  margin-bottom: 32px;
+}
+.contact-info__header .eyebrow {
+  margin-bottom: 8px;
+}
+.contact-info__header h2 {
+  font-size: clamp(28px, 3.5vw, 36px);
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.contact-info__desc {
+  color: var(--muted);
+  font-size: 16px;
+  max-width: 400px;
+}
+
+/* Contact Cards */
+.contact-cards {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.contact-card {
+  display: grid;
+  grid-template-columns: 56px 1fr 32px;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.16s, box-shadow 0.16s, transform 0.16s;
+}
+.contact-card:hover {
+  border-color: var(--gold-line);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.contact-card--highlight {
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+}
+.contact-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contact-card__icon svg { width: 24px; height: 24px; }
+.contact-card__icon--wa {
+  background: #e6f7ee;
+  color: #12803d;
+}
+.contact-card__content { min-width: 0; }
+.contact-card__content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.contact-card__value { color: var(--text); }
+.contact-card__desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.contact-card__arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--cream);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.16s, color 0.16s;
+}
+.contact-card:hover .contact-card__arrow {
+  background: var(--gold);
+  color: #161600;
+}
+
+/* Opening Hours */
+.contact-hours {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+.contact-hours h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.hours-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  margin: 0;
+}
+.hours-list dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.hours-list dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.hours-note {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Contact Form */
+.contact-form-wrap {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  position: sticky;
+  top: 96px;
+}
+.contact-form__header {
+  margin-bottom: 28px;
+}
+.contact-form__header .eyebrow {
+  margin-bottom: 8px;
+}
+.contact-form__header h2 {
+  font-size: clamp(24px, 3vw, 28px);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.contact-form__header p {
+  color: var(--muted);
+}
+.contact-form .btn {
+  margin-top: 8px;
+}
+.contact-form__note {
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+}
+.contact-form__note a { color: var(--muted); text-decoration: underline; }
+.contact-form__note a:hover { color: var(--gold); }
+
+/* WhatsApp CTA */
+.contact-whatsapp-cta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  margin-top: 48px;
+}
+.contact-whatsapp__content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.contact-whatsapp__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #e6f7ee;
+  color: #12803d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contact-whatsapp__icon svg { width: 24px; height: 24px; }
+.contact-whatsapp__content h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.contact-whatsapp__content p {
+  color: var(--muted);
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .contact-whatsapp-cta {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    text-align: center;
+  }
+  .contact-whatsapp__content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* Map Section */
+.map-section {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-top: 48px;
+}
+.map-section__header {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--line);
+}
+.map-section__header h2 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.map-section__header p {
+  color: var(--muted);
+  margin: 0;
+}
+.map-section__map {
+  position: relative;
+}
+.map-section__map iframe {
+  width: 100%;
+  height: 450px;
+  border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.map-note {
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Contact Visual */
+.contact-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  padding: 60px;
+  background: var(--ink);
+  border-radius: var(--radius-lg);
+  margin-top: 64px;
+  color: #fff;
+}
+@media (max-width: 1024px) {
+  .contact-visual {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+  .contact-visual__image {
+    order: -1;
+  }
+}
+.contact-visual__image {
+  aspect-ratio: 1;
+  max-width: 400px;
+  margin: 0 auto;
+  background: var(--steel);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gold-line);
+}
+.contact-visual__image .svg-art {
+  width: 160px;
+  height: 160px;
+  color: var(--gold);
+}
+.contact-visual__content .eyebrow {
+  color: var(--gold-2);
+}
+.contact-visual__content .eyebrow::before {
+  background: var(--gold);
+}
+.contact-visual__content h2 {
+  font-size: clamp(28px, 3.5vw, 36px);
+  letter-spacing: -0.02em;
+  margin-top: 8px;
+}
+.contact-visual__content p {
+  color: var(--muted-on-dark);
+  margin-top: 16px;
+  max-width: 480px;
+}
+.contact-visual__features {
+  display: flex;
+  gap: 24px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.feature__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--gold);
+}
+
+@media (max-width: 1024px) {
+  .contact-form-wrap {
+    position: static;
+  }
+}
+
+/* Our Workshop Strip (full width) */
+.workshop-strip {
+  background: var(--ink);
+  color: #fff;
+}
+.workshop-strip__visual {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  margin-top: 0;
+  box-shadow: none;
+}
+</style>
+{% endblock %}

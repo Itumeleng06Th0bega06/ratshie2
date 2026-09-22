@@ -1,0 +1,30 @@
+{% comment %}
+Member-only purchase prompt. Rendered (often via HTMX, status 403) when an
+anonymous visitor tries to add or buy a member-only / on-sale product.
+The underlying page stays visible behind the modal.
+{% endcomment %}
+{% load static %}
+<div class="member-modal" id="memberPrompt" role="dialog" aria-modal="true" aria-labelledby="memberPromptTitle" aria-describedby="memberPromptDesc">
+  <div class="member-modal__backdrop" data-member-close></div>
+  <div class="member-modal__panel" role="document">
+    <button class="member-modal__close" data-member-close aria-label="Close">
+      <svg width="22" height="22" aria-hidden="true"><use href="#i-x"></use></svg>
+    </button>
+    <span class="eyebrow">MEMBERS-ONLY SALE</span>
+    <h2 id="memberPromptTitle">Members-only sale</h2>
+    {% if product %}
+    <p class="member-modal__product">
+      <strong>{{ product.name }}</strong><br>
+      <span class="was">R {{ product.original_price|floatformat:2 }}</span>
+      <span class="now">R {{ product.price|floatformat:2 }}</span>
+    </p>
+    {% endif %}
+    <p id="memberPromptDesc">Create a free account or sign in to purchase sale products.</p>
+    <div class="member-modal__actions">
+      <a class="btn btn--gold" href="{% url 'customers:register' %}{% if product %}?next={{ product.get_absolute_url }}{% endif %}">Create Account</a>
+      <a class="btn btn--dark" href="{% url 'customers:login' %}{% if product %}?next={{ product.get_absolute_url }}{% endif %}">Sign In</a>
+      <button type="button" class="btn btn--outline" data-member-close>Continue Browsing</button>
+    </div>
+    <p class="member-modal__fine">Anonymous visitors can view sale products and prices, but only registered members may purchase them.</p>
+  </div>
+</div>

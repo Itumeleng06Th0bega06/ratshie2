@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation - Ratshie</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 24px; background: #fafafa;">
+        <h2 style="color: #2c3e50;">Order Confirmation</h2>
+        <p>Dear {{ customer_name }},</p>
+        <p>Thank you for your order! Your payment has been confirmed and your order is now being processed.</p>
+
+        <h3>Order Details</h3>
+        <p><strong>Order Reference:</strong> {{ reference }}</p>
+        <p><strong>Order Number:</strong> {{ order_number }}</p>
+        <p><strong>Total Amount:</strong> R {{ total|floatformat:2 }}</p>
+
+        {% if estimate %}
+        <p><strong>Estimated Delivery:</strong> {{ estimate }}</p>
+        {% endif %}
+
+        <h3>Items</h3>
+        <ul style="list-style: none; padding: 0;">
+            {% for item in items %}
+            <li style="margin: 8px 0; padding: 8px; background: #fff; border: 1px solid #e0e0e0; border-radius: 4px;">
+                {{ item.product_name|default:item.product }} x{{ item.quantity }}
+            </li>
+            {% endfor %}
+        </ul>
+
+        {% if delivery_address %}
+        <h3>Delivery Address</h3>
+        <p>{{ delivery_address }}</p>
+        {% endif %}
+
+        <p style="margin-top: 24px; font-size: 12px; color: #7f8c8d;">
+            If you have any questions, please contact us:<br>
+            Email: {{ support_email }}<br>
+            Phone: {{ support_phone }}
+        </p>
+    </div>
+</body>
+</html>

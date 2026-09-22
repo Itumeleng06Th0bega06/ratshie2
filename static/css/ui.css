@@ -1,0 +1,340 @@
+/* =========================================================================
+   Ratshie UI — shared component layer
+   Toasts · popups · modals · drawers · global form system · autofill ·
+   z-index architecture.
+   Loaded on the public site AND the admin command centre (tokens are
+   remapped to the admin palette via `--r-*` vars declared in admin.css).
+   ========================================================================= */
+
+/* ---------- Z-index architecture ----------
+   30  nav            sticky site navbar / admin sidebar content column
+   60  header         sticky admin command bar + public navbar
+   80  dropdown       popups, dropdowns, tooltips
+   120 drawer         off-canvas drawers (mobile nav, mobile admin sidebar)
+   200 modal          lightbox, confirm, member prompt
+   300 toast          transient messages — always on top
+---------------------------------------------------------------------------- */
+:root {
+  --z-nav: 30;
+  --z-header: 60;
+  --z-dropdown: 80;
+  --z-drawer: 120;
+  --z-modal: 200;
+  --z-toast: 300;
+}
+
+/* ---------------------------------------------------------------------------
+   Global form system
+   Rules deliberately apply to bare controls so *nothing* anywhere (public or
+   admin, including browser autofill) renders with a black or overridden
+   background. Deliberately-dark form *cards* keep light inputs.
+--------------------------------------------------------------------------- */
+
+input, select, textarea, button { font: inherit; }
+
+input, select, textarea {
+  background: #fff;
+  color: var(--ink, #0b0b0c);
+  line-height: 1.5;
+}
+
+input:disabled, select:disabled, textarea:disabled {
+  background: var(--cream, #f6f4ef);
+  color: var(--muted, #6c717b);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+input[readonly], textarea[readonly] {
+  background: var(--cream, #f6f4ef);
+  color: var(--muted, #6c717b);
+}
+
+/* Browser autofill — keep fields light, never black. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink, #0b0b0c);
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 99999s ease-in-out 0s;
+  caret-color: var(--ink, #0b0b0c);
+}
+
+/* Universal brand focus ring. */
+:focus-visible {
+  outline: 3px solid var(--gold-line, rgba(240, 160, 0, 0.45));
+  outline-offset: 2px;
+}
+
+/* Checkboxes / radios — brand accent everywhere. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--gold, #f0a000);
+}
+
+/* Textarea resize affordance. */
+textarea { resize: vertical; }
+
+/* Shared field primitives (public `.field`, auth cards, admin aligned rows) */
+.field input,
+.field select,
+.field textarea,
+.form-card input,
+.form-card select,
+.form-card textarea,
+.auth-card input,
+.auth-card select,
+.auth-card textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #2b2e37);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ink, #0b0b0c);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.field input::placeholder,
+.field textarea::placeholder,
+.auth-card input::placeholder,
+.auth-card textarea::placeholder {
+  color: var(--muted, #6c717b);
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover,
+.auth-card input:hover,
+.auth-card select:hover,
+.auth-card textarea:hover {
+  border-color: var(--gold-2, #ffb41f);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.auth-card input:focus,
+.auth-card select:focus,
+.auth-card textarea:focus {
+  outline: none;
+  border-color: var(--gold, #f0a000);
+  box-shadow: 0 0 0 3px var(--gold-soft, rgba(240, 160, 0, 0.12));
+}
+
+/* Input states: error / success */
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  background: var(--cream, #f6f4ef);
+  color: var(--muted, #6c717b);
+  cursor: not-allowed;
+}
+
+.field--success input,
+.field--success select,
+.field--success textarea {
+  border-color: var(--green, #1f9d61);
+  box-shadow: 0 0 0 3px rgba(31, 157, 97, 0.12);
+}
+
+.field--success .hint,
+.field--success .field-hint {
+  color: var(--green, #1f9d61);
+}
+
+/* ---------------------------------------------------------------------------
+   Toast system
+   Desktop: top-right · Mobile: top, full width. Fade+slide in, fade out.
+   Respects prefers-reduced-motion. Manual × and timed auto-close.
+--------------------------------------------------------------------------- */
+
+.toast-stack {
+  position: fixed;
+  top: 92px;
+  right: 24px;
+  width: min(390px, calc(100vw - 32px));
+  display: grid;
+  gap: 12px;
+  z-index: var(--z-toast, 300);
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .toast-stack {
+    top: 12px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    pointer-events: auto;
+  }
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 16px;
+  border-radius: 13px;
+  border: 1px solid var(--line, #2b2e37);
+  border-left-width: 5px;
+  background: var(--paper, #ffffff);
+  color: var(--ink, #0b0b0c);
+  box-shadow: var(--shadow-lg, 0 24px 60px rgba(0, 0, 0, 0.22));
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  animation: toast-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.toast.is-leaving { animation: toast-out 0.28s ease forwards; }
+
+.toast--success { border-left-color: var(--green, #1f9d61); background: #eefaf3; }
+.toast--error   { border-left-color: var(--red, #d94b3d);   background: #fdf0ee; }
+.toast--warning { border-left-color: var(--gold, #f0a000);  background: #fdf6e6; }
+.toast--info    { border-left-color: var(--muted, #6c717b); background: var(--cream, #f6f4ef); }
+
+.toast__icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--gold, #f0a000);
+}
+
+.toast--success .toast__icon { color: var(--green, #1f9d61); }
+.toast--error .toast__icon   { color: var(--red, #d94b3d); }
+.toast--warning .toast__icon { color: var(--gold, #f0a000); }
+
+.toast__body { flex: 1 1 auto; min-width: 0; }
+.toast__close {
+  flex: 0 0 auto;
+  border: none;
+  background: none;
+  color: var(--muted, #6c717b);
+  cursor: pointer;
+  padding: 4px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  margin: -4px -4px -4px 0;
+}
+.toast__close:hover { background: rgba(0, 0, 0, 0.06); color: var(--ink, #0b0b0c); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(22px) translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  to { opacity: 0; transform: translateX(22px); }
+}
+
+/* ---------------------------------------------------------------------------
+   Popups (anchored dropdowns)
+   `[data-popup]` absolutely positions against its wrapper. Clicking INSIDE a
+   popup never closes it; outside / Escape / re-toggle does.
+--------------------------------------------------------------------------- */
+
+[data-popup-wrap] { position: relative; display: inline-block; }
+
+[data-popup] {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 260px;
+  background: var(--paper, #ffffff);
+  border: 1px solid var(--line, #2b2e37);
+  border-radius: var(--radius, 14px);
+  box-shadow: var(--shadow-md, 0 10px 34px rgba(0, 0, 0, 0.12));
+  padding: 8px;
+  display: none;
+  z-index: var(--z-dropdown, 80);
+}
+[data-popup][data-popup-align="left"] { right: auto; left: 0; }
+[data-popup].open {
+  display: block;
+  animation: popup-in 0.18s ease;
+}
+
+@keyframes popup-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Modal / drawer primitives
+   `.dui-modal` (centered dialog) and `.dui-drawer` (off-canvas panel) use a
+   common `.open` gate so they never appear until explicitly opened.
+--------------------------------------------------------------------------- */
+
+.dui-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  /* hidden until opened */
+}
+.dui-modal:not(.open) { display: none; }
+
+.dui-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 11, 12, 0.6);
+  backdrop-filter: blur(3px);
+}
+.dui-modal__panel {
+  position: relative;
+  z-index: 1;
+  animation: modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.dui-drawer {
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  z-index: var(--z-drawer, 120);
+  width: min(88vw, 340px);
+  transform: translateX(-105%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--paper, #ffffff);
+  box-shadow: var(--shadow-lg, 0 24px 60px rgba(0, 0, 0, 0.22));
+  visibility: hidden;
+}
+.dui-drawer.open { transform: translateX(0); visibility: visible; }
+.dui-drawer__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 12, 0.45);
+  z-index: var(--z-drawer, 120);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.dui-drawer__backdrop.open { visibility: visible; opacity: 1; }
+
+/* Reduced motion: static, instant. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001s !important;
+    scroll-behavior: auto !important;
+  }
+}

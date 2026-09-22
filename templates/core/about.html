@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}About Us{% endblock %}
+{% block meta_description %}Learn about Ratshie (Pty) Ltd - a registered private company based in Seoding Village, Kuruman, Northern Cape, offering vehicle repairs, diagnostics and mobile spares delivery.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+<section class="section section--ink" style="background:var(--ink);color:#f3f3f3">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">What We Offer</span>
+      <h2 class="section-title" style="color:#fff">Our Services &amp; Products</h2>
+      <p class="lead" style="color:var(--muted-on-dark)">From repairs and diagnostics to replacement parts and mobile delivery — one reliable automotive partner in the Northern Cape.</p>
+    </div>
+    <div class="why-grid" style="margin-top:44px">
+      <article class="why-card">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-wrench"></use></svg></div>
+        <h3>Mechanical Repairs &amp; Diagnostics</h3>
+        <p>Skilled workshop repairs and accurate diagnostics to keep you moving.</p>
+      </article>
+      <article class="why-card">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-gearbox"></use></svg></div>
+        <h3>Car Parts, Lubricants &amp; Accessories</h3>
+        <p>Quality spare parts, lubricants and accessories for a wide range of vehicles.</p>
+      </article>
+      <article class="why-card">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-truck"></use></svg></div>
+        <h3>Mobile Spares Delivery</h3>
+        <p>Parts delivered to you within {{ cfg.service_radius_km }} km of Kuruman.</p>
+      </article>
+      <article class="why-card">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-bolt"></use></svg></div>
+        <h3>Emergency &amp; Roadside Support</h3>
+        <p>Emergency support and roadside parts delivery when you need it most.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section--cream">
+  <div class="container split">
+    <div class="reveal">
+      <span class="eyebrow">Who We Are</span>
+      <h2 class="section-title" style="margin-top:14px">Your Local Automotive Partner</h2>
+      <div class="flow" style="margin-top:20px">
+        <p style="color:var(--muted)"><strong style="color:var(--text)">{{ cfg.site_name }}</strong> is a registered private company based in Seoding Village, Kuruman, in the Northern Cape.</p>
+        <p style="color:var(--muted)">We operate a dual-model automotive service: a car repairs workshop and a mobile car spares delivery business. Our aim is to bridge the gap in rural vehicle care and parts supply with accessible, affordable and high-quality services.</p>
+        <p style="color:var(--muted)">Our mission is to become the most trusted provider of vehicle repairs and mobile parts delivery in the Northern Cape.</p>
+      </div>
+      <div class="split__cta">
+        <a class="btn btn--gold" href="{% url 'quotes:form' %}">Request a Quote</a>
+        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">Chat on WhatsApp</a>
+      </div>
+    </div>
+    <div class="split__media reveal">
+      <img src="{% static 'img/brand/logo-square.png' %}" alt="{{ cfg.site_name }} logo" style="max-height:300px;width:auto;margin:0 auto;display:block">
+    </div>
+  </div>
+</section>
+
+<section class="section section--coal" id="why">
+  <div class="container">
+    <div class="section-head center mx-auto reveal">
+      <span class="eyebrow eyebrow--center" style="justify-content:center">Why Choose Ratshie</span>
+      <h2 class="section-title" style="color:#fff">Built on Reliability &amp; Trust</h2>
+    </div>
+    <div class="why-grid why-grid--3" data-stagger style="margin-top:48px">
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-tools"></use></svg></div>
+        <h3>Skilled Automotive Care</h3>
+        <p>Professional mechanical repairs and diagnostics from a dedicated local workshop.</p>
+      </article>
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-gearbox"></use></svg></div>
+        <h3>Quality Parts</h3>
+        <p>Spare parts, lubricants and accessories supplied for a wide range of vehicles.</p>
+      </article>
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-gauge"></use></svg></div>
+        <h3>Accurate Diagnostics</h3>
+        <p>We diagnose the real issue before quoting, so you know exactly what's needed.</p>
+      </article>
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-truck"></use></svg></div>
+        <h3>Mobile Delivery</h3>
+        <p>Spares delivered within {{ cfg.service_radius_km }} km — parts brought to you, not the other way around.</p>
+      </article>
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-shield"></use></svg></div>
+        <h3>Transparent Process</h3>
+        <p>Request a quote up front and get clear communication at every step.</p>
+      </article>
+      <article class="why-card reveal">
+        <div class="why-card__icon"><svg aria-hidden="true"><use href="#i-bolt"></use></svg></div>
+        <h3>Emergency Support</h3>
+        <p>Roadside delivery and emergency support when your vehicle lets you down.</p>
+      </article>
+    </div>
+  </div>
+</section><section class="cta-band">
+  <div class="container cta-band__inner">
+    <div>
+      <h2>Let's look after your vehicle</h2>
+      <p>Get in touch for repairs, diagnostics, parts or lubricants.</p>
+    </div>
+    <a class="btn cb" href="{% url 'contact' %}">Contact Us</a>
+  </div>
+</section>
+{% endblock %}

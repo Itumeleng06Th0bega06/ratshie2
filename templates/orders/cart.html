@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Your Cart{% endblock %}
+{% block meta_description %}Review your selected products and proceed to secure checkout with Ratshie.{% endblock %}
+
+{% block content %}
+<section class="cart-hero">
+  <div class="grid-lines" aria-hidden="true"></div>
+  <div class="container cart-hero__inner">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      <span class="sep">/</span>
+      <span>Cart</span>
+    </nav>
+    <div class="cart-hero__content">
+      <div class="cart-hero__text">
+        <span class="eyebrow">Your Cart</span>
+        <h1>Review your selected products<br>before checkout.</h1>
+        <p class="cart-hero__lead">Secure online payments powered by PayFast</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--cream">
+  <div class="container">
+    <div id="cart-region">
+      {% include "orders/_cart_panel.html" %}
+    </div>
+  </div>
+</section>
+{% endblock %}

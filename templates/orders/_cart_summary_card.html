@@ -1,0 +1,49 @@
+<div class="cart-summary">
+  <h2>Cart Summary</h2>
+
+  <div class="cart-summary__row">
+    <span>Subtotal</span>
+    <span>R {{ subtotal|floatformat:2 }}</span>
+  </div>
+
+  {% if discount_total and discount_total > 0 %}
+  <div class="cart-summary__row cart-summary__row--discount">
+    <span>Discount</span>
+    <span class="text-green">-R {{ discount_total|floatformat:2 }}</span>
+  </div>
+  {% endif %}
+
+  <div class="cart-summary__row">
+    <span>Delivery</span>
+    <span>Calculated at checkout</span>
+  </div>
+
+  <div class="cart-summary__row cart-summary__row--total">
+    <span>Total</span>
+    <span>R {{ total|floatformat:2 }}</span>
+  </div>
+
+  {% if discount_total and discount_total > 0 %}
+  <p class="cart-summary__saved">
+    You save <strong>R {{ discount_total|floatformat:2 }}</strong>
+  </p>
+  {% endif %}
+
+  <form method="post" action="{% url 'orders:cart_clear' %}" style="margin-top:16px"
+        hx-post="{% url 'orders:cart_clear' %}" hx-target="#cart-region" hx-swap="innerHTML">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--ghost-dark btn--block">Clear Cart</button>
+  </form>
+
+  <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap">
+    <a class="btn btn--outline btn--block" href="{% url 'products:shop' %}">Continue Shopping</a>
+    <a class="btn btn--gold btn--block" href="{% url 'orders:checkout' %}">Proceed to Checkout</a>
+  </div>
+
+  <div class="cart-pay-strip" aria-label="Secure checkout">
+    <span>Secure checkout with</span>
+    <div class="pay-brand__row">
+      {% for m in payment_methods %}<span class="pay-badge pay-badge--sm">{{ m.name }}</span>{% endfor %}
+    </div>
+  </div>
+</div>
