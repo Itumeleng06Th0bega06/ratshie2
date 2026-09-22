@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Book a Service{% endblock %}
+{% block meta_description %}Book a workshop service with Ratshie - choose your service, preferred date and time, and we'll confirm your appointment.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title="Book a Service" lead="Choose your service and a preferred date and time, and we'll confirm your appointment." crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="form-card" style="max-width:820px;margin:0 auto">
+      <form method="post" action="{% url 'bookings:submit' %}">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="field">
+            <label for="full_name">Full Name <span class="req">*</span></label>
+            <input type="text" id="full_name" name="full_name" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="phone">Phone <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" required autocomplete="tel">
+          </div>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email">
+        </div>
+
+        <h3 style="font-size:18px;margin:26px 0 14px">Service</h3>
+        <div class="field">
+          <label for="service">Service Required <span class="req">*</span></label>
+          <select id="service" name="service" required>
+            <option value="">Select a service</option>
+            {% for s in services %}
+            <option value="{{ s.id }}" {% if preselect_service and preselect_service.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <h3 style="font-size:18px;margin:26px 0 14px">Vehicle</h3>
+        <div class="form-grid-3">
+          <div class="field">
+            <label for="vehicle_make">Make</label>
+            <input type="text" id="vehicle_make" name="vehicle_make">
+          </div>
+          <div class="field">
+            <label for="vehicle_model">Model</label>
+            <input type="text" id="vehicle_model" name="vehicle_model">
+          </div>
+          <div class="field">
+            <label for="vehicle_year">Year</label>
+            <input type="number" id="vehicle_year" name="vehicle_year" min="1900" max="2100">
+          </div>
+        </div>
+        <div class="field">
+          <label for="registration">Registration Number</label>
+          <input type="text" id="registration" name="registration">
+        </div>
+
+        <h3 style="font-size:18px;margin:26px 0 14px">Date &amp; Time</h3>
+        <div class="form-row">
+          <div class="field">
+            <label for="preferred_date">Preferred Date <span class="req">*</span></label>
+            <input type="date" id="preferred_date" name="preferred_date" required>
+          </div>
+          <div class="field">
+            <label for="preferred_time">Preferred Time</label>
+            <select id="preferred_time" name="preferred_time">
+              {% for k, v in time_slots %}
+              <option value="{{ k }}">{{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="notes">Additional Notes</label>
+          <textarea id="notes" name="notes" placeholder="Anything we should know?"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--gold btn--lg btn--block">Request Booking</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

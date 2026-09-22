@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block meta_description %}{{ product.short_description|default:product.description|default:""|truncatechars:160 }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "description": "{{ product.short_description|default:product.description|default:''|slice:":200" }}",
+  "brand": {% if product.brand %}{ "@type": "Brand", "name": "{{ product.brand }}" }{% else %}"Ratshie"{% endif %},
+  "sku": "{{ product.sku }}",
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ product.price }}",
+    "priceCurrency": "ZAR",
+    "availability": {% if product.in_stock %}"https://schema.org/InStock"{% else %}"https://schema.org/OutOfStock"{% endif %}
+  }{% if product.public_image %},
+  "image": "{{ request.build_absolute_uri }}{{ product.public_image.image.url }}"{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=product.name lead=product.short_description crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="pd">
+      <div class="pd__gallery-wrapper reveal">
+        <div class="pd__gallery">
+          <div class="pd__main-image" data-lightbox-trigger>
+            {% if product.public_image %}
+            <img src="{{ product.public_image.image.url }}" alt="{{ product.name }}" loading="eager">
+            {% else %}
+            <svg class="svg-art" aria-hidden="true"><use href="#{% if product.product_type == 'lubricant' %}i-oil{% else %}i-gearbox{% endif %}"></use></svg>
+            {% endif %}
+            <span class="pd__zoom-hint">
+              <svg width="16" height="16" aria-hidden="true"><use href="#i-zoom"></use></svg>
+              Click to zoom
+            </span>
+          </div>
+
+          {% if product.public_gallery_images %}
+          <div class="pd__thumbnails" role="list" aria-label="Product images">
+            {% for img in product.public_gallery_images %}
+            <button class="pd__thumb {% if forloop.first %}active{% endif %}" 
+                    data-thumb-index="{{ forloop.counter0 }}"
+                    aria-label="View image {{ forloop.counter }}"
+                    type="button">
+              <img src="{{ img.image.url }}" alt="{{ img.alt_text|default:product.name }} {{ forloop.counter }}" loading="lazy">
+            </button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="reveal">
+        <span class="product-card__cat">{{ product.product_type_name }}{% if product.brand %} · {{ product.brand }}{% endif %}</span>
+        <h1 class="pd__title" style="margin-top:10px">{{ product.name }}</h1>
+        {% if product.sku %}<div class="pd__meta-row" style="color:var(--muted)">SKU / Part number: <strong style="color:var(--text)">{{ product.sku }}</strong></div>{% endif %}
+
+        {% if product.short_description or product.description %}
+        <p class="pd__desc">{{ product.description|default:product.short_description }}</p>
+        {% endif %}
+
+        <div class="pd__pricing">
+          {% if product.is_on_sale %}
+            <span class="badge badge--sale" style="margin-bottom:6px">SALE · {{ product.discount_percent }}% OFF</span>
+            <div class="pd__price"><span class="was" style="color:var(--muted);text-decoration:line-through;font-size:0.8em;margin-right:8px">R {{ product.original_price|floatformat:2 }}</span><span class="now" style="font-size:1.5em;font-weight:800;color:var(--accent)">R {{ product.price|floatformat:2 }}</span></div>
+          {% elif product.price is not None %}
+            <div class="pd__price">{{ product.display_price }}</div>
+          {% else %}
+            <div class="pd__price"><span class="enq">Request a Quote</span></div>
+          {% endif %}
+        </div>
+
+        <!-- Specifications -->
+        {% if product.specs_present %}
+        <div class="pd__specs" style="margin-top:26px">
+          {% if product.volume %}<div class="spec-row"><span class="k">Volume / Size</span><span class="v">{{ product.volume }}</span></div>{% endif %}
+          {% if product.viscosity %}<div class="spec-row"><span class="k">Viscosity</span><span class="v">{{ product.viscosity }}</span></div>{% endif %}
+          {% if product.oil_type %}<div class="spec-row"><span class="k">Oil type</span><span class="v">{{ product.oil_type }}</span></div>{% endif %}
+          {% if product.spec %}<div class="spec-row"><span class="k">Specification / API</span><span class="v">{{ product.spec }}</span></div>{% endif %}
+          {% if product.vehicle_makes %}<div class="spec-row"><span class="k">Compatible makes</span><span class="v">{{ product.vehicle_makes }}</span></div>{% endif %}
+          {% if product.vehicle_models %}<div class="spec-row"><span class="k">Compatible models</span><span class="v">{{ product.vehicle_models }}</span></div>{% endif %}
+          {% for kv in product.specifications %}
+            <div class="spec-row"><span class="k">{{ kv.0 }}</span><span class="v">{{ kv.1 }}</span></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Quantity + CTAs -->
+        <form method="post" action="{% url 'products:cart_add' product.slug %}" style="margin-top:26px" data-add-to-cart>
+          {% csrf_token %}
+          <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
+            {% if enabled_cart and product.in_stock %}
+            <span class="qty">
+              <button type="button" data-dec aria-label="Decrease quantity">−</button>
+              <input type="number" name="quantity" value="1" min="1" aria-label="Quantity">
+              <button type="button" data-inc aria-label="Increase quantity">+</button>
+            </span>
+            <button type="submit" class="btn btn--gold">Add to Cart</button>
+            <button type="submit" name="action" value="buy_now" class="btn btn--dark" formaction="{% url 'products:buy_now' product.slug %}">Buy Now</button>
+            {% else %}
+            <a class="btn btn--gold" href="{% url 'products:product_enquiry' product.slug %}">Request This Item</a>
+            {% endif %}
+            <a class="btn btn--whatsapp" href="{{ product_wa_link }}" target="_blank" rel="noopener">WhatsApp Enquiry</a>
+          </div>
+          {% if product.is_member_only and not user.is_authenticated %}
+          <div class="member-gate member-gate--cta" style="margin-top:14px">
+            <span class="eyebrow">MEMBERS-ONLY SALE</span>
+            <p>This sale product is available to registered members only. Click <strong>Add to Cart</strong> and we'll take you to <a href="{% url 'customers:register' %}?next={{ product.get_absolute_url }}">create a free account</a> or <a href="{% url 'customers:login' %}?next={{ product.get_absolute_url }}">sign in</a> to complete your purchase.</p>
+          </div>
+          {% endif %}
+        </form>
+
+        {% if enabled_cart and in_cart_qty %}
+        <div style="margin-top:16px; color:var(--green); font-weight:600">Already {{ in_cart_qty }} in your cart — <a href="{% url 'orders:cart' %}">view cart</a>.</div>
+        {% endif %}
+
+        <div class="pd__meta-row" style="margin-top:22px; color:var(--muted); font-size:14px">
+          <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px">
+            {% if delivery_estimate %}
+            <span style="display:flex;gap:6px;align-items:center;color:var(--accent);font-weight:600">
+              <svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg>
+              Estimated delivery: {{ delivery_estimate }}
+            </span>
+            {% endif %}
+            <span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg> Mobile delivery within {{ site_config.service_radius_km }} km</span>
+            <span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16" aria-hidden="true"><use href="#i-pin"></use></svg> Collection from workshop</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; padding-top:12px; border-top:1px solid var(--line)">
+            <svg width="16" height="16" aria-hidden="true" style="color:var(--gold)"><use href="#i-lock"></use></svg>
+            <span>Secure online payment available</span>
+            <span class="pay-brand pay-brand--main pay-brand--xs">PAYFAST</span>
+          </div>
+          Demo catalogue pricing. Prices are subject to verification before dispatch.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox for image zoom -->
+<div class="image-lightbox" id="product-lightbox" role="dialog" aria-modal="true" aria-label="Product image zoom">
+  <div class="image-lightbox__inner">
+    <button class="image-lightbox__close" aria-label="Close zoom" type="button">
+      <svg width="24" height="24" aria-hidden="true"><use href="#i-close"></use></svg>
+    </button>
+    <button class="image-lightbox__prev" aria-label="Previous image" type="button">
+      <svg width="24" height="24" aria-hidden="true"><use href="#i-chevron-left"></use></svg>
+    </button>
+    <button class="image-lightbox__next" aria-label="Next image" type="button">
+      <svg width="24" height="24" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+    </button>
+    <img src="" alt="" id="lightbox-image">
+    <span class="image-lightbox__counter" aria-live="polite"><span id="lightbox-current">1</span> / <span id="lightbox-total">1</span></span>
+  </div>
+</div>
+
+<!-- Booking cross-sell -->
+<section class="cta-band cta-band--compact">
+  <div class="container cta-band__inner">
+    <div>
+      <h2>Need it fitted, or a repair done at the same time?</h2>
+      <p>Book a service at our workshop and we'll also fit the part or fluid you need.</p>
+    </div>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:flex-end">
+      <a class="btn cb" href="{% url 'bookings:form' %}">Book a Service</a>
+      <a class="btn cb-outline" href="{% url 'quotes:form' %}">Request a Quote</a>
+    </div>
+  </div>
+</section>
+
+{% if related %}
+<section class="section section--ink" style="background:var(--ink);color:#f3f3f3">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Related</span>
+      <h2 class="section-title" style="color:#fff">Related Products</h2>
+    </div>
+    <div class="products-grid" style="margin-top:40px">
+      {% for p in related %}
+        {% include "includes/product_card.html" with product=p %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  // Product image gallery
+  const mainImage = document.querySelector('.pd__main-image img');
+  const thumbnails = document.querySelectorAll('.pd__thumb');
+  const lightbox = document.getElementById('product-lightbox');
+  const lightboxImage = document.getElementById('lightbox-image');
+  const lightboxCurrent = document.getElementById('lightbox-current');
+  const lightboxTotal = document.getElementById('lightbox-total');
+  const lightboxClose = lightbox.querySelector('.image-lightbox__close');
+  const lightboxPrev = lightbox.querySelector('.image-lightbox__prev');
+  const lightboxNext = lightbox.querySelector('.image-lightbox__next');
+
+  let currentIndex = 0;
+  const images = Array.from(thumbnails).map(t => t.querySelector('img').src);
+
+  if (!mainImage || images.length === 0) return;
+
+  // Set total count
+  lightboxTotal.textContent = images.length;
+
+  function openLightbox(index) {
+    currentIndex = index;
+    lightboxImage.src = images[currentIndex];
+    lightboxCurrent.textContent = currentIndex + 1;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function showImage(index) {
+    if (index < 0) index = images.length - 1;
+    if (index >= images.length) index = 0;
+    currentIndex = index;
+    mainImage.src = images[currentIndex];
+    lightboxImage.src = images[currentIndex];
+    lightboxCurrent.textContent = currentIndex + 1;
+    updateThumbnails();
+  }
+
+  function updateThumbnails() {
+    thumbnails.forEach((t, i) => {
+      t.classList.toggle('active', i === currentIndex);
+    });
+  }
+
+  function nextImage() {
+    showImage(currentIndex + 1);
+  }
+
+  function prevImage() {
+    showImage(currentIndex - 1);
+  }
+
+  // Thumbnail click
+  thumbnails.forEach((thumb, index) => {
+    thumb.addEventListener('click', () => showImage(index));
+  });
+
+  // Main image click -> open lightbox
+  mainImage.addEventListener('click', () => openLightbox(currentIndex));
+  mainImage.style.cursor = 'zoom-in';
+
+  // Lightbox controls
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightboxPrev.addEventListener('click', prevImage);
+  lightboxNext.addEventListener('click', nextImage);
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevImage();
+  });
+
+  // Click outside to close
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) closeLightbox();
+  });
+
+  // Swipe support for mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  mainImage.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  mainImage.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  lightbox.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) nextImage();
+      else prevImage();
+    }
+  }
+})();
+</script>
+{% endblock %}

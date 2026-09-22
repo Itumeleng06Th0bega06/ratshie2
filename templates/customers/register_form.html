@@ -1,0 +1,23 @@
+{% comment %}Registration form partial - rendered standalone (HTMX) or inside register.html.
+Only fields with errors are flagged; valid values are preserved.{% endcomment %}
+{% load static %}
+<form method="post" action="{% url 'customers:register' %}" class="auth-form" id="registerForm" data-auth-form novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next_url|default:'' }}">
+  <div class="form-row">
+    {% include "components/form_field.html" with field=form.first_name %}
+    {% include "components/form_field.html" with field=form.last_name %}
+  </div>
+  {% include "components/form_field.html" with field=form.phone %}
+  {% include "components/form_field.html" with field=form.email %}
+  {% include "components/form_field.html" with field=form.password1 %}
+  {% include "components/form_field.html" with field=form.password2 %}
+  {% include "components/form_field.html" with field=form.terms %}
+  <button type="submit" class="btn btn--gold btn--block" data-submit-label>
+    <span class="btn-label">Create Account</span>
+  </button>
+  {% if form.non_field_errors %}
+  <p class="auth-error" role="alert">{{ form.non_field_errors.0 }}</p>
+  {% endif %}
+  <p class="auth-alt">Already have an account? <a href="{% url 'customers:login' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Sign in</a></p>
+</form>

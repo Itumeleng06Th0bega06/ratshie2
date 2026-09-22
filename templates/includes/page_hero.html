@@ -1,0 +1,17 @@
+{% comment %}Inner page hero. Expects: title, optional crumb_list (list of (name, url_name)), optional lead{% endcomment %}
+<section class="page-hero">
+  <div class="grid-lines" aria-hidden="true"></div>
+  <div class="container page-hero__inner">
+    {% if crumb_list %}
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="{% url 'home' %}">Home</a>
+      {% for name, target in crumb_list %}
+      <span class="sep">/</span>
+      {% if target %}<a href="{% url target %}">{{ name }}</a>{% else %}<span>{{ name }}</span>{% endif %}
+      {% endfor %}
+    </nav>
+    {% endif %}
+    <h1>{{ title }}</h1>
+    {% if lead %}<p class="page-hero__lead">{{ lead }}</p>{% endif %}
+  </div>
+</section>

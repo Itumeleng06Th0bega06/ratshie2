@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Product Enquiry{% endblock %}
+{% block meta_description %}Enquire about spare parts and lubricants availability, compatibility and pricing with Ratshie.{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title="Product Enquiry" lead="Tell us the part or lubricant you need and your vehicle details, and we'll check availability and pricing for you." crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="center" style="max-width:640px;margin:0 auto 40px">
+      <span class="eyebrow eyebrow--center" style="justify-content:center">How it works</span>
+      <p style="margin-top:14px;color:var(--muted)">Complete the form below or message us directly on WhatsApp. We'll confirm the correct part, price and availability for your vehicle.</p>
+    </div>
+
+    <div class="form-card" style="max-width:840px;margin:0 auto">
+      <form method="post" action="{% url 'products:enquiry_submit' %}">
+        {% csrf_token %}
+        {% if product %}<input type="hidden" name="product" value="{{ product.id }}">{% endif %}
+
+        <div class="form-row">
+          <div class="field">
+            <label for="full_name">Full Name <span class="req">*</span></label>
+            <input type="text" id="full_name" name="full_name" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="phone">Phone <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" required autocomplete="tel">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email">
+        </div>
+
+        <div class="field">
+          <label for="product_name">Product / Part you need</label>
+          <input type="text" id="product_name" name="product_name" value="{% if product %}{{ product.name }}{% endif %}" {% if product %}readonly{% endif %}>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="quantity">Quantity Required</label>
+            <input type="number" id="quantity" name="quantity" value="1" min="1">
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="field">
+            <label for="vehicle_make">Vehicle Make</label>
+            <input type="text" id="vehicle_make" name="vehicle_make" value="{{ product.vehicle_makes|default:'' }}">
+          </div>
+          <div class="field">
+            <label for="vehicle_model">Vehicle Model</label>
+            <input type="text" id="vehicle_model" name="vehicle_model">
+          </div>
+          <div class="field">
+            <label for="vehicle_year">Vehicle Year</label>
+            <input type="number" id="vehicle_year" name="vehicle_year" min="1900" max="2100">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="registration">Registration Number</label>
+            <input type="text" id="registration" name="registration">
+          </div>
+          <div class="field">
+            <label for="preferred_contact">Preferred Contact Method</label>
+            <select id="preferred_contact" name="preferred_contact">
+              <option value="whatsapp">WhatsApp</option>
+              <option value="phone">Phone</option>
+              <option value="email">Email</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Tell us more about what you need..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--gold btn--lg btn--block">Send Product Enquiry</button>
+        <p class="center" style="margin-top:16px; color:var(--muted); font-size:14px">
+          Or enquire instantly: <a class="btn btn--whatsapp btn--sm" style="margin-left:6px" href="{{ whatsapp_link }}" target="_blank" rel="noopener">WhatsApp Us</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

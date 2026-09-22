@@ -1,0 +1,131 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block object-tools %}{% endblock %}
+
+{% block content %}
+<div class="rui-orders-head">
+  <div>
+    <h1 class="rui-section-title">Orders</h1>
+    <p class="rui-subtitle">Manage customer orders, payments and fulfilment.</p>
+  </div>
+  {% if has_add_permission %}
+  <a href="{% url cl.opts|admin_urlname:'add' %}" class="rui-btn rui-btn-primary">
+    <svg class="h-4 w-4" aria-hidden="true"><use href="#i-plus"></use></svg> Create Order
+  </a>
+  {% endif %}
+</div>
+
+<div class="rui-orders-stats">
+  <div class="rui-orders-stat">
+    <span class="rui-orders-stat__icon" aria-hidden="true"><svg class="h-4 w-4"><use href="#i-badge"></use></svg></span>
+    <div><span class="rui-orders-stat__label">Total Orders</span><span class="rui-orders-stat__value">{{ order_stats.total|default:0 }}</span></div>
+  </div>
+  <div class="rui-orders-stat rui-orders-stat--amber">
+    <span class="rui-orders-stat__icon" aria-hidden="true"><svg class="h-4 w-4"><use href="#i-clock"></use></svg></span>
+    <div><span class="rui-orders-stat__label">Pending</span><span class="rui-orders-stat__value">{{ order_stats.pending|default:0 }}</span></div>
+  </div>
+  <div class="rui-orders-stat rui-orders-stat--blue">
+    <span class="rui-orders-stat__icon" aria-hidden="true"><svg class="h-4 w-4"><use href="#i-tools"></use></svg></span>
+    <div><span class="rui-orders-stat__label">Processing</span><span class="rui-orders-stat__value">{{ order_stats.processing|default:0 }}</span></div>
+  </div>
+  <div class="rui-orders-stat rui-orders-stat--green">
+    <span class="rui-orders-stat__icon" aria-hidden="true"><svg class="h-4 w-4"><use href="#i-trend-up"></use></svg></span>
+    <div><span class="rui-orders-stat__label">Completed</span><span class="rui-orders-stat__value">{{ order_stats.completed|default:0 }}</span></div>
+  </div>
+  <div class="rui-orders-stat rui-orders-stat--red">
+    <span class="rui-orders-stat__icon" aria-hidden="true"><svg class="h-4 w-4"><use href="#i-close"></use></svg></span>
+    <div><span class="rui-orders-stat__label">Cancelled</span><span class="rui-orders-stat__value">{{ order_stats.cancelled|default:0 }}</span></div>
+  </div>
+</div>
+
+{{ block.super }}
+{% endblock %}
+
+{% block search %}
+<div id="toolbar" class="rui-orders-toolbar">
+  <form id="changelist-search" method="get" role="search">
+    <label for="order-search" class="sr-only">Search orders</label>
+    <input type="text" id="order-search" name="q" value="{{ cl.query }}" placeholder="Search orders by number, name or email..." autocomplete="off">
+    {% for key, value in cl.params.items %}{% if key != 'q' and key != 'p' %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endif %}{% endfor %}
+    <button type="submit" class="rui-btn rui-btn-primary">Search</button>
+    {% if cl.query or cl.has_active_filters %}
+    <a href="{% url cl.opts|admin_urlname:'changelist' %}" class="rui-btn rui-btn-ghost">Clear Filters</a>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}
+
+{% block result_list %}
+{% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+
+{% if cl.result_count %}
+<div class="rui-orders-table-wrap">
+  <table class="rui-orders-table">
+    <thead>
+      <tr>
+        {% if action_form and cl.show_admin_actions %}<th class="rui-orders-check"><input type="checkbox" id="action-toggle" aria-label="Select all orders on this page"></th>{% endif %}
+        <th>Order</th>
+        <th>Customer</th>
+        <th>Date</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Payment</th>
+        <th>Status</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in cl.result_list %}
+      <tr>
+        {% if action_form and cl.show_admin_actions %}<td class="rui-orders-check"><input type="checkbox" name="_selected_action" value="{{ o.pk }}" class="action-select" aria-label="Select order {{ o.reference }}"></td>{% endif %}
+        <td><a class="rui-orders-ref" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">{{ o.reference }}</a></td>
+        <td>
+          <span class="rui-orders-cust">{{ o.customer_name|default:"Guest" }}</span>
+          {% if o.email %}<span class="rui-orders-email">{{ o.email }}</span>{% endif %}
+        </td>
+        <td class="rui-orders-date">{{ o.created_at|date:"d M Y" }}</td>
+        <td>{{ o.items.all|length }} item{{ o.items.all|length|pluralize }}</td>
+        <td class="rui-orders-total">R {{ o.total|floatformat:2 }}</td>
+        <td><span class="rui-badge rui-badge-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span></td>
+        <td><span class="rui-badge rui-badge-{{ o.status }}">{{ o.get_status_display }}</span></td>
+        <td class="text-right"><a class="rui-btn rui-btn-secondary rui-btn-sm" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="rui-orders-cards">
+  {% for o in cl.result_list %}
+  <div class="rui-order-card">
+    <div class="rui-order-card__top">
+      <a class="rui-orders-ref" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">{{ o.reference }}</a>
+      <span class="rui-badge rui-badge-{{ o.status }}">{{ o.get_status_display }}</span>
+    </div>
+    <div class="rui-order-card__cust">
+      <span class="rui-orders-cust">{{ o.customer_name|default:"Guest" }}</span>
+      {% if o.email %}<span class="rui-orders-email">{{ o.email }}</span>{% endif %}
+    </div>
+    <div class="rui-order-card__meta">
+      <span>{{ o.items.all|length }} item{{ o.items.all|length|pluralize }}</span>
+      <span>{{ o.created_at|date:"d M Y" }}</span>
+    </div>
+    <div class="rui-order-card__bottom">
+      <span class="rui-orders-total">R {{ o.total|floatformat:2 }}</span>
+      <span class="rui-badge rui-badge-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span>
+    </div>
+    <a class="rui-btn rui-btn-secondary rui-btn-sm" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">View Order</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="rui-empty rui-orders-empty">
+  <svg aria-hidden="true"><use href="#i-cart"></use></svg>
+  <p class="rui-orders-empty__title">No orders yet</p>
+  <p>When customers place orders, they will appear here.</p>
+</div>
+{% endif %}
+
+{% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+{% endblock %}

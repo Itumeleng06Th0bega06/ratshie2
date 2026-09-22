@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{{ form.media }}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{{ title }}</h1>
+  <p>Order <strong>{{ order.reference }}</strong> — current estimate:
+    {% if est_from %}
+      {{ est_from|date:"d F Y" }}{% if est_to %}{% if est_to != est_from %} – {{ est_to|date:"d F Y" }}{% endif %}{% endif %}
+    {% else %}
+      <em>Not yet set</em>
+    {% endif %}
+  </p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+      <div class="form-row{% if field.errors %} errors{% endif %}">
+        {{ field.errors }}
+        <div>
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" value="Update delivery estimate" class="default">
+      <a href="{% url 'admin:orders_order_change' order.pk %}" class="button">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

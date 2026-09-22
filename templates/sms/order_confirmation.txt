@@ -1,0 +1,3 @@
+Your order #{{ order_number }} has been confirmed. Payment received.
+Estimated delivery: {{ estimate }}.
+If you have questions, contact us at {{ support_email }} or {{ support_phone }}.

@@ -1,0 +1,24 @@
+{% if lines %}
+<div class="cart-grid">
+  <div class="cart-items" id="cart-lines">
+    {% include "orders/_cart_lines.html" %}
+  </div>
+
+  <aside class="cart-summary-panel">
+    {% include "orders/_cart_summary_card.html" %}
+  </aside>
+</div>
+
+<div class="cart-summary-mobile">
+  {% include "orders/_cart_summary_card.html" %}
+</div>
+{% else %}
+<div class="empty-state">
+  <svg class="svg-art" aria-hidden="true"><use href="#i-cart"></use></svg>
+  <h3>Your cart is empty</h3>
+  <p>Browse our shop and add products you'd like to order.</p>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+    <a class="btn btn--gold" href="{% url 'products:shop' %}">Browse the Shop</a>
+  </div>
+</div>
+{% endif %}

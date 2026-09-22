@@ -1,0 +1,40 @@
+{% comment %}Reusable product card. Expects: product. Optional: cart_qtys (dict pk->qty).{% endcomment %}
+{% load static %}
+{% with p=product %}
+<article class="product-card reveal">
+  <a class="product-card__media" href="{{ p.get_absolute_url }}">
+    <div class="product-card__badges">
+      {% if p.is_on_sale %}<span class="badge badge--sale">{{ p.discount_percent }}% Off</span>{% endif %}
+      {% if p.is_new %}<span class="badge badge--gold">New</span>{% endif %}
+      {% if p.is_genuine %}<span class="badge badge--nyc">Genuine</span>{% endif %}
+    </div>
+    {% if p.public_image %}
+      <img src="{{ p.public_image.image.url }}" alt="{{ p.name }}" loading="lazy">
+    {% endif %}
+  </a>
+  <div class="product-card__body">
+    <span class="product-card__cat">{% if p.brand %}{{ p.brand }}{% else %}{{ p.product_type_name }}{% endif %}</span>
+    <h3><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
+    {% if p.short_description %}<p class="product-card__desc">{{ p.short_description }}</p>{% endif %}
+    <div class="product-card__foot">
+      <div class="product-card__price-row">
+        <div class="product-card__price">
+          {% if p.is_on_sale %}
+            <span class="now">R {{ p.price|floatformat:2 }}</span>
+            <span class="was">R {{ p.original_price|floatformat:2 }}</span>
+          {% else %}
+            <span class="now">R {{ p.price|floatformat:2 }}</span>
+          {% endif %}
+        </div>
+        <form action="{% url 'products:cart_add' p.slug %}" method="post" class="card-add" data-add-to-cart>
+          {% csrf_token %}
+          <button type="submit" class="btn btn--gold btn--sm add-to-cart" data-add-to-cart-url="{% url 'products:cart_add' p.slug %}" aria-label="Add {{ p.name }} to cart">
+            <svg class="ico" aria-hidden="true"><use href="#i-cart"></use></svg>
+            <span>ADD TO CART</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</article>
+{% endwith %}

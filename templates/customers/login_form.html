@@ -1,0 +1,18 @@
+{% comment %}Login form partial - rendered standalone (HTMX) or inside login.html.
+Only fields with errors are flagged; valid values are preserved.{% endcomment %}
+{% load static %}
+<form method="post" action="{% url 'customers:login' %}" class="auth-form" id="loginForm" data-auth-form novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next_url|default:'' }}">
+  {% include "components/form_field.html" with field=form.username %}
+  <div class="field-input-wrap">
+    {% include "components/form_field.html" with field=form.password %}
+  </div>
+  <button type="submit" class="btn btn--gold btn--block" data-submit-label>
+    <span class="btn-label">Sign In</span>
+  </button>
+  {% if form.non_field_errors %}
+  <p class="auth-error" role="alert">{{ form.non_field_errors.0 }}</p>
+  {% endif %}
+  <p class="auth-alt">No account yet? <a href="{% url 'customers:register' %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">Create a free account</a></p>
+</form>

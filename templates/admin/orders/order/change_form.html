@@ -1,0 +1,149 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools %}{% if not original %}{{ block.super }}{% endif %}{% endblock %}
+
+{% block content_title %}
+{% if original %}<span class="rui-order-view__eyebrow">Order details</span>{% else %}{{ block.super }}{% endif %}
+{% endblock %}
+
+{% block content_subtitle %}{% endblock %}
+
+{% block content %}
+{% if not original %}
+  {{ block.super }}
+{% else %}
+<div id="content-main" class="rui-order-view">
+
+  <header class="rui-order-view__head">
+    <div class="rui-order-view__id">
+      <h1 class="rui-order-view__title">Order #{{ original.pk }}</h1>
+      {% if original.reference %}<p class="rui-order-view__ref">{{ original.reference }}</p>{% endif %}
+    </div>
+    <div class="rui-order-detail-badges">
+      <span class="rui-badge rui-badge-{{ original.payment_status }}">Payment: {{ original.get_payment_status_display }}</span>
+      <span class="rui-badge rui-badge-{{ original.status }}">Status: {{ original.get_status_display }}</span>
+    </div>
+  </header>
+
+  <div class="rui-order-view__grid">
+    {% if original.customer_name or original.email or original.phone %}
+    <section class="rui-ov-card">
+      <h2 class="rui-ov-card__title">Customer</h2>
+      <dl class="rui-ov-dl">
+        {% if original.customer_name %}<div><dt>Name</dt><dd>{{ original.customer_name }}</dd></div>{% endif %}
+        {% if original.email %}<div><dt>Email</dt><dd>{{ original.email }}</dd></div>{% endif %}
+        {% if original.phone %}<div><dt>Phone</dt><dd>{{ original.phone }}</dd></div>{% endif %}
+      </dl>
+    </section>
+    {% endif %}
+
+    <section class="rui-ov-card">
+      <h2 class="rui-ov-card__title">Order Information</h2>
+      <dl class="rui-ov-dl">
+        {% if original.reference %}<div><dt>Reference</dt><dd>{{ original.reference }}</dd></div>{% endif %}
+        <div><dt>Order Date</dt><dd>{{ original.created_at|date:"j M Y, H:i" }}</dd></div>
+        <div><dt>Delivery Option</dt><dd>{{ original.get_delivery_option_display }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Delivery Estimate</h2>
+    <dl class="rui-ov-dl">
+      {% if original.delivery_estimate_from and original.delivery_estimate_to %}
+      <div><dt>Estimated delivery</dt><dd>{{ original.delivery_estimate_from|date:"d F Y" }}–{{ original.delivery_estimate_to|date:"d F Y" }}</dd></div>
+      {% elif original.delivery_estimate_from %}
+      <div><dt>Estimated delivery</dt><dd>{{ original.delivery_estimate_from|date:"d F Y" }}</dd></div>
+      {% endif %}
+      {% if original.delivery_estimate_source %}
+      <dt>Source</dt><dd>{{ original.get_delivery_estimate_source_display }}</dd>
+      {% endif %}
+    </dl>
+    {% if original.pk and request.user.is_staff %}
+    <p><a class="button" href="{% url 'admin:orders_order_delivery_override' original.pk %}">Change delivery estimate</a></p>
+    {% endif %}
+  </section>
+
+  <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Order Items</h2>
+    {% if original.items.all %}
+    <table class="rui-ov-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="num">Qty</th>
+          <th class="num">Unit Price</th>
+          <th class="num">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in original.items.all %}
+        <tr>
+          <td>
+            <div class="rui-ov-prod">
+              {% with img=item.product.public_image_url %}
+                {% if img %}<img src="{{ img }}" alt="{{ item.product_name }}" class="rui-ov-thumb">{% endif %}
+              {% endwith %}
+              <span>{{ item.product_name|default:item.product.name|default:"Item" }}</span>
+            </div>
+          </td>
+          <td class="num">{{ item.quantity }}</td>
+          <td class="num">R {{ item.unit_price|floatformat:2 }}</td>
+          <td class="num">R {{ item.line_total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="num rui-ov-total-label">Subtotal</td>
+          <td class="num">R {{ original.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% if original.delivery_fee %}
+        <tr>
+          <td colspan="3" class="num rui-ov-total-label">Delivery</td>
+          <td class="num">R {{ original.delivery_fee|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        <tr class="rui-ov-grand">
+          <td colspan="3" class="num">Total</td>
+          <td class="num">R {{ original.total|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+      <p class="rui-ov-empty">No items on this order.</p>
+    {% endif %}
+  </section>
+
+  {% if original.delivery_option == "delivery" and original.delivery_address %}
+  <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Delivery Information</h2>
+    <div class="rui-ov-address">
+      {% if original.customer_name %}<div>{{ original.customer_name }}</div>{% endif %}
+      <div>{{ original.delivery_address|linebreaksbr }}</div>
+      {% if original.phone %}<div>{{ original.phone }}</div>{% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if original.payment_reference or original.payfast_transaction_id %}
+  <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Payment Information</h2>
+    <dl class="rui-ov-dl">
+      {% if original.payment_reference %}<div><dt>Reference</dt><dd>{{ original.payment_reference }}</dd></div>{% endif %}
+      {% if original.payfast_transaction_id %}<div><dt>Transaction ID</dt><dd>{{ original.payfast_transaction_id }}</dd></div>{% endif %}
+    </dl>
+  </section>
+  {% endif %}
+
+  {% if original.notes %}
+  <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Notes</h2>
+    <div class="rui-ov-notes">{{ original.notes|linebreaksbr }}</div>
+  </section>
+  {% endif %}
+
+</div>
+{% endif %}
+{% endblock %}

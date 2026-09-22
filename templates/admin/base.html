@@ -1,0 +1,80 @@
+{% load i18n static tz %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{% endblock %}</title>
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static "admin_premium/admin.tailwind.min.css" %}" {% csp_nonce_attr %}>
+<link rel="stylesheet" href="{% static "admin_premium/admin.css" %}" {% csp_nonce_attr %}>
+{% block responsive %}{% endblock %}
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
+{% block extrastyle %}{% endblock %}
+{% block extrahead %}{% endblock %}
+</head>
+
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}" data-admin-utc-offset="{% now "Z" %}" data-admin-server-timezone="{% get_current_timezone as time_zone %}{{ time_zone }}">
+<a href="#content-start" class="skip-to-content-link">{% translate 'Skip to main content' %}</a>
+
+{% block shell %}
+<div class="rui-shell">
+  {% block nav-sidebar %}{% include "admin/nav_sidebar.html" %}{% endblock %}
+
+  <div class="rui-main {% block main_class %}rui-shifted{% endblock %}" id="ruiMain">
+    {% block header %}{% include "admin/topbar.html" %}{% endblock %}
+
+    {% block nav-breadcrumbs %}
+      {% block breadcrumbs %}
+      <nav class="px-6 pt-4" aria-label="{% translate 'Breadcrumbs' %}">
+        <ol class="flex items-center gap-1.5 text-xs">
+          <li><a href="{% url 'admin:index' %}" class="font-medium text-brand-600 hover:text-brand-700">{% translate 'Home' %}</a></li>
+          {% if title %}
+          <li class="flex items-center gap-1.5"><span class="h-1 w-1 rounded-full" style="background:var(--admin-accent-border)"></span><span aria-current="page" class="font-medium text-ink-600">{{ title }}</span></li>
+          {% endif %}
+        </ol>
+      </nav>
+      {% endblock %}
+    {% endblock %}
+
+    <main id="content-start" class="content" tabindex="-1">
+      {% block messages %}
+        {% if messages %}
+          <div class="px-6 pt-4">
+            <div id="rui-django-messages" data-messages='[{% for m in messages %}{"tags":"{{ m.tags|escapejs }}","msg":"{{ m|escapejs }}"}{% if not forloop.last %},{% endif %}{% endfor %}]'></div>
+          </div>
+        {% endif %}
+      {% endblock messages %}
+      <div id="content" class="{% block coltype %}colM{% endblock %} px-6 py-6">
+        <div class="titles-and-tools">
+          <div class="titles">
+            {% block pretitle %}{% endblock %}
+            {% block content_title %}{% if title %}<h1 class="rui-section-title">{{ title }}</h1>{% endif %}{% endblock %}
+            {% block content_subtitle %}{% if subtitle %}<p class="rui-subtitle">{{ subtitle }}</p>{% endif %}{% endblock %}
+          </div>
+          {% block object-tools %}{% endblock %}
+        </div>
+        {% block content %}{{ content }}{% endblock %}
+        {% block sidebar %}{% endblock %}
+        <br class="clear">
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock shell %}
+
+<footer id="footer">{% block footer %}{% endblock %}</footer>
+
+{% include "includes/icons.html" %}
+<div id="rui-toast-region" class="rui-toast-region" aria-live="polite"></div>
+<div id="rui-modal-root"></div>
+<div id="rui-drawer-root"></div>
+{% block extrabody %}{% endblock extrabody %}
+<script src="{% static "js/htmx.min.js" %}" {% csp_nonce_attr %}></script>
+<script src="{% static "js/ui.js" %}" {% csp_nonce_attr %}></script>
+<script src="{% static "admin_premium/admin.js" %}" {% csp_nonce_attr %}></script>
+</body>
+</html>

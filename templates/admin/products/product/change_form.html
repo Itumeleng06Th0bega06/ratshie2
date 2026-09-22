@@ -1,0 +1,19 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls admin_modify %}
+
+{% block object-tools %}
+{% if change and not is_popup and has_add_permission %}
+  <ul class="object-tools">
+    <li>
+      <a href="{% url opts|admin_urlname:'add' %}" class="addlink">{% blocktranslate %}Add {{ opts.verbose_name|capfirst }}{% endblocktranslate %}</a>
+    </li>
+    {% block object-tools-items %}
+    {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
+    <li><a href="{% add_preserved_filters history_url %}" class="historylink">{% translate "History" %}</a></li>
+    {% if has_absolute_url %}<li><a href="{% url 'admin:view_on_site' content_type_id original.pk %}" class="viewsitelink">{% translate "View on site" %}</a></li>{% endif %}
+    {% endblock %}
+  </ul>
+{% else %}
+  {{ block.super }}
+{% endif %}
+{% endblock %}

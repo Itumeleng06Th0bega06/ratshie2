@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Our Services{% endblock %}
+{% block meta_description %}Explore Ratshie workshop services: mechanical repairs, diagnostics, car parts, lubricants, mobile spares delivery and emergency support.{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title="Our Services" lead=lead crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="services-grid" data-stagger>
+      {% for service in services %}
+        {% include "includes/service_card.html" with service=service %}
+      {% endfor %}
+    </div>
+
+    {% if not services %}
+    <div class="empty-state">
+      <svg class="svg-art" aria-hidden="true"><use href="#i-wrench"></use></svg>
+      <h3>Our service list is being updated</h3>
+      <p>Please contact us for our current range of workshop services.</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+        <a class="btn btn--gold" href="{% url 'quotes:form' %}">Request a Quote</a>
+        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="container cta-band__inner">
+    <div>
+      <h2>Not sure which service you need?</h2>
+      <p>Tell us about your vehicle and we'll recommend the right care.</p>
+    </div>
+    <a class="btn cb" href="{% url 'quotes:form' %}">Get a Quote</a>
+  </div>
+</section>
+{% endblock %}

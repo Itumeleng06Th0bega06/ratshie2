@@ -1,0 +1,56 @@
+{% if restricted_items %}
+<div class="alert alert--error cart-restricted-note" role="alert">
+  <strong>Members-only sale items:</strong>
+  {% for line in restricted_items %}{{ line.product.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+  — these can only be purchased by registered members.
+  <a href="{% url 'customers:login' %}">Sign in</a> or
+  <a href="{% url 'customers:register' %}">create a free account</a> to continue.
+</div>
+{% endif %}
+
+{% for line in lines %}
+<article class="cart-line{% if line.restricted %} cart-line--restricted{% endif %}" data-product-id="{{ line.product.pk }}">
+  <div class="cart-line__media">
+    {% if line.product.public_image %}
+    <img src="{{ line.product.public_image.image.url }}" alt="{{ line.product.name }}" loading="lazy" class="cart-product-image">
+    {% else %}
+    <svg class="svg-art" aria-hidden="true"><use href="#i-gearbox"></use></svg>
+    {% endif %}
+  </div>
+  <div class="cart-line__body">
+    <h3><a href="{{ line.product.get_absolute_url }}">{{ line.product.name }}</a></h3>
+    {% if line.product.brand %}<div class="cart-line__brand">{{ line.product.brand }}</div>{% endif %}
+    {% if line.product.sku %}<div class="cart-line__sku">{{ line.product.sku }}</div>{% endif %}
+    <div class="cart-line__price-row">
+      {% if line.product.is_on_sale %}
+      <span class="cart-line__price was">{{ line.product.display_original_price }}</span>
+      <span class="cart-line__price now">{{ line.product.display_price }}</span>
+      {% else %}
+      <span class="cart-line__price">{{ line.product.display_price }}</span>
+      {% endif %}
+    </div>
+    {% if line.restricted %}
+    <div class="cart-line__restricted" role="note">Members-only sale item — sign in to purchase.</div>
+    {% endif %}
+  </div>
+  <div class="cart-line__qty">
+    <form action="{% url 'orders:cart_set_qty' line.product.pk %}" method="post" class="qty-form" data-cart-qty
+          hx-post="{% url 'orders:cart_set_qty' line.product.pk %}" hx-target="#cart-region" hx-swap="innerHTML" hx-disabled-elt="find button">
+      {% csrf_token %}
+      <button type="submit" aria-label="Decrease quantity" name="qty" value="{{ line.qty|add:'-1' }}">−</button>
+      <input type="number" value="{{ line.qty }}" min="0" readonly aria-label="Quantity">
+      <button type="submit" aria-label="Increase quantity" name="qty" value="{{ line.qty|add:'1' }}">+</button>
+    </form>
+  </div>
+  <div class="cart-line__total">
+    <span class="cart-line__subtotal">{{ line.line_total|floatformat:2 }}</span>
+  </div>
+  <form action="{% url 'orders:cart_remove' line.product.pk %}" method="post" class="cart-line__remove"
+        hx-post="{% url 'orders:cart_remove' line.product.pk %}" hx-target="#cart-region" hx-swap="innerHTML">
+    {% csrf_token %}
+    <button type="submit" class="icon-btn" aria-label="Remove {{ line.product.name }}">
+      <svg width="18" height="18" aria-hidden="true"><use href="#i-trash"></use></svg>
+    </button>
+  </form>
+</article>
+{% endfor %}

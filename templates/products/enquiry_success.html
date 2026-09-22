@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Product Enquiry Sent{% endblock %}
+
+{% block content %}
+<section class="section section--cream">
+  <div class="container result-state">
+    <div class="big-icon ok"><svg aria-hidden="true"><use href="#i-check"></use></svg></div>
+    <h1>Enquiry Sent</h1>
+    <p>Thank you. Your product enquiry has been received and we'll get back to you shortly to confirm availability and pricing.</p>
+    <div class="actions">
+      <a class="btn btn--whatsapp" href="{{ whatsapp_link }}?text={{ whatsapp_msg|urlencode }}" target="_blank" rel="noopener">
+        <svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-whatsapp"></use></svg> Continue on WhatsApp
+      </a>
+      <a class="btn btn--dark" href="{% url 'products:shop' %}">Continue Shopping</a>
+      <a class="btn btn--ghost-dark" href="{% url 'home' %}">Back to Home</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

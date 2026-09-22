@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<section class="auth-hero">
+  <div class="auth-hero__inner">
+    <div class="auth-brand-panel">
+      <div class="auth-brand-panel__logo">
+        <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo">
+      </div>
+      <div class="auth-brand-panel__copy">
+        <span class="eyebrow">Join as a Member</span>
+        <h1>Get members-only access<br>to sale products.</h1>
+        <p>Create a free account to purchase sale products, track your orders and enjoy a faster checkout.</p>
+      </div>
+      <ul class="auth-brand-panel__points">
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Free to register</li>
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Members-only sale pricing</li>
+        <li><svg width="16" height="16" aria-hidden="true"><use href="#i-check"></use></svg> Order history &amp; tracking</li>
+      </ul>
+    </div>
+
+    <div class="auth-card-panel">
+      <div class="auth-card">
+        <h2>Create your account</h2>
+        <p class="auth-card__lead">Register below — it only takes a moment.</p>
+        <div id="authFormContainer">
+          {% include "customers/register_form.html" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{
+  "name": "ratshie",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "admin:css": "tailwindcss -i ./static/admin_premium/src/admin.css -o ./static/admin_premium/admin.tailwind.min.css --minify",
+    "admin:css:watch": "tailwindcss -i ./static/admin_premium/src/admin.css -o ./static/admin_premium/admin.tailwind.min.css --watch",
+    "public:css": "tailwindcss -i ./static/css/src/site.css -o ./static/css/site.min.css --minify",
+    "public:css:watch": "tailwindcss -i ./static/css/src/site.css -o ./static/css/site.min.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.14"
+  }
+}
+

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Booking Request Received{% endblock %}
+
+{% block content %}
+<section class="section section--cream">
+  <div class="container result-state">
+    <div class="big-icon ok"><svg aria-hidden="true"><use href="#i-check"></use></svg></div>
+    <h1>Booking Request Received</h1>
+    <p>Thank you{% if customer_name %}, {{ customer_name }}{% endif %}. We've received your service booking request and will confirm your appointment shortly.</p>
+    <div class="actions">
+      <a class="btn btn--whatsapp" href="{{ whatsapp_link }}?text={{ wa_quote_msg|urlencode }}" target="_blank" rel="noopener">
+        <svg class="ico" width="18" height="18" aria-hidden="true"><use href="#i-whatsapp"></use></svg> Confirm on WhatsApp
+      </a>
+      <a class="btn btn--dark" href="{% url 'quotes:form' %}">Get a Quote</a>
+      <a class="btn btn--ghost-dark" href="{% url 'home' %}">Back to Home</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

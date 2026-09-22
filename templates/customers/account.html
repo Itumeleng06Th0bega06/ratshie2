@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My Account{% endblock %}
+{% block content %}
+<section class="account-hero">
+  <div class="container account-hero__inner">
+    <span class="eyebrow">My Account</span>
+    <h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
+    <p>Manage your profile and review your order history.</p>
+  </div>
+</section>
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="account-grid">
+      <aside class="account-side">
+        <div class="account-side__user">
+          <div class="account-avatar">{{ request.user.first_name|first|default:request.user.username|first|upper }}</div>
+          <div>
+            <strong>{{ request.user.get_full_name|default:request.user.email }}</strong>
+            <div class="muted">{{ request.user.email }}</div>
+          </div>
+        </div>
+        <nav class="account-side__nav" aria-label="Account">
+          <a class="is-active" href="{% url 'customers:account' %}">Overview</a>
+          <a href="{% url 'products:shop' %}">Shop</a>
+          <a href="{% url 'orders:cart' %}">Your Cart</a>
+        </nav>
+        <form method="post" action="{% url 'customers:logout' %}" data-logout>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'home' %}">
+          <button type="submit" class="btn btn--outline btn--block">Log Out</button>
+        </form>
+      </aside>
+
+      <div class="account-main">
+        <div class="account-profile form-card">
+          <h3>Profile</h3>
+          <div class="form-row">
+            <div class="field">
+              <label>First name</label>
+              <input type="text" value="{{ request.user.first_name }}" readonly>
+            </div>
+            <div class="field">
+              <label>Last name</label>
+              <input type="text" value="{{ request.user.last_name }}" readonly>
+            </div>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" value="{{ request.user.email }}" readonly>
+          </div>
+          {% if profile %}
+          <div class="field">
+            <label>Phone</label>
+            <input type="text" value="{{ profile.phone|default:'—' }}" readonly>
+          </div>
+          {% endif %}
+          <p class="auth-alt" style="margin-top:12px">
+            <a href="{% url 'customers:password_reset' %}">Reset your password</a>
+          </p>
+        </div>
+
+        <div class="account-orders form-card">
+          <h3>Order history</h3>
+          {% if orders %}
+          <div class="account-table-wrap">
+            <table class="account-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for o in orders %}
+                <tr>
+                  <td>{{ o.reference }}</td>
+                  <td>{{ o.created_at|date:"d M Y" }}</td>
+                  <td>R {{ o.total|floatformat:2 }}</td>
+                  <td><span class="order-pill order-pill--{{ o.status }}">{{ o.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="muted">You have not placed any orders yet.</p>
+          <a class="btn btn--gold" href="{% url 'products:shop' %}">Browse the Shop</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

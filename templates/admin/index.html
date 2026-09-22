@@ -1,0 +1,251 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Dashboard | {{ site_title|default:_('Ratshie Command Centre') }}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="rui-accent-glow rounded-2xl">
+<span class="inline-block text-[11px] font-bold uppercase tracking-[.14em] text-brand-600">Automotive Operations Command Centre</span>
+<div class="mt-1 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="rui-section-title text-2xl">Good {{ greeting|default:"day" }}, {{ request.user.get_short_name|default:"Admin" }}.</h1>
+    <div class="rui-accent-line mt-2"></div>
+    <p class="mt-3 text-sm text-ink-500">
+      {{ dash_open_orders|default:0 }} open order{{ dash_open_orders|pluralize }} · 
+      {{ dash_sale_products|default:0 }} sale item{{ dash_sale_products|pluralize }} · 
+      {{ dash_pending_images|default:0 }} image{{ dash_pending_images|pluralize:"s" }} awaiting verification.
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="/admin/orders/order/?status__exact=pending" class="rui-btn rui-btn-secondary">Review orders</a>
+    <a href="/admin/products/product/add/" class="rui-btn rui-btn-primary">
+      <svg class="h-4 w-4"><use href="#i-plus"></use></svg> Add product
+    </a>
+  </div>
+</div>
+</div>
+
+<!-- Featured analytics: revenue performance (accent chart) -->
+<div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+  <div class="rui-kpi rui-kpi-featured lg:col-span-2">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <span class="rui-kpi-label">Revenue performance</span>
+        <div class="rui-kpi-value mt-1">R {{ dash_revenue|default:0|floatformat:0 }}</div>
+        <div class="rui-kpi-delta up"><svg class="h-3.5 w-3.5"><use href="#i-trend-up"></use></svg> <span>Secured across the shop</span></div>
+      </div>
+      <div class="flex items-center gap-1.5 text-xs text-amber-200/70">
+        <span class="h-2 w-2 rounded-full" style="background:var(--admin-accent)"></span> 30-day trend
+      </div>
+    </div>
+    <div class="mt-4">
+      <svg viewBox="0 0 640 180" class="h-36 w-full sm:h-40" preserveAspectRatio="none" role="img" aria-label="Revenue performance chart">
+        <defs>
+          <linearGradient id="ruiChartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f0a000" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#f0a000" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        <g class="rui-chart-grid">
+          <line x1="0" y1="0" x2="640" y2="0"/><line x1="0" y1="45" x2="640" y2="45"/>
+          <line x1="0" y1="90" x2="640" y2="90"/><line x1="0" y1="135" x2="640" y2="135"/>
+        </g>
+        <path class="rui-chart-area" d="M0,150 C50,140 80,120 130,128 C180,136 200,150 250,118 C300,86 330,110 380,92 C430,74 460,92 520,60 C570,34 600,54 640,24 L640,180 L0,180 Z"/>
+        <path class="rui-chart-line" fill="none" stroke-width="2.5" stroke-linecap="round" d="M0,150 C50,140 80,120 130,128 C180,136 200,150 250,118 C300,86 330,110 380,92 C430,74 460,92 520,60 C570,34 600,54 640,24"/>
+        <circle cx="640" cy="24" r="4" fill="#f0a000"/>
+        <circle cx="640" cy="24" r="8" fill="none" stroke="#f0a000" stroke-opacity=".35"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="rui-kpi rui-kpi-featured">
+      <span class="rui-kpi-label">Lifetime Orders</span>
+      <div class="rui-kpi-value mt-1">{{ dash_orders_count|default:0 }}</div>
+      <div class="rui-kpi-delta up">All statuses</div>
+    </div>
+    <div class="rui-kpi rui-kpi-featured">
+      <span class="rui-kpi-label">Enquiries Open</span>
+      <div class="rui-kpi-value mt-1 {% if dash_pending_enquiries %}text-amber-300{% endif %}">{{ dash_pending_enquiries|default:0 }}</div>
+      <div class="rui-kpi-delta up">Need a response</div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI cards -->
+<div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  <a href="/admin/orders/order/" class="rui-kpi group">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">Active Orders</span>
+      <span class="rounded-lg bg-brand-50 p-2 text-brand-600"><svg class="h-4 w-4"><use href="#i-badge"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value">{{ dash_open_orders|default:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_orders_count|default:0 }} lifetime</span></div>
+  </a>
+
+  <a href="/admin/payments/payment/" class="rui-kpi">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">Revenue Secured</span>
+      <span class="rounded-lg bg-emerald-50 p-2 text-emerald-600"><svg class="h-4 w-4"><use href="#i-trend-up"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value">R {{ dash_revenue|floatformat:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">Paid + fulfilled</span></div>
+  </a>
+
+  <a href="/admin/products/product/" class="rui-kpi">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">Products Live</span>
+      <span class="rounded-lg bg-brand-50 p-2 text-brand-600"><svg class="h-4 w-4"><use href="#i-cart"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value">{{ dash_products|default:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_sale_products|default:0 }} on sale</span></div>
+  </a>
+
+  <a href="/admin/customers/customer/" class="rui-kpi">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">Members</span>
+      <span class="rounded-lg bg-sky-50 p-2 text-sky-600"><svg class="h-4 w-4"><use href="#i-user"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value">{{ dash_members|default:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_customers|default:0 }} total contacts</span></div>
+  </a>
+
+  <a href="/admin/products/productimage/?status__exact=PENDING" class="rui-kpi">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">Images to Verify</span>
+      <span class="rounded-lg bg-amber-50 p-2 text-amber-600"><svg class="h-4 w-4"><use href="#i-eye"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value {% if dash_pending_images %}text-amber-600{% endif %}">{{ dash_pending_images|default:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">Pending review</span></div>
+  </a>
+
+  <a href="/admin/products/productenquiry/?status__exact=new" class="rui-kpi">
+    <div class="flex items-center justify-between">
+      <span class="rui-kpi-label">New Enquiries</span>
+      <span class="rounded-lg bg-red-50 p-2 text-red-600"><svg class="h-4 w-4"><use href="#i-mail"></use></svg></span>
+    </div>
+    <div class="rui-kpi-value {% if dash_pending_enquiries %}text-red-600{% endif %}">{{ dash_pending_enquiries|default:0 }}</div>
+    <div class="rui-kpi-delta"><span class="text-ink-500">Need a response</span></div>
+  </a>
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+  <!-- Recent orders -->
+  <div class="rui-card xl:col-span-2">
+    <div class="rui-card-header">
+      <div>
+        <h3 class="rui-card-title">Recent orders</h3>
+        <p class="mt-0.5 text-xs text-ink-500">Latest {{ dash_recent_orders|length }} orders across the shop</p>
+      </div>
+      <a href="/admin/orders/order/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="rui-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="ruiRecentOrders">
+          {% for o in dash_recent_orders %}
+          <tr>
+            <td class="font-semibold text-ink-800">
+              <a href="/admin/orders/order/{{ o.pk }}/change/" class="hover:text-brand-700">{{ o.reference }}</a>
+            </td>
+            <td>{{ o.customer.full_name|default:"Guest" }}</td>
+            <td class="text-ink-500">{{ o.created_at|date:"d M Y" }}</td>
+            <td class="font-semibold">R {{ o.total|floatformat:2 }}</td>
+            <td>
+              <span class="rui-badge rui-badge-{{ o.status }}" id="rui-status-badge-{{ o.pk }}" data-status="{{ o.status }}" data-label="{{ o.get_status_display }}">{{ o.get_status_display }}</span>
+              <select class="mt-1 block w-full rounded-lg border border-ink-200 px-2 py-1 text-xs shadow-sm outline-none focus:border-brand-500 rui-status-select" data-pk="{{ o.pk }}" data-action="/orders/management/order/{{ o.pk }}/status/" aria-label="Update status">
+                {% for value, label in order_status_choices %}
+                <option value="{{ value }}" {% if o.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="py-10 text-center text-ink-400">No orders yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Side column: quick actions + new members -->
+  <div class="space-y-4">
+    <div class="rui-card">
+      <div class="rui-card-header"><h3 class="rui-card-title">Quick actions</h3></div>
+      <div class="grid grid-cols-2 gap-3 p-4">
+        <a href="/admin/products/product/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Product</a>
+        <a href="/admin/orders/order/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Order</a>
+        <a href="/admin/customers/customer/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Customer</a>
+        <a href="/admin/core/faq/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ FAQ</a>
+      </div>
+    </div>
+
+    <div class="rui-card">
+      <div class="rui-card-header">
+        <h3 class="rui-card-title">New members</h3>
+        <a href="/admin/customers/customer/?user__isnull=False" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
+      </div>
+      <ul class="divide-y divide-ink-100">
+        {% for c in dash_new_members %}
+        <li class="flex items-center gap-3 px-4 py-3">
+          <span class="rui-avatar">{{ c.full_name|slice:":1"|upper }}</span>
+          <a href="/admin/customers/customer/{{ c.pk }}/change/" class="min-w-0">
+            <span class="block truncate text-sm font-medium text-ink-900 hover:text-brand-700">{{ c.full_name }}</span>
+            <span class="block truncate text-xs text-ink-500">{{ c.user.email|default:c.email|default:"—" }}</span>
+          </a>
+        </li>
+        {% empty %}
+        <li class="px-4 py-8 text-center text-sm text-ink-400">No new members yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Sale focus -->
+<div class="mt-6 rui-card">
+  <div class="rui-card-header">
+    <div>
+      <h3 class="rui-card-title">On sale now</h3>
+      <p class="mt-0.5 text-xs text-ink-500">Products with discounted pricing</p>
+    </div>
+    <a href="/admin/products/product/?is_member_only__exact=1" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Manage →</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="rui-table">
+      <thead>
+        <tr><th>Product</th><th>SKU</th><th>Price</th><th>Was</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for p in dash_sale_list %}
+        <tr>
+          <td class="font-medium text-ink-800"><a href="/admin/products/product/{{ p.pk }}/change/" class="hover:text-brand-700">{{ p.name }}</a></td>
+          <td class="text-ink-500">{{ p.sku|default:"—" }}</td>
+          <td class="font-semibold">R {{ p.price|floatformat:2 }}</td>
+          <td class="text-ink-400 line-through">R {{ p.original_price|floatformat:2 }}</td>
+          <td>
+            <span class="rui-badge {% if p.is_active %}rui-badge-green{% else %}rui-badge-slate{% endif %}">
+              {% if p.is_active %}Active{% else %}Draft{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="py-10 text-center text-ink-400">No sale products right now.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

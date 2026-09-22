@@ -1,0 +1,89 @@
+{% load i18n static %}
+<aside class="rui-sidebar {% if sidebar_collapsed %}rui-collapsed{% endif %}" id="ruiSidebar" aria-label="{% translate 'Sidebar' %}">
+  <div class="rui-sidebar-brand">
+    <a href="{% url 'admin:index' %}" class="inline-flex items-center">
+      <img src="{% static "img/brand/logo.png" %}" alt="{{ site_header|default:'Ratshie' }} logo" class="rui-sidebar-logo">
+    </a>
+    <button type="button" class="rui-icon-btn ml-auto hidden md:inline-flex rui-collapse-trigger" id="ruiSidebarCollapse" aria-label="{% translate 'Collapse sidebar' %}">
+      <svg class="h-4 w-4 rui-collapse-chev" aria-hidden="true"><use href="#i-chevron-left"></use></svg>
+    </button>
+  </div>
+
+  <div class="rui-sidebar-scroll">
+    <nav class="rui-sidebar-nav">
+      <div class="rui-sidebar-group">
+        <a href="{% url 'admin:index' %}" class="rui-sidebar-link {% if request.resolver_match.url_name == 'index' %}rui-active{% endif %}" data-tip="{% translate 'Dashboard' %}">
+          <svg aria-hidden="true"><use href="#i-gauge"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Dashboard' %}</span>
+        </a>
+      </div>
+
+      <div class="rui-sidebar-group">
+        <div class="rui-sidebar-group-title">{% translate 'Shop' %}</div>
+        <a href="/admin/products/product/" class="rui-sidebar-link {% if is_product_list %}rui-active{% endif %}" data-tip="{% translate 'Products' %}">
+          <svg aria-hidden="true"><use href="#i-cart"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Products' %}</span>
+        </a>
+        <a href="/admin/orders/order/" class="rui-sidebar-link {% if is_order_list %}rui-active{% endif %}" data-tip="{% translate 'Orders' %}">
+          <svg aria-hidden="true"><use href="#i-badge"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Orders' %}</span>
+          {% if orders_count %}<span class="rui-sidebar-count">{{ orders_count }}</span>{% endif %}
+        </a>
+        <a href="/admin/quotes/quote/" class="rui-sidebar-link" data-tip="{% translate 'Quotes' %}">
+          <svg aria-hidden="true"><use href="#i-mail"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Quotes' %}</span>
+        </a>
+      </div>
+
+      <div class="rui-sidebar-group">
+        <div class="rui-sidebar-group-title">{% translate 'Customers' %}</div>
+        <a href="/admin/customers/customer/" class="rui-sidebar-link" data-tip="{% translate 'Customers' %}">
+          <svg aria-hidden="true"><use href="#i-user"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Customers' %}</span>
+        </a>
+        <a href="/admin/products/productenquiry/" class="rui-sidebar-link" data-tip="{% translate 'Enquiries' %}">
+          <svg aria-hidden="true"><use href="#i-mail"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Enquiries' %}</span>
+        </a>
+        <a href="/admin/bookings/booking/" class="rui-sidebar-link" data-tip="{% translate 'Bookings' %}">
+          <svg aria-hidden="true"><use href="#i-calendar"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Bookings' %}</span>
+        </a>
+      </div>
+
+      <div class="rui-sidebar-group">
+        <div class="rui-sidebar-group-title">{% translate 'Content' %}</div>
+        <a href="/admin/core/siteconfig/1/change/" class="rui-sidebar-link" data-tip="{% translate 'Settings' %}">
+          <svg aria-hidden="true"><use href="#i-gearbox"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Settings' %}</span>
+        </a>
+        <a href="/admin/services/service/" class="rui-sidebar-link" data-tip="{% translate 'Services' %}">
+          <svg aria-hidden="true"><use href="#i-tools"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Services' %}</span>
+        </a>
+        <a href="/admin/products/productcategory/" class="rui-sidebar-link" data-tip="{% translate 'Categories' %}">
+          <svg aria-hidden="true"><use href="#i-disc"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Categories' %}</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="rui-sidebar-footer">
+    <div class="flex items-center gap-3 px-2 py-2">
+      <span class="rui-avatar">{{ user.get_username|first|upper }}</span>
+      <div class="min-w-0 rui-sidebar-label">
+        <div class="truncate text-sm font-semibold text-ink-900">{{ user.get_short_name|default:user.get_username }}</div>
+        <div class="truncate text-xs text-ink-500">{% translate 'Administrator' %}</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'admin:logout' %}" class="mt-1">
+      {% csrf_token %}
+      <button type="submit" class="rui-sidebar-link w-full text-red-600 hover:bg-red-50" data-tip="{% translate 'Log out' %}">
+        <svg aria-hidden="true"><use href="#i-close"></use></svg>
+        <span class="rui-sidebar-label">{% translate 'Log out' %}</span>
+      </button>
+    </form>
+  </div>
+</aside>
+<div class="rui-backdrop" id="ruiSidebarBackdrop"></div>

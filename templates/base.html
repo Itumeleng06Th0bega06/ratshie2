@@ -1,0 +1,275 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en-za">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_config.site_name }}{% endblock %} | {{ site_config.site_name }}</title>
+  <meta name="description" content="{% block meta_description %}{{ site_config.tagline }}{% endblock %}">
+
+  {% block canonical %}{% endblock %}
+  {% block og %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ site_config.site_name }}">
+  <meta property="og:title" content="{% block og_title %}{{ site_config.site_name }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ site_config.tagline }}{% endblock %}">
+  <meta property="og:image" content="{% block og_image %}{% static 'img/brand/logo.png' %}{% endblock %}">
+  {% endblock %}
+  <meta name="theme-color" content="#0b0b0c">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/brand/apple-touch-icon.png' %}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/ui.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.min.css' %}">
+  {% block extra_css %}{% endblock %}
+
+  {% block structured_data %}{% endblock %}
+</head>
+<body>
+  {% include "includes/icons.html" %}
+
+  <!-- Top info bar -->
+  <div class="topbar">
+    <div class="container topbar__inner">
+      <div class="topbar__links">
+        <a href="tel:{{ site_config.phone|cut:' '|cut:'('|cut:')'|cut:'-' }}">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-phone"></use></svg>
+          {{ site_config.phone_display }}
+        </a>
+        <a href="{{ whatsapp_link }}" target="_blank" rel="noopener">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-whatsapp"></use></svg>
+          WhatsApp: {{ site_config.whatsapp_display }}
+        </a>
+        <a href="mailto:{{ site_config.email }}">
+          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-mail"></use></svg>
+          {{ site_config.email }}
+        </a>
+      </div>
+      <div class="topbar__links">
+        <span><svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-pin"></use></svg> {{ site_config.address }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="nav">
+    <span class="nav__accent-line" aria-hidden="true"></span>
+    <div class="container nav__inner">
+      <a href="{% url 'home' %}" class="brand" aria-label="{{ site_config.site_name }} home">
+        <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" class="logo-mark" height="44" loading="eager">
+      </a>
+
+      <nav class="nav__menu" aria-label="Primary">
+        <a class="nav__link {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" href="{% url 'home' %}">Home</a>
+        <a class="nav__link {% if request.resolver_match.namespace == 'products' %}is-active{% endif %}" href="{% url 'products:shop' %}">Shop</a>
+        <a class="nav__link {% if request.resolver_match.url_name == 'about' %}is-active{% endif %}" href="{% url 'about' %}">About</a>
+        <a class="nav__link {% if request.resolver_match.url_name == 'contact' %}is-active{% endif %}" href="{% url 'contact' %}">Contact</a>
+      </nav>
+
+      <div class="nav__actions">
+        <div id="accountArea" class="account-area">
+          {% if user.is_authenticated %}
+          <div class="account-menu">
+            <button class="account-menu__trigger" aria-expanded="false" aria-haspopup="true" aria-label="Account menu">
+              <svg width="20" height="20" aria-hidden="true"><use href="#i-user"></use></svg>
+              <span class="account-menu__label">{{ user.first_name|default:user.username }}</span>
+            </button>
+            <div class="account-menu__dropdown" role="menu">
+              <a role="menuitem" href="{% url 'customers:account' %}">My Account</a>
+              <a role="menuitem" href="{% url 'orders:cart' %}">Your Cart</a>
+              <form method="post" action="{% url 'customers:logout' %}" data-logout>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'home' %}">
+                <button type="submit" role="menuitem">Log Out</button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <a class="account-link" href="{% url 'customers:login' %}">Sign In</a>
+          <a class="btn btn--gold btn--sm" href="{% url 'customers:register' %}">Sign Up</a>
+          {% endif %}
+        </div>
+        {% if enabled_cart %}
+        <a href="{% url 'orders:cart' %}" class="nav__cart" aria-label="Your cart">
+          <svg width="20" height="20" aria-hidden="true"><use href="#i-cart"></use></svg>
+          <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+        </a>
+        {% endif %}
+        <a class="nav__cta nav__cta--outline" href="{% url 'quotes:form' %}">Get a Quote</a>
+        <a class="nav__cta nav__cta--wa" href="{{ whatsapp_link }}?text=Hi%2C%20I%20would%20like%20to%20request%20a%20quote" target="_blank" rel="noopener">
+          <svg width="17" height="17" aria-hidden="true"><use href="#i-whatsapp"></use></svg> WhatsApp
+        </a>
+        <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
+          <svg aria-hidden="true"><use href="#i-menu"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile nav -->
+  <div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav__panel" role="dialog" aria-label="Menu">
+      <div class="mobile-nav__head">
+        <a href="{% url 'home' %}" class="brand">
+          <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }}" class="logo-mark" height="36">
+        </a>
+        <button class="mobile-nav__close" aria-label="Close menu">
+          <svg width="24" height="24" aria-hidden="true"><use href="#i-x"></use></svg>
+        </button>
+      </div>
+      <nav class="mobile-nav__menu" aria-label="Mobile">
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'products:shop' %}">Shop</a>
+        <a href="{% url 'about' %}">About</a>
+        <a href="{% url 'contact' %}">Contact</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'customers:account' %}">My Account</a>
+        {% else %}
+        <a href="{% url 'customers:login' %}">Sign In</a>
+        <a href="{% url 'customers:register' %}">Sign Up</a>
+        {% endif %}
+      </nav>
+      <div class="mobile-nav__ctas">
+        <a class="btn btn--gold" href="{% url 'quotes:form' %}">Get a Quote</a>
+        <a class="btn btn--dark" href="{% url 'products:shop' %}">Shop All Products</a>
+        {% if enabled_cart %}
+        <a class="btn btn--outline" href="{% url 'orders:cart' %}">View Cart</a>
+        {% endif %}
+        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">Chat on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  {% include "components/messages.html" %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+<!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__about">
+          <div class="footer__logo">
+            <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" class="logo-mark" loading="lazy">
+          </div>
+          <p style="margin-top:14px; max-width:34ch">
+            {{ site_config.tagline }} Specialising in mechanical repairs, diagnostics,
+            quality spare parts and lubricants, plus mobile spares delivery within
+            {{ site_config.service_radius_km }} km.
+          </p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'products:shop' %}">Shop</a></li>
+            <li><a href="{% url 'about' %}">About</a></li>
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="{% url 'products:shop' %}">All Products</a></li>
+            <li><a href="{% url 'products:enquiry' %}">Product Enquiry</a></li>
+            {% if enabled_cart %}<li><a href="{% url 'orders:cart' %}">Your Cart</a></li>{% endif %}
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul class="footer__contact">
+            <li>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-phone"></use></svg></span>
+              <a href="tel:{{ site_config.phone|cut:' '|cut:'('|cut:')'|cut:'-' }}">{{ site_config.phone_display }}</a>
+            </li>
+            <li>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-whatsapp"></use></svg></span>
+              <a href="{{ whatsapp_link }}" target="_blank" rel="noopener">{{ site_config.whatsapp_display }}</a>
+            </li>
+            <li>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-mail"></use></svg></span>
+              <a href="mailto:{{ site_config.email }}">{{ site_config.email }}</a>
+            </li>
+            <li>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-pin"></use></svg></span>
+              <span>{{ site_config.address }}</span>
+            </li>
+            <li>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-clock"></use></svg></span>
+              <span>Mobile spares delivery within {{ site_config.service_radius_km }} km</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>© {% now "Y" %} {{ site_config.site_name }}. All rights reserved.</span>
+        <div class="footer__legal">
+          <a href="{% url 'home' %}">Privacy Policy</a>
+          <a href="{% url 'home' %}">Terms & Conditions</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating WhatsApp -->
+  <a class="wa-float" href="{{ whatsapp_link }}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <svg aria-hidden="true"><use href="#i-whatsapp"></use></svg>
+  </a>
+
+  <!-- Member purchase prompt modal (populated via HTMX when an anonymous
+       visitor tries to buy a members-only on-sale product). -->
+  <div id="memberPromptHost"></div>
+
+  <!-- Mobile bottom bar -->
+  <div class="mobile-bar">
+    <div class="mobile-bar__inner">
+      <a class="mb-shop" href="{% url 'products:shop' %}">
+        <svg aria-hidden="true"><use href="#i-cart"></use></svg> Shop
+      </a>
+      {% if enabled_cart %}
+      <a class="mb-cart" href="{% url 'orders:cart' %}">
+        <svg aria-hidden="true"><use href="#i-cart"></use></svg> Cart
+        <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+      </a>
+      {% endif %}
+      <a class="mb-wa" href="{{ whatsapp_link }}" target="_blank" rel="noopener">
+        <svg aria-hidden="true"><use href="#i-whatsapp"></use></svg> WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="{% static 'js/ui.js' %}" defer></script>
+  <script src="{% static 'js/main.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+
+  <!-- Scroll to top -->
+  <button type="button" class="to-top" id="toTop" aria-label="Back to top" hidden>
+    <svg aria-hidden="true"><use href="#i-chevron-up"></use></svg>
+  </button>
+  <script>
+    (function () {
+      var btn = document.getElementById("toTop");
+      if (!btn) return;
+      function onScroll() {
+        if (window.scrollY > 400) { btn.hidden = false; } else { btn.hidden = true; }
+      }
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+      btn.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    })();
+  </script>
+</body>
+</html>
