@@ -1,7 +1,9 @@
 {% comment %}Reusable product card. Expects: product. Optional: cart_qtys (dict pk->qty).{% endcomment %}
 {% load static %}
 {% with p=product %}
-<article class="product-card reveal">
+<article class="product-card reveal product-card--loading">
+  <div class="product-card__skeleton" aria-hidden="true"></div>
+  <div class="product-card__content">
   <a class="product-card__media" href="{{ p.get_absolute_url }}">
     <div class="product-card__badges">
       {% if p.is_on_sale %}<span class="badge badge--sale">{{ p.discount_percent }}% Off</span>{% endif %}
@@ -35,6 +37,7 @@
         </form>
       </div>
     </div>
+  </div>
   </div>
 </article>
 {% endwith %}

@@ -14,6 +14,7 @@ from products.models import Product
 from products.services import can_purchase_product, cart_restriction_errors, line_totals
 from customers.models import Customer
 from core.utils import cart_from_session, save_cart, cart_items
+from .services import resolve_shipping_method, shipping_methods
 
 
 def _build_lines(cart, user=None):
@@ -168,6 +169,8 @@ def checkout(request):
         return redirect("orders:cart")
     lines, subtotal, discount_total, total = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
+    methods = shipping_methods(total)
+    default_method = next((m for m in methods if m["code"] == Order.ShippingMethod.PICKUP), None) or methods[0] if methods else None
     return render(
         request,
         "orders/checkout.html",
@@ -178,6 +181,8 @@ def checkout(request):
             "total": total,
             "total_qty": total_qty,
             "restricted_items": _restricted_lines(lines),
+            "shipping_methods": methods,
+            "selected_method": default_method["code"] if default_method else "",
             "restriction_errors": cart_restriction_errors(request.user, cart_items(cart))
             if not request.user.is_authenticated
             else [],
@@ -210,12 +215,29 @@ def checkout_submit(request):
             messages.error(request, "Please update your cart and try again.")
         return redirect("orders:checkout")
 
+    # Recompute the order total server-side. Free-delivery eligibility and the
+    # shipping fee are decided from this value; the browser never supplies a fee.
+    _, _, _, total_before_shipping = _build_lines(cart, request.user)
+
     full_name = request.POST.get("full_name", "").strip()
     email = request.POST.get("email", "").strip()
     phone = request.POST.get("phone", "").strip()
-    delivery_option = request.POST.get("delivery_option", "collection").strip()
+    shipping_code = request.POST.get("shipping_method", "").strip()
     delivery_address = request.POST.get("delivery_address", "").strip()
     notes = request.POST.get("notes", "").strip()
+
+    # Resolve the shipping method from config server-side, defaulting to local
+    # pickup when the submitted code is missing/invalid so a tampered value can
+    # never attach an unexpected fee.
+    shipping = resolve_shipping_method(shipping_code, total_before_shipping)
+    if shipping is None:
+        shipping = {
+            "code": "",
+            "label": "Delivery to be arranged",
+            "fee": Decimal("0"),
+            "needs_address": False,
+        }
+    delivery_option = "delivery" if shipping["needs_address"] else "collection"
 
     errors = []
     if not full_name:
@@ -224,7 +246,7 @@ def checkout_submit(request):
         errors.append("Please provide a phone number.")
     if not email:
         errors.append("Please provide an email address for your order confirmation.")
-    if delivery_option == "delivery" and not delivery_address:
+    if shipping["needs_address"] and not delivery_address:
         errors.append("Please provide a delivery address.")
 
     if errors:
@@ -258,9 +280,11 @@ def checkout_submit(request):
             customer_name=full_name,
             email=email,
             phone=phone,
-            delivery_option=delivery_option if delivery_option in ["collection", "delivery"] else "collection",
+            delivery_option=delivery_option,
             delivery_address=delivery_address,
-            delivery_fee=Decimal("0"),
+            delivery_fee=shipping["fee"],
+            shipping_method=shipping["code"],
+            shipping_method_label=shipping["label"],
             notes=notes,
             status=Order.Status.PAYMENT_PENDING,
             payment_status=Order.Status.PAYMENT_PENDING,
@@ -277,7 +301,9 @@ def checkout_submit(request):
             )
 
         order.recalc_totals()
-        order.recalc_delivery_estimate()
+        # Pickup orders skip the courier-style delivery window entirely.
+        if shipping["code"] in (Order.ShippingMethod.STANDARD, Order.ShippingMethod.FREE):
+            order.recalc_delivery_estimate()
 
         Payment.objects.create(
             reference=order.payment_reference,

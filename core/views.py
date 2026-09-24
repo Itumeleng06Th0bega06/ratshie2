@@ -126,6 +126,66 @@ def faq(request):
     )
 
 
+def _legal_page(request, template, title, lead, crumb):
+    """Render a legal/statutory page from ``core/templates/core``.
+
+    All legal pages share the same hero + editable prose structure and keep the
+    resident contact details so customers can always reach us.
+    """
+    cfg = SiteConfig.load()
+    return render(
+        request,
+        template,
+        {
+            "cfg": cfg,
+            "title": title,
+            "lead": lead,
+            "wa_quote_msg": service_whatsapp_message(),
+            "crumb_list": [(crumb, None)],
+        },
+    )
+
+
+def privacy_policy(request):
+    return _legal_page(
+        request,
+        "core/privacy.html",
+        "Privacy Policy",
+        "How Ratshie collects, uses, protects and processes your personal information.",
+        "Privacy Policy",
+    )
+
+
+def terms_of_service(request):
+    return _legal_page(
+        request,
+        "core/terms.html",
+        "Terms & Conditions",
+        "The rules that apply when you browse ratshie.co.za, place an order, request a quote or book a service.",
+        "Terms & Conditions",
+    )
+
+
+def refunds_policy(request):
+    return _legal_page(
+        request,
+        "core/refunds.html",
+        "Refund & Returns Policy",
+        "How returns, exchanges, refunds and cooling-off periods work for Ratshie goods and services.",
+        "Refund & Returns Policy",
+    )
+
+
+def shipping_policy(request):
+    return _legal_page(
+        request,
+        "core/shipping.html",
+        "Shipping & Delivery",
+        "How Ratshie delivers orders: standard delivery, free delivery and local pickup.",
+        "Shipping & Delivery",
+    )
+
+
 @require_GET
 def health(request):
     return JsonResponse({"status": "ok"})

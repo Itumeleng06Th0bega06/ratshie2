@@ -12,23 +12,10 @@
         <p style="color:var(--muted);margin-top:10px">Pay securely with PayFast — a leading South African online payment gateway.</p>
       </div>
 
-      <!-- PayFast + choose payment method -->
-      <div class="pay-brands reveal">
-        <div class="pay-brand pay-brand--main">PAYFAST</div>
-        <div class="pay-brand__divider" aria-hidden="true"></div>
-        <div class="pay-brand__row">
-          <a class="pay-badge{% if not chosen_method %} pay-badge--sel{% endif %}" href="{% url 'payments:details' payment.reference %}">All methods</a>
-          {% for m in payment_methods %}
-          <a class="pay-badge{% if chosen_method == m.code %} pay-badge--sel{% endif %}" href="{% url 'payments:details' payment.reference %}?method={{ m.code }}">{{ m.name }}</a>
-          {% endfor %}
-        </div>
-      </div>
-      {% if chosen_method %}
       <div class="pay-note" style="margin-top:14px;justify-content:center">
         <svg aria-hidden="true"><use href="#i-lock"></use></svg>
-        <span>Only <strong>{{ chosen_method_label }}</strong> will be offered at PayFast for this payment.</span>
+        <span>Your payment is securely processed by PayFast.</span>
       </div>
-      {% endif %}
 
       <div class="pay-summary reveal" style="margin-top:24px">
         {% if payment.customer %}

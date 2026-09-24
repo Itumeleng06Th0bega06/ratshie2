@@ -77,6 +77,43 @@
     window.addEventListener("load", reveal);
   }
 
+  /* Whole-card image-ready reveal
+     Each product card is rendered with a single full-card grey skeleton that
+     stays visible until THAT card's own image has finished loading (or the
+     image is already complete, missing, or failed). The complete card is then
+     revealed at once — never element-by-element. */
+  function initProductCardReveal(scope) {
+    var cards = (scope || document).querySelectorAll(".product-card--loading");
+    cards.forEach(function (card) {
+      var img = card.querySelector(".product-card__media img");
+      var revealed = false;
+      function showCard() {
+        if (revealed) return;
+        revealed = true;
+        card.classList.remove("product-card--loading");
+        card.classList.add("product-card--ready");
+      }
+      function handleFailure() {
+        // Existing fallback: the media area renders as an empty styled panel
+        // when no product image exists. Hide a broken image to match that state,
+        // then reveal the usable card so it is never stuck on a grey skeleton.
+        if (img) img.style.display = "none";
+        showCard();
+      }
+      if (!img) { showCard(); return; }
+      if (img.complete) {
+        if (img.naturalWidth > 0) { showCard(); return; }
+        handleFailure();
+        return;
+      }
+      img.addEventListener("load", showCard);
+      img.addEventListener("error", handleFailure);
+    });
+  }
+  initProductCardReveal();
+  window.addEventListener("load", function () { initProductCardReveal(); });
+  document.addEventListener("htmx:afterSwap", function () { initProductCardReveal(); });
+
   /* Filter form auto-submit on change */
   document.querySelectorAll("[data-autofilter]").forEach(function (sel) {
     sel.addEventListener("change", function () {

@@ -7,6 +7,10 @@ urlpatterns = [
     path("contact/", views.contact, name="contact"),
     path("contact/submit/", views.contact_submit, name="contact_submit"),
     path("faq/", views.faq, name="faq"),
+    path("privacy/", views.privacy_policy, name="privacy"),
+    path("terms/", views.terms_of_service, name="terms"),
+    path("refunds/", views.refunds_policy, name="refunds"),
+    path("shipping/", views.shipping_policy, name="shipping"),
     path("health/", views.health, name="health"),
 ]
 

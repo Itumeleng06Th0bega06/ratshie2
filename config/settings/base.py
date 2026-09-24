@@ -19,8 +19,13 @@ env = environ.Env(
     DATABASE_URL=(str, ""),
     CSRF_TRUSTED_ORIGINS=(list, []),
 )
-# Load .env if present (never committed to version control)
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+# Load the environment file (never committed to version control).
+# Local/development uses .env; production (RATSHIE_ENV=prod) uses .env.prod so
+# live credentials never leak into the local/dev environment.
+if os.environ.get("RATSHIE_ENV", "").lower() == "prod":
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env.prod"))
+else:
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = env("SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DEBUG", default=True if os.environ.get("RATSHIE_ENV") != "prod" else False)
@@ -160,7 +165,7 @@ SITE_TAGLINE = "Vehicle repairs, diagnostics & mobile spares delivery in the Nor
 # Contact details - sourced from the official business summary
 BUSINESS_PHONE = env("BUSINESS_PHONE", default="+27614884254")
 BUSINESS_PHONE_DISPLAY = env("BUSINESS_PHONE_DISPLAY", default="061 488 4254")
-BUSINESS_EMAIL = env("BUSINESS_EMAIL", default="livhuwaniratshibvumo7@gmail.com")
+BUSINESS_EMAIL = env("BUSINESS_EMAIL", default="admin@ratshie.co.za")
 WHATSAPP_NUMBER = env("WHATSAPP_NUMBER", default="27659017566")
 WHATSAPP_DISPLAY = env("WHATSAPP_DISPLAY", default="065 901 7566")
 CONTACT_NAME = env("CONTACT_NAME", default="Livhuwani")
@@ -196,9 +201,18 @@ PAYFAST_ENABLED = bool(PAYFAST_MERCHANT_ID and PAYFAST_MERCHANT_KEY)
 PAYFAST_MODE = "sandbox" if PAYFAST_SANDBOX else "live"
 
 # ---------------------------------------------------------------------------
-# Email
+# Email (cPanel SMTP on ratshie.co.za - credentials via .env, never committed)
 # ---------------------------------------------------------------------------
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@ratshie.co.za")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=BUSINESS_EMAIL)
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="ratshie.co.za")
+EMAIL_PORT = env.int("EMAIL_PORT", default=465)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=BUSINESS_EMAIL)
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+# Used purely for the test-send notification to the site owner, not customers.
+ADMIN_EMAIL = env("ADMIN_EMAIL", default=BUSINESS_EMAIL)
 
 # ---------------------------------------------------------------------------
 # SMS (configurable provider; credentials via .env, never committed)

@@ -1,5 +1,11 @@
 from django.contrib import admin
 from .models import SiteConfig, FAQ, Testimonial, Notification, PublicHoliday
+from .forms import HoneypottedAdminAuthenticationForm
+
+# Harden the shared admin login form with a hidden honeypot + per-IP cooldown.
+# Assigned here (not in the AdminSite subclass) so the site-wide admin site
+# keeps every model registered by @admin.register across all apps.
+admin.site.login_form = HoneypottedAdminAuthenticationForm
 
 
 @admin.register(PublicHoliday)

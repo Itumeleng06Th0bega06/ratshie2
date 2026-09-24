@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | {{ cfg.site_name }}{% endblock %}
+{% block meta_description %}{{ lead }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=title lead=lead crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="legal-prose flow">
+      <h2>1. Our Promise on Refunds</h2>
+      <p>We want you to be happy with every Ratshie (Pty) Ltd (Ratshie) purchase. This policy explains the situations
+      in which you may return items or cancel a service and how we refund you, in line with the
+      <strong>Consumer Protection Act 68 of 2008 (CPA)</strong> and the <strong>Electronic Communications and
+      Transactions Act 25 of 2002 (ECTA)</strong>.</p>
+
+      <h2>2. Returning a Wrong, Damaged or Faulty Item</h2>
+      <p>If a part, filter, oil or any product you received is <strong>wrong, damaged in transit, or faulty</strong>,
+      tell us within <strong>7 days</strong> of receiving it. After we confirm the fault with you (we may ask for a
+      photo or to have the item inspected), we will at your choice:</p>
+      <ul>
+        <li>replace the item with the correct one, or</li>
+        <li>repair it, or</li>
+        <li>refund the full purchase price including any delivery fee you paid.</li>
+      </ul>
+      <p>We will not deduct an amount for the benefit you have already had from the item in these cases — the refund
+      is the full price.</p>
+
+      <h2>3. Changing Your Mind (Cooling-Off)</h2>
+      <p>Because of the <strong>CPA cooling-off right</strong>, if you order goods online (rather than walking in) you
+      may cancel without penalty within <strong>5 business days</strong> of delivery, and you do not have to give a
+      reason. The item must be:</p>
+      <ul>
+        <li>unused, in its original packaging and in a re-sellable condition, and</li>
+        <li>returned at your cost, or handed back to us for collection, within the cooling-off period.</li>
+      </ul>
+      <p>We will refund the full amount you paid, minus any delivery, courier or collection costs we reasonably
+      incurred to get the item to you. Tailor-made or special-order parts, and items that are time-sensitive, may not
+      be resold. Please ask before ordering — we will always advise upfront rather than surprise you later.</p>
+
+      <h2>4. Cancelling a Service or Booking</h2>
+      <ul>
+        <li><strong>Before work begins:</strong> cancel anytime and receive a full refund of any deposit.</li>
+        <li><strong>After work has started:</strong> you pay only for the work actually done, quoted and approved up
+        to the point of cancellation.</li>
+      </ul>
+
+      <h2>5. How Refunds Are Paid</h2>
+      <p>Refunds are paid back the same way you paid:</p>
+      <ul>
+        <li>PayFast card / Instant EFT / wallet payments are refunded back through PayFast to your original card or
+        wallet account.</li>
+        <li>Bank transfers are refunded to your bank account (we may verify your details first).</li>
+      </ul>
+      <p>Once we approve a refund, it usually lands within <strong>3–7 business days</strong> depending on your bank
+      and the payment method.</p>
+
+      <h2>6. Items We Can’t Refund</h2>
+      <p>No refund is available for: items you have used, installed, fitted or damaged; digital content you have
+      started using; goods clearly described as non-returnable at the time of order (for example special, tailor-made
+      or cut-to-length items), unless they are faulty; or services already fully and satisfactorily performed.</p>
+
+      <h2>7. How to Start a Return or Refund</h2>
+      <p>The fastest way is WhatsApp or email us with your <strong>order number</strong> and what went wrong:</p>
+      <ul>
+        <li><strong>Email:</strong> {{ cfg.email }}</li>
+        <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>
+      </ul>
+      <p>We respond quickly and will tell you exactly what to do next (whether to hand the item back, return it by
+      courier, or simply send photos).</p>
+    </div>
+  </div>
+</section>
+{% endblock %}
