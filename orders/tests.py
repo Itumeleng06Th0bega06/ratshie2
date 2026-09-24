@@ -101,12 +101,14 @@ class CartCheckoutIntegrationTests(TestCase):
         add_to_cart(self.client, product)
         self.client.post(
             reverse("orders:checkout_submit"),
-            {"full_name": "B", "email": "b@b.com", "phone": "071 555 1234", "delivery_option": "delivery", "delivery_address": "1 Main St"},
+            {"full_name": "B", "email": "b@b.com", "phone": "071 555 1234", "shipping_method": "standard", "delivery_address": "1 Main St"},
         )
         order = Order.objects.get(customer_name="B")
         self.assertEqual(order.delivery_option, Order.DeliveryChoice.DELIVERY)
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.STANDARD)
         self.assertEqual(order.delivery_address, "1 Main St")
-        self.assertEqual(order.total, product.price)
+        self.assertEqual(order.delivery_fee, Decimal("99.00"))
+        self.assertEqual(order.total, product.price + Decimal("99.00"))
 
     def test_customer_record_created_and_reused(self):
         product = create_product()
@@ -159,3 +161,127 @@ class MemberRestrictionIntegrationTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Order.objects.filter(customer_name="Member").count(), 1)
+
+
+@override_settings(**TEST_PAYFAST)
+class ShippingMethodTests(TestCase):
+    """Configurable shipping methods: selection, server-side pricing, history."""
+
+    def _checkout(self, **overrides):
+        payload = {
+            "full_name": "Ship Buyer",
+            "email": "ship@b.com",
+            "phone": "071 555 7777",
+        }
+        payload.update(overrides)
+        return self.client.post(reverse("orders:checkout_submit"), payload)
+
+    def test_standard_delivery_fee_included_in_total_and_payment(self):
+        product = create_product()
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="standard", delivery_address="2 Long Rd")
+        order = Order.objects.get(customer_name="Ship Buyer")
+        payment = Payment.objects.get(order=order)
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.STANDARD)
+        self.assertEqual(order.shipping_method_label, "Standard Delivery")
+        self.assertEqual(order.delivery_fee, Decimal("99.00"))
+        self.assertEqual(order.total, product.price + Decimal("99.00"))
+        self.assertEqual(payment.amount, order.total)
+
+    def test_free_delivery_qualifies_at_threshold_and_charges_nothing(self):
+        product = create_product(price=Decimal("600.00"))
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="free", delivery_address="2 Long Rd")
+        order = Order.objects.get(customer_name="Ship Buyer")
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.FREE)
+        self.assertEqual(order.shipping_method_label, "Free Delivery")
+        self.assertEqual(order.delivery_fee, Decimal("0.00"))
+        self.assertEqual(order.total, product.price)
+        self.assertEqual(Payment.objects.get(order=order).amount, order.total)
+
+    def test_free_delivery_not_offered_below_threshold(self):
+        from orders.services import shipping_methods
+
+        product = create_product(price=Decimal("100.00"))
+        methods = {m["code"] for m in shipping_methods(product.price)}
+        self.assertNotIn(Order.ShippingMethod.FREE, methods)
+        self.assertIn(Order.ShippingMethod.STANDARD, methods)
+        self.assertIn(Order.ShippingMethod.PICKUP, methods)
+
+    def test_free_delivery_offered_at_threshold(self):
+        from orders.services import shipping_methods
+
+        methods = {m["code"] for m in shipping_methods(Decimal("500.00"))}
+        self.assertIn(Order.ShippingMethod.FREE, methods)
+
+    def test_local_pickup_free_and_no_delivery_estimate(self):
+        product = create_product()
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="pickup")
+        order = Order.objects.get(customer_name="Ship Buyer")
+        self.assertEqual(order.delivery_option, Order.DeliveryChoice.COLLECTION)
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.PICKUP)
+        self.assertEqual(order.delivery_fee, Decimal("0.00"))
+        self.assertEqual(order.delivery_address, "")
+        self.assertIsNone(order.delivery_estimate_from)
+        self.assertIsNone(order.delivery_estimate_to)
+        self.assertEqual(order.total, product.price)
+
+    def test_delivery_address_required_for_standard(self):
+        product = create_product()
+        add_to_cart(self.client, product)
+        response = self._checkout(shipping_method="standard")
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("orders:checkout"))
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_invalid_or_missing_method_falls_back_to_pickup(self):
+        product = create_product()
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="not-a-method")
+        order = Order.objects.filter(customer_name="Ship Buyer").first()
+        self.assertIsNotNone(order)
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.PICKUP)
+        self.assertEqual(order.delivery_fee, Decimal("0.00"))
+
+    def test_disabled_standard_not_offered(self):
+        from orders.models import ShippingSettings
+        from orders.services import shipping_methods
+
+        settings = ShippingSettings.load()
+        settings.standard_enabled = False
+        settings.save()
+        product = create_product()
+        methods = {m["code"] for m in shipping_methods(product.price)}
+        self.assertNotIn(Order.ShippingMethod.STANDARD, methods)
+
+    def test_disabled_standard_falls_back_to_pickup(self):
+        from orders.models import ShippingSettings
+
+        settings = ShippingSettings.load()
+        settings.standard_enabled = False
+        settings.save()
+        product = create_product()
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="standard", delivery_address="2 Long Rd")
+        order = Order.objects.get(customer_name="Ship Buyer")
+        self.assertEqual(order.shipping_method, Order.ShippingMethod.PICKUP)
+        self.assertEqual(order.delivery_fee, Decimal("0.00"))
+
+    def test_historical_orders_keep_their_shipping_price(self):
+        from orders.models import ShippingSettings
+
+        product = create_product()
+        add_to_cart(self.client, product)
+        self._checkout(shipping_method="standard", delivery_address="2 Long Rd")
+        order = Order.objects.get(customer_name="Ship Buyer")
+        self.assertEqual(order.delivery_fee, Decimal("99.00"))
+
+        settings = ShippingSettings.load()
+        settings.standard_fee = Decimal("150.00")
+        settings.save()
+
+        order.recalc_totals()
+        order.refresh_from_db()
+        self.assertEqual(order.delivery_fee, Decimal("99.00"))
+        self.assertEqual(order.total, product.price + Decimal("99.00"))

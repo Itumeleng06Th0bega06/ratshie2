@@ -1,0 +1,30 @@
+# Ratshie - cPanel Apache overrides.
+#
+# The Django app is served via Passenger from a Python App outside public_html.
+# This file sits in the DOCUMENT ROOT and instructs Apache to serve collected
+# static files directly, and pass anything else on to the Passenger app.
+#
+# Adjust paths to match your cPanel layout if the python app lives elsewhere.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Serve collected static assets directly (no Django round-trip).
+    RewriteCond %{REQUEST_URI} ^/static/ [OR]
+    RewriteCond %{REQUEST_URI} ^/media/
+    RewriteRule .* - [L]
+
+    # Keep health checks / well-known paths static when they exist.
+    RewriteCond %{REQUEST_URI} ^/well-known/(.*)$
+    RewriteCond %{DOCUMENT_ROOT}/.well-known/%1 -f
+    RewriteRule ^ - [L]
+
+    # Everything else is handled by the Python app (set by cPanel Passenger).
+</IfModule>
+
+# Baseline hardening headers (optional if your hosting layer already sets them).
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

@@ -95,6 +95,20 @@
     {% endif %}
   </div>
 </section>
+{% else %}
+<!-- Special offers (empty state) -->
+<section class="section section--cream">
+  <div class="container">
+    <div class="section-head center mx-auto reveal">
+      <span class="eyebrow eyebrow--center" style="justify-content:center">Deals</span>
+      <h2 class="section-title">No special offers right now</h2>
+      <p class="lead">New deals are on the way. In the meantime, browse the full range of spare parts and lubricants.</p>
+    </div>
+    <div class="center" style="margin-top:36px">
+      <a class="btn btn--gold" href="{% url 'products:shop' %}">Shop All Products</a>
+    </div>
+  </div>
+</section>
 {% endif %}
 
 <!-- Get Members Only (anonymous visitors) -->

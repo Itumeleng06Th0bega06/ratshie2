@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | {{ cfg.site_name }}{% endblock %}
+{% block meta_description %}{{ lead }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=title lead=lead crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="legal-prose flow">
+      <h2>1. Agreement to These Terms</h2>
+      <p>These Website Terms &amp; Conditions (“Terms”) govern your use of <strong>{{ cfg.site_name }}</strong>
+      (ratshie.co.za) and every quote, enquiry, booking, order or purchase you make with us. By browsing this site,
+      requesting a quote, booking a service or placing an order you agree to be bound by these Terms.</p>
+      <p>Ratshie (Pty) Ltd is a private company registered in South Africa and our services are supplied under South
+      African law, in particular the <strong>Consumer Protection Act 68 of 2008 (CPA)</strong>, the
+      <strong>Electronic Communications and Transactions Act 25 of 2002 (ECTA)</strong> and the
+      <strong>Protection of Personal Information Act 4 of 2013 (POPIA)</strong>.</p>
+
+      <h2>2. About Our Services</h2>
+      <p>We offer vehicle spare parts, filters, oils and lubricants, a fast-and-fair way to request quotes, mobile
+      and workshop servicing and repairs within our service area around Kuruman, Northern Cape, and delivery or
+      collection options (Standard Delivery, Free Delivery on qualifying orders, and Local Pickup). The exact
+      shipping methods, fees and available options are shown at checkout and may be updated from time to time.</p>
+
+      <h2>3. Quotations, Prices and Payment</h2>
+      <ul>
+        <li><strong>Quotes</strong> are provided free of charge. A written quote we issue stays valid for the period
+        stated on it, unless withdrawn earlier.</li>
+        <li><strong>Prices</strong> are in South African Rand (ZAR) and include VAT. We work hard to keep the site
+        accurate, but if a price on the site is clearly wrong we may correct it and will tell you before charging.</li>
+        <li><strong>Shipping</strong> is calculated at checkout. Standard Delivery and Free Delivery (when the cart
+        qualifies) are applied to delivered orders; Local Pickup is always free.</li>
+        <li><strong>Payment</strong> is collected through <strong>PayFast</strong>, our secure payment gateway. Your
+        order is only confirmed once we receive successful payment authorisation.</li>
+      </ul>
+
+      <h2>4. Our Right to Refuse or Cancel</h2>
+      <p>We may decline or cancel an order, quote or booking where information is inaccurate, stock or parts are no
+      longer available, the order or request is incomplete, or where we reasonably suspect fraud, abuse or that
+      accepting the order would break the law. If we cancel and you have already paid, we refund the full amount to
+      the original payment method without undue delay.</p>
+
+      <h2>5. Your Obligations</h2>
+      <p>When you use this site you agree to:</p>
+      <ul>
+        <li>Provide accurate, up-to-date contact and vehicle details so our quote, booking and delivery are correct.</li>
+        <li>Ensure you are entitled to the vehicle/parts you ask us to work on or supply.</li>
+        <li>Not misuse the site, attempt to interfere with it, or provide false or misleading information.</li>
+        <li>Keep your account login, if any, safe and let us know immediately if you suspect unauthorised use.</li>
+      </ul>
+
+      <h2>6. Your Rights as a Consumer (CPA)</h2>
+      <p>Nothing in these Terms takes away the rights you have under the Consumer Protection Act. In particular, you
+      are entitled to good-quality goods and services, accurate information about prices and availability, and the
+      cooling-off, return and refund rights described in our <a href="{% url 'refunds' %}">Refund &amp; Returns
+      Policy</a>. If there is ever a conflict, your rights under the CPA take precedence.</p>
+
+      <h2>7. Intellectual Property</h2>
+      <p>All content on this site — names, logos, text, images, layout and code — belongs to Ratshie (Pty) Ltd or its
+      licensors and is protected by South African law. You may not copy, reproduce, republish or resell it
+      commercially without our written permission.</p>
+
+      <h2>8. Limitation of Liability</h2>
+      <p>We do our best to keep the site accurate, available and secure, but we provide it on an “as is, as
+      available” basis and are not liable for indirect, incidental or consequential losses to the fullest extent
+      permitted by law. We are not liable for delays or failures outside our reasonable control (for example courier
+      or payment-gateway outages, extreme weather, or supplier delays). Nothing in this clause limits liability that
+      cannot lawfully be limited, including for gross negligence or fraud.</p>
+
+      <h2>9. Privacy and POPIA</h2>
+      <p>Our collection and use of your personal information is explained in our
+      <a href="{% url 'privacy' %}">Privacy Policy</a>, which forms part of these Terms. By using this site you
+      confirm that you have read it.</p>
+
+      <h2>10. Changes to These Terms</h2>
+      <p>We may update these Terms to reflect changes in the law or our services. When we do, we will show the date
+      at the top of this page/
+      updated date at the top of this page. Continued use of the site after changes take effect means you accept the
+      updated Terms.</p>
+
+      <h2>11. Law and Jurisdiction</h2>
+      <p>These Terms are governed by the laws of the Republic of South Africa, and the courts of the Northern Cape
+      have jurisdiction over any disputes.</p>
+
+      <h2>12. Contact Us</h2>
+      <p>Questions about these Terms? Contact us:</p>
+      <ul>
+        <li><strong>Email:</strong> {{ cfg.email }}</li>
+        <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>
+        <li><strong>Or send a message on WhatsApp using the green button below</strong> — we usually respond within
+        one business day.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

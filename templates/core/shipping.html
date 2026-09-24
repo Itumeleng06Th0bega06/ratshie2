@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | {{ cfg.site_name }}{% endblock %}
+{% block meta_description %}{{ lead }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=title lead=lead crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="legal-prose flow">
+      <h2>1. Our Delivery Options</h2>
+      <p>We aim to get your parts and items to you safely and simply. The available methods, fees and lead times are
+      shown live at checkout, but the general options are:</p>
+
+      <h2>2. Standard Delivery</h2>
+      <p>A courier-level delivery to your door within our service area. A flat standard fee applies per order and is
+      calculated by us — always at checkout, never added later — based on your delivery area. Orders usually reach
+      you within a short, predictable window that we confirm with your order confirmation.</p>
+
+      <h2>3. Free Delivery</h2>
+      <p>When your order total reaches a minimum amount (shown at checkout and in your order), <strong>standard
+      delivery is free</strong>. Your checkout will show the standard fee struck through and replaced with
+      <strong>R0.00 — Free Delivery</strong>, so you always see exactly what you’ll pay before you confirm.</p>
+
+      <h2>4. Local Pickup</h2>
+      <p>Prefer to collect? Choose <strong>Local Pickup</strong> at checkout for a <strong>R0.00</strong> fee. We’ll
+      WhatsApp you the moment your order is ready, with our address:
+      <strong>{{ cfg.address }}</strong>. Please contact us via WhatsApp or phone before you visit so we can have
+      everything packed and waiting for you.</p>
+
+      <h2>5. How Delivery Fees Are Calculated</h2>
+      <ul>
+        <li>The fee is calculated on our side at checkout, based on the delivery method you select and your order
+        total.</li>
+        <li>It is added to your order total in <strong>one place</strong> — the order summary — before you pay.</li>
+        <li>The amount you see at checkout is the amount you pay. We never add delivery charges to your order after
+        it is confirmed.</li>
+      </ul>
+
+      <h2>6. Delivery Times</h2>
+      <p>Delivery windows appear at checkout and with your confirmation. They depend on your location and our workshop
+      schedule HOLIDAYS and unforeseen delays excluded. If we’re ever running late we’ll let you know on WhatsApp
+      as soon as we do.</p>
+
+      <h2>7. Failed Delivery / No-One Home</h2>
+      <p>If a delivery attempt is unsuccessful, we’ll contact you on WhatsApp to rearrange. Reasonable redelivery may
+      be arranged; repeated failed attempts may eventually be treated as Local Pickup so your order isn’t stuck in a
+      courier depot.</p>
+
+      <h2>8. Damaged or Missing Items</h2>
+      <p>Receipt of an item is subject to our returns process — if anything arrives damaged or is missing, please
+      tell us within 7 days (see our <a href="{% url 'refunds' %}">Refund &amp; Returns Policy</a>).</p>
+
+      <h2>9. Questions</h2>
+      <ul>
+        <li><strong>Email:</strong> {{ cfg.email }}</li>
+        <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -214,8 +214,10 @@
       <div class="footer__bottom">
         <span>© {% now "Y" %} {{ site_config.site_name }}. All rights reserved.</span>
         <div class="footer__legal">
-          <a href="{% url 'home' %}">Privacy Policy</a>
-          <a href="{% url 'home' %}">Terms & Conditions</a>
+          <a href="{% url 'privacy' %}">Privacy Policy</a>
+          <a href="{% url 'terms' %}">Terms & Conditions</a>
+          <a href="{% url 'refunds' %}">Refund Policy</a>
+          <a href="{% url 'shipping' %}">Shipping & Delivery</a>
         </div>
       </div>
     </div>

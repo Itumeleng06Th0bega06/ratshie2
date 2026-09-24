@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Checkout{% endblock %}
-{% block meta_description %}Complete your order with Ratshie — choose collection or delivery and pay securely via PayFast.{% endblock %}
+{% block meta_description %}Complete your order with Ratshie — choose your shipping option and pay securely via PayFast.{% endblock %}
 
 {% block content %}
-{% include "includes/page_hero.html" with title="Checkout" lead="Review your items, choose collection or delivery, and pay securely via PayFast." crumb_list=crumb_list %}
+{% include "includes/page_hero.html" with title="Checkout" lead="Review your items, choose a shipping option, and pay securely via PayFast." crumb_list=crumb_list %}
 
 <section class="section section--cream">
   <div class="container">
@@ -29,11 +29,11 @@
             <span>Discount</span><span>-R {{ discount_total|floatformat:2 }}</span>
           </div>
           {% endif %}
-          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px">
-            <span>Delivery</span><span>R 0.00</span>
+          <div id="checkout-totals" style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px" data-base-total="{{ total }}">
+            <span>Shipping</span><span id="shipping-line">R 0.00</span>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:18px;font-weight:700">
-            <span>Total</span><span>R {{ total|floatformat:2 }}</span>
+            <span>Total</span><span id="total-line">R {{ total|floatformat:2 }}</span>
           </div>
           <div class="pay-note" style="margin-top:16px">
             <svg aria-hidden="true"><use href="#i-lock"></use></svg>
@@ -41,30 +41,13 @@
           </div>
         </div>
 
-        <!-- Secure Payment -->
-        <div class="form-card pf-panel" style="max-width:none">
-          <div class="pf-panel__head">
-            <span class="eyebrow">Secure Payment</span>
-            <h3 style="margin-top:8px">Pay securely with PayFast</h3>
-            <p style="color:var(--muted);margin-top:8px;font-size:14px">Complete your payment securely through PayFast.</p>
-          </div>
-          <div class="pay-brands pf-panel__brands">
-            <div class="pay-brand pay-brand--main">PAYFAST</div>
-            <div class="pay-brand__row">
-              {% for m in payment_methods %}
-              <span class="pay-badge">{{ m.name }}</span>
-              {% endfor %}
-            </div>
-          </div>
-          <div class="pf-panel__note">
-            {% if payfast_enabled %}
-            <svg aria-hidden="true"><use href="#i-shield"></use></svg>
-            <span>Your payment is securely processed by PayFast.</span>
-            {% else %}
-            <svg aria-hidden="true"><use href="#i-shield"></use></svg>
-            <span>Online payment is currently being configured. You can still place your order below — we'll arrange payment with you.</span>
-            {% endif %}
-          </div>
+        <div class="pay-note" style="margin-top:16px">
+          <svg aria-hidden="true"><use href="#i-shield"></use></svg>
+          {% if payfast_enabled %}
+          <span>Your payment is securely processed by PayFast when you continue.</span>
+          {% else %}
+          <span>Online payment is currently being configured. You can still place your order below — we'll arrange payment with you.</span>
+          {% endif %}
         </div>
       </div>
 
@@ -89,15 +72,24 @@
 
           <div class="field">
             <label>How would you like to receive your order? <span class="req">*</span></label>
-            <div style="display:grid;gap:10px;margin-top:8px">
-              <label style="display:flex;gap:10px;align-items:center">
-                <input type="radio" name="delivery_option" value="collection" checked>
-                <span><strong>Collect at Workshop</strong> — Kuruman, Northern Cape</span>
+            <div style="display:grid;gap:10px;margin-top:8px" id="shipping-options">
+              {% for m in shipping_methods %}
+              <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid #ece8e0;border-radius:10px;padding:12px;cursor:pointer">
+                <input type="radio" name="shipping_method" value="{{ m.code }}"
+                       {% if selected_method == m.code %}checked{% endif %}
+                       data-fee="{{ m.fee|floatformat:2 }}"
+                       data-needs-address="{% if m.needs_address %}1{% else %}0{% endif %}"
+                       style="margin-top:3px">
+                <span>
+                  <strong>{{ m.label }}</strong>
+                  <span style="color:var(--green,#1a7f37);font-weight:700">{% if m.fee %}R {{ m.fee|floatformat:2 }}{% else %}Free{% endif %}</span>
+                  {% if m.note %}<span style="display:block;color:var(--muted);font-size:13px" class="ship-note">{{ m.note }}</span>{% endif %}
+                  {% if m.location %}<span style="display:block;color:var(--muted);font-size:13px">{{ m.location }}</span>{% endif %}
+                </span>
               </label>
-              <label style="display:flex;gap:10px;align-items:center">
-                <input type="radio" name="delivery_option" value="delivery">
-                <span><strong>Delivery</strong> — within {{ site_config.service_radius_km }} km (fee arranged)</span>
-              </label>
+              {% empty %}
+              <p style="color:var(--muted);font-size:14px">No shipping options are currently configured. Contact us to arrange collection or delivery.</p>
+              {% endfor %}
             </div>
           </div>
 
@@ -122,18 +114,44 @@
 {% block extra_js %}
 <script>
   (function () {
-    var radios = document.querySelectorAll('input[name="delivery_option"]');
+    var radios = document.querySelectorAll('input[name="shipping_method"]');
     var field = document.getElementById('delivery-address-field');
-    function toggle() {
-      var value = document.querySelector('input[name="delivery_option"]:checked');
-      if (field && value && value.value === 'delivery') {
-        field.style.display = 'block';
-      } else if (field) {
-        field.style.display = 'none';
+    var totals = document.getElementById('checkout-totals');
+    var shippingLine = document.getElementById('shipping-line');
+    var totalLine = document.getElementById('total-line');
+
+    if (radios.length === 0) {
+      if (field) field.style.display = 'none';
+      return;
+    }
+
+    var baseTotal = totals ? parseFloat(String(totals.getAttribute('data-base-total'))) : 0;
+    if (!isFinite(baseTotal)) baseTotal = 0;
+
+    function fmt(n) {
+      return n.toFixed(2);
+    }
+
+    function refresh() {
+      var checked = document.querySelector('input[name="shipping_method"]:checked');
+      if (!checked) {
+        if (field) field.style.display = 'none';
+        return;
+      }
+      if (field) field.style.display = checked.getAttribute('data-needs-address') === '1' ? 'block' : 'none';
+      var fee = parseFloat(checked.getAttribute('data-fee'));
+      if (isFinite(fee) && fee > 0 && shippingLine) {
+        shippingLine.textContent = 'R ' + fmt(fee);
+      } else if (shippingLine) {
+        shippingLine.textContent = 'R 0.00';
+      }
+      if (totalLine) {
+        totalLine.textContent = 'R ' + fmt(baseTotal + (isFinite(fee) ? fee : 0));
       }
     }
-    radios.forEach(function (r) { r.addEventListener('change', toggle); });
-    toggle();
+
+    radios.forEach(function (r) { r.addEventListener('change', refresh); });
+    refresh();
   })();
 </script>
 {% endblock %}

@@ -66,6 +66,17 @@
   </section>
 
   <section class="rui-ov-card">
+    <h2 class="rui-ov-card__title">Shipping</h2>
+    <dl class="rui-ov-dl">
+      <div><dt>Method</dt><dd>{{ original.shipping_method_label|default:"—" }}</dd></div>
+      <div><dt>Cost</dt><dd>R {{ original.delivery_fee|floatformat:2 }}</dd></div>
+      {% if original.shipping_method == "pickup" and shipping_settings.pickup_location %}
+      <div><dt>Pickup location</dt><dd>{{ shipping_settings.pickup_location }}</dd></div>
+      {% endif %}
+    </dl>
+  </section>
+
+  <section class="rui-ov-card">
     <h2 class="rui-ov-card__title">Order Items</h2>
     {% if original.items.all %}
     <table class="rui-ov-table">
@@ -101,7 +112,7 @@
         </tr>
         {% if original.delivery_fee %}
         <tr>
-          <td colspan="3" class="num rui-ov-total-label">Delivery</td>
+          <td colspan="3" class="num rui-ov-total-label">Shipping</td>
           <td class="num">R {{ original.delivery_fee|floatformat:2 }}</td>
         </tr>
         {% endif %}

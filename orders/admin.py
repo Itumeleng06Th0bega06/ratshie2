@@ -5,9 +5,52 @@ from django.shortcuts import render, redirect
 from django.urls import path
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from .models import Order, OrderItem, OrderDeliveryHistory, OrderNotification
+from .models import Order, OrderItem, OrderDeliveryHistory, OrderNotification, ShippingSettings
 from .notifications import send_order_confirmation, send_delivery_update
 from core import delivery
+
+
+@admin.register(ShippingSettings)
+class ShippingSettingsAdmin(admin.ModelAdmin):
+    """Admin UI for the singleton shipping-method configuration."""
+
+    fieldsets = (
+        (
+            "Standard Delivery",
+            {
+                "fields": (
+                    "standard_enabled",
+                    "standard_fee",
+                )
+            },
+        ),
+        (
+            "Free Delivery",
+            {
+                "fields": (
+                    "free_enabled",
+                    "free_minimum",
+                )
+            },
+        ),
+        (
+            "Local Pickup",
+            {
+                "fields": (
+                    "pickup_enabled",
+                    "pickup_location",
+                    "pickup_instructions",
+                )
+            },
+        ),
+    )
+
+    def has_add_permission(self, request):
+        # Singleton: never add a second configuration row.
+        return not ShippingSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class OrderItemForm(forms.ModelForm):
@@ -97,6 +140,11 @@ class OrderAdmin(admin.ModelAdmin):
             "cancelled": qs.filter(status="cancelled").count(),
         }
         return super().changelist_view(request, extra_context=extra_context)
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["shipping_settings"] = ShippingSettings.load()
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     @admin.display(description="# Items")
     def items_count(self, obj):

@@ -45,6 +45,7 @@
             <a href="{% url 'admin_password_reset' %}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">{% translate 'Forgotten your password?' %}</a>
           </div>
         </div>
+        {{ form.website }}
         <button type="submit" class="rui-btn rui-btn-primary w-full py-3">{% translate 'Sign in' %}</button>
       </div>
     </form>

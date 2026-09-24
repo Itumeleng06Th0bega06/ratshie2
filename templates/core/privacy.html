@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | {{ cfg.site_name }}{% endblock %}
+{% block meta_description %}{{ lead }}{% endblock %}
+{% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
+
+{% block content %}
+{% include "includes/page_hero.html" with title=title lead=lead crumb_list=crumb_list %}
+
+<section class="section section--cream">
+  <div class="container">
+    <div class="legal-prose flow">
+      <h2>1. Who We Are</h2>
+      <p><strong>Ratshie (Pty) Ltd</strong> (registration number 2025/371062/07) operates this website and the
+      Ratshie workshop and mobile spares service as a registered private company in South Africa.</p>
+      <p>When we say “we”, “us” or “our”, we mean Ratshie (Pty) Ltd. When we say “you” or “your”, we mean any
+      visitor, customer, member, quote requester or booker of this site.</p>
+      <p>Our registered and operational details are:</p>
+      <ul>
+        <li><strong>Business:</strong> Ratshie (Pty) Ltd – registered private company</li>
+        <li><strong>Based in:</strong> Seoding Village, Kuruman, Northern Cape (please WhatsApp or phone before visiting)</li>
+        <li><strong>Email:</strong> {{ cfg.email }}</li>
+        <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>
+      </ul>
+
+      <h2>2. What This Policy Covers</h2>
+      <p>This Privacy Policy (“Policy”) tells you what personal information Ratshie (Pty) Ltd collects, why we
+      collect it, how we use and protect it, and the choices and rights you have over it. It applies whenever you
+      browse ratshie.co.za, contact us, submit an enquiry, request a quote, book a service or place an order.</p>
+      <p>We process personal information in line with the <strong>Protection of Personal Information Act 4 of
+      2013 (POPIA)</strong>, the <strong>Consumer Protection Act 68 of 2008 (CPA)</strong>, the
+      <strong>Electronic Communications and Transactions Act 25 of 2002 (ECTA)</strong> and other applicable South
+      African law.</p>
+      <p>We are a “responsible party” under POPIA for the personal information we hold. We value your trust and
+      only collect the information we genuinely need to run our business honestly.</p>
+
+      <h2>3. Information We Collect</h2>
+      <p>We collect only the information needed to serve you. This includes:</p>
+      <ul>
+        <li><strong>Contact details</strong> — your name, email address, phone/WhatsApp number and delivery or
+        collection address.</li>
+        <li><strong>Vehicle details</strong> — the make, model and year of your vehicle, and the vehicle
+        registration or VIN where you provide it, so we can quote, source the right parts or book the right
+        service.</li>
+        <li><strong>Order and quote details</strong> — the products you buy, the services you request, your
+        requested rental/booking dates/goal, notes and communication history with us.</li>
+        <li><strong>Account details (members)</strong> — if you register, your login identity and account
+        preferences.</li>
+        <li><strong>Optional account details</strong> — your password is stored as a secure, salted hash, never in
+        plain text.</li>
+        <li><strong>Payment confirmation</strong> — we do <u>not</u> collect or store your card or bank details.
+        Payments are processed by <strong>PayFast</strong>, our secure payment gateway. We only keep the payment
+        reference and outcome.</li>
+        <li><strong>Technical data</strong> — standard web server logs (IP address, browser, pages visited,
+        device type) so we can keep the site secure and fix faults.</li>
+      </ul>
+      <p>Whenever we ask for information marked optional, you may choose not to provide it.</p>
+
+      <h2>4. Why We Process Your Information</h2>
+      <p>We use your personal information for these purposes:</p>
+      <ul>
+        <li>To respond to enquiries and contact you about your quotes, orders and bookings.</li>
+        <li>To supply the goods and services you ordered or requested, and to arrange delivery or collection.</li>
+        <li>To process, confirm and reconcile payments (through our secure gateway).</li>
+        <li>To provide customer support and after-sales service online, by phone or on WhatsApp.</li>
+        <li>To keep records required by South African tax law and the Companies Act.</li>
+        <li>To improve our website, services and shop and to keep the site secure.</li>
+        <li>To send you order updates and confirmations. We only send marketing messages if you have consented
+        (and you can unsubscribe at any time).</li>
+      </ul>
+
+      <h2>5. Lawful Bases We Rely On</h2>
+      <p>Under POPIA we may only process your information where we have a lawful basis. We rely on:</p>
+      <ul>
+        <li><strong>Consent</strong> — where you opted in (for example marketing or optional extras).</li>
+        <li><strong>Contract</strong> — to perform our side of a quote, booking or order you asked us to
+        fulfil.</li>
+        <li><strong>Legal obligation</strong> — to keep records and comply with tax and company law.</li>
+        <li><strong>Legitimate interest</strong> — to run and protect our business (e.g. security, anti-fraud and
+        quality control) where your rights do not outweigh ours.</li>
+      </ul>
+
+      <h2>6. Who We Share Your Information With</h2>
+      <p>We never sell your personal information. We only share it where it is necessary to serve you or where the
+      law requires it:</p>
+      <ul>
+        <li><strong>Payment partners</strong> — PayFast, our payment gateway, for processing payments.</li>
+        <li><strong>Delivery / courier partners</strong> — only the details required to deliver your order.</li>
+        <li><strong>Service providers</strong> — web hosting and email/notification providers that help us run the
+        site, under contract and only for our purposes.</li>
+        <li><strong>Law enforcement, regulators or courts</strong> — where we are required to by law or to protect
+        our legal rights.</li>
+      </ul>
+      <p>Where we use a third-party processor, we agree contracts that require them to treat your information
+      lawfully and keep it secure.</p>
+
+      <h2>7. How We Protect Your Information</h2>
+      <p>We take reasonable, appropriate technical and organisational measures to keep your personal information
+      secure, including:</p>
+      <ul>
+        <li>Encrypted connections (HTTPS) across the site.</li>
+        <li>Secure, hashed storage of passwords.</li>
+        <li>Restricted access to personal information on a need-to-know basis.</li>
+        <li>Regular review of our practices and limited, justified data retention.</li>
+      </ul>
+      <p>No method of transmission or storage is 100% secure. Although we work hard to protect your information,
+      we cannot guarantee absolute security of information shared over the internet.</p>
+
+      <h2>8. How Long We Keep Your Information</h2>
+      <p>We keep personal information only for as long as needed for the purposes above or as required by law.
+      In particular:</p>
+      <ul>
+        <li>Invoices and transaction records are kept for the periods required by the South African Revenue
+        Service (SARS) and the Companies Act.</li>
+        <li>Order and customer records are kept so we can honour warranties, returns and after-sales support.</li>
+        <li>When information is no longer needed, we delete it or de-identify it.</li>
+      </ul>
+
+      <h2>9. Children</h2>
+      <p>Our services are intended for persons 18 years or older or who are legally able to consent. Where we
+      process information about children we do so with a responsible parent or guardian’s consent and only where
+      the law permits.</p>
+
+      <h2>10. Your Rights Under POPIA</h2>
+      <p>You have rights over your personal information. Subject to the conditions and limits in POPIA, you may:</p>
+      <ul>
+        <li><strong>Ask what</strong> personal information we hold about you.</li>
+        <li><strong>Correct or update</strong> information that is inaccurate or incomplete.</li>
+        <li><strong>Request deletion</strong> of information in lawful circumstances.</li>
+        <li><strong>Object</strong> to processing in certain circumstances.</li>
+        <li><strong>Withdraw consent</strong> at any time to processing that relies on consent.</li>
+        <li><strong>Lodge a complaint</strong> with the Information Regulator of South Africa.</li>
+      </ul>
+      <p>To exercise any of these rights, contact our information officer using the details in section 1. We will
+      respond within a reasonable time (usually within 30(30) days as permitted by law).</p>
+
+      <h2>11. Pop-up / Cookie Notes &amp; Do-Not-Track</h2>
+      <p>Our site uses browser storage (such as your shopping cart) to remember what’s in your basket while you
+      shop. We do not use third-party advertising trackers. If your browser sends a “Do Not Track” signal, we
+      honour it to the extent we can.</p>
+
+      <h2>12. Changes to This Policy</h2>
+      <p>We may update this Privacy Policy from time to time. The latest version always appears on this page with
+      the “Last updated” date above. Significant changes will be noted on the site.</p>
+
+      <h2>13. How to Contact Us / Complaints</h2>
+      <p>If you have questions about this Policy, want to exercise your rights, or wish to complain, please contact
+      us:</p>
+      <ul>
+        <li><strong>Email:</strong> {{ cfg.email }}</li>
+        <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>
+      </ul>
+      <p>If you are unhappy with our response, you may approach the <strong>Information Regulator (South
+      Africa)</strong> — <a href="https://inforegulator.org.za" target="_blank" rel="noopener">inforegulator.org.za</a>.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

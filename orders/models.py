@@ -5,9 +5,65 @@ An order is created when a customer checks out and provides delivery/collection
 details. Payment state is managed alongside the order. The server always
 recalculates totals from the database - never trusting browser data.
 """
+from decimal import Decimal
+
 from django.db import models
 from django.utils import timezone
 import secrets
+
+
+class ShippingSettings(models.Model):
+    """Singleton holding admin-configurable shipping methods used at checkout.
+
+    Standard Delivery has a configurable flat fee. Free Delivery is offered
+    once the order total (before shipping) reaches a configurable minimum.
+    Local Pickup is always free and shows a configurable location. The fee is
+    resolved server-side from this table - the browser only submits a method
+    code, never a price.
+    """
+
+    standard_enabled = models.BooleanField("Standard Delivery available", default=True)
+    standard_fee = models.DecimalField(
+        "Standard Delivery fee (R)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("99.00"),
+        help_text="Flat fee charged for standard delivery to the customer's address.",
+    )
+    free_enabled = models.BooleanField("Free Delivery available", default=True)
+    free_minimum = models.DecimalField(
+        "Free Delivery minimum order (R)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("500.00"),
+        help_text="Orders with a total at or above this amount (before shipping) qualify for free delivery.",
+    )
+    pickup_enabled = models.BooleanField("Local Pickup available", default=True)
+    pickup_location = models.CharField(
+        "Pickup location",
+        max_length=255,
+        default="Kuruman, Northern Cape",
+        help_text="Where customers can collect their order.",
+    )
+    pickup_instructions = models.TextField(
+        "Pickup instructions",
+        blank=True,
+        help_text="Optional notes shown to customers who choose local pickup.",
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Shipping settings"
+        verbose_name_plural = "Shipping settings"
+
+    def __str__(self):
+        return "Shipping settings"
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
 
 
 class Order(models.Model):
@@ -25,6 +81,11 @@ class Order(models.Model):
         COLLECTION = "collection", "Collect at Workshop"
         DELIVERY = "delivery", "Delivery"
 
+    class ShippingMethod(models.TextChoices):
+        STANDARD = "standard", "Standard Delivery"
+        FREE = "free", "Free Delivery"
+        PICKUP = "pickup", "Local Pickup"
+
     reference = models.CharField(max_length=40, unique=True, blank=True)
     customer = models.ForeignKey(
         "customers.Customer", on_delete=models.SET_NULL, null=True, blank=True, related_name="orders"
@@ -37,6 +98,21 @@ class Order(models.Model):
     delivery_option = models.CharField(max_length=20, choices=DeliveryChoice.choices, default=DeliveryChoice.COLLECTION)
     delivery_address = models.TextField(blank=True)
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_method = models.CharField(
+        "Shipping method",
+        max_length=20,
+        choices=ShippingMethod.choices,
+        blank=True,
+        default="",
+        help_text="Shipping method chosen at checkout; snapshot of the customer's choice.",
+    )
+    shipping_method_label = models.CharField(
+        "Shipping method label",
+        max_length=60,
+        blank=True,
+        default="",
+        help_text="Human-friendly name of the shipping method, captured at checkout.",
+    )
 
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -99,8 +175,33 @@ class Order(models.Model):
         self.save(update_fields=["subtotal", "total"])
 
     def recalc_delivery_estimate(self, save=True):
-        """Recalculate the delivery estimate window for this order."""
+        """Recalculate the delivery estimate window for this order.
+
+        Pickup orders have no courier delivery window, so their estimate is
+        cleared. Orders without a shipping method (legacy records) are treated
+        as deliveries and keep the standard calculation.
+        """
         from core import delivery
+
+        is_pickup = self.shipping_method == self.ShippingMethod.PICKUP
+        is_legacy_collection = (
+            not self.shipping_method and self.delivery_option == self.DeliveryChoice.COLLECTION
+        )
+        if is_pickup or is_legacy_collection:
+            self.delivery_estimate_from = None
+            self.delivery_estimate_to = None
+            self.delivery_estimate_source = "product"
+            self.delivery_estimate_updated_at = timezone.now()
+            if save:
+                self.save(
+                    update_fields=[
+                        "delivery_estimate_from",
+                        "delivery_estimate_to",
+                        "delivery_estimate_source",
+                        "delivery_estimate_updated_at",
+                    ]
+                )
+            return None, None
 
         f, t = delivery.order_delivery_window(self)
         self.delivery_estimate_from = f

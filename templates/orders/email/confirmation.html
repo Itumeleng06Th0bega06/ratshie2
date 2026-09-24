@@ -19,6 +19,16 @@
         <p><strong>Estimated Delivery:</strong> {{ estimate }}</p>
         {% endif %}
 
+        <h3>Shipping</h3>
+        <p>
+            <strong>{{ shipping_method_label|default:"To be arranged" }}</strong>
+            {% if shipping_fee %} — R {{ shipping_fee|floatformat:2 }}{% endif %}
+        </p>
+        {% if pickup_location %}
+        <p><strong>Pickup Location:</strong> {{ pickup_location }}</p>
+        {% if pickup_instructions %}<p>{{ pickup_instructions }}</p>{% endif %}
+        {% endif %}
+
         <h3>Items</h3>
         <ul style="list-style: none; padding: 0;">
             {% for item in items %}
