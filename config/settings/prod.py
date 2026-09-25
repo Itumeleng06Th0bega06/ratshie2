@@ -14,8 +14,14 @@ from .base import env, BASE_DIR  # noqa: F401
 DEBUG = False
 SECRET_KEY = env("SECRET_KEY", default="")
 if not SECRET_KEY or "change-me" in SECRET_KEY or len(SECRET_KEY) < 50:
+    secret_related = [
+        key for key in os.environ if "SECRET" in key.upper() or key.upper() == "RATSHIE_ENV"
+    ]
     raise ValueError(
         "Production requires a strong SECRET_KEY (>=50 chars, no 'change-me'). "
+        f"Received length={len(SECRET_KEY)}. "
+        f"Relevant process env keys present: {secret_related}. "
+        f"(.env.prod exists on disk: {os.path.exists(os.path.join(BASE_DIR, '.env.prod'))}). "
         "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(50))\""
     )
 
