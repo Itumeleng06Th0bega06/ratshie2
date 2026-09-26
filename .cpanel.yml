@@ -1,0 +1,4 @@
+---
+deployment:
+  tasks:
+    - cd /home3/ratshiec/repositories/ratshie && export RATSHIE_ENV=prod && [ -f .env.prod ] && set -a && . ./.env.prod && set +a; export PY=$(test -x /home3/ratshiec/virtualenv/repositories/ratshie/3.13/bin/python && echo /home3/ratshiec/virtualenv/repositories/ratshie/3.13/bin/python || echo python3) && $PY -m pip install -q -r requirements.txt && $PY manage.py migrate --noinput && $PY manage.py collectstatic --noinput
