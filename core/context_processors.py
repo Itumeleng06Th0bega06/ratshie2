@@ -1,12 +1,16 @@
 """Template context processor injecting site-wide business config and cart count."""
+import logging
 from decimal import Decimal
 
 from django.conf import settings
+from django.db import Error as DatabaseError
 from django.db.models import F, Sum
 from django.urls import resolve
 
 from core.models import SiteConfig
 from payments.payment_methods import get_payment_methods, payfast_enabled, payfast_mode, payfast_summary
+
+logger = logging.getLogger(__name__)
 
 
 def get_cart_count(request):
@@ -22,7 +26,14 @@ def get_cart_count(request):
 
 
 def site_globals(request):
-    cfg = SiteConfig.load()
+    # SiteConfig is read on every request. If the DB is down (or migrations
+    # haven't run yet) we degrade to an empty config instead of raising, so the
+    # page still renders and the 500/404 handlers don't recurse into a flood.
+    try:
+        cfg = SiteConfig.load()
+    except DatabaseError as exc:
+        logger.error("site_globals: SiteConfig.load() unavailable: %s", exc)
+        cfg = SiteConfig()
     whatsapp = cfg.whatsapp_number or ""
     # Normalise to international digits for wa.me links
     digits = "".join(ch for ch in whatsapp if ch.isdigit())
