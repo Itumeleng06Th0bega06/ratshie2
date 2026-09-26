@@ -8,6 +8,8 @@ placeholder key is a security incident waiting to happen.
 """
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F401,F403
 from .base import env, BASE_DIR  # noqa: F401
 
@@ -30,6 +32,15 @@ CSRF_TRUSTED_ORIGINS = env(
     "CSRF_TRUSTED_ORIGINS",
     default=["https://ratshie.co.za", "https://www.ratshie.co.za"],
 )
+
+# Production must never silently run on SQLite. base.py selects MySQL only when
+# DB_USER is set; if it isn't, fail loudly instead of scattering migrations into
+# db.sqlite3 while the live app keeps hitting an empty MariaDB.
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    raise ImproperlyConfigured(
+        "Production cannot run on SQLite. Set DB_USER / DB_PASSWORD / DB_NAME "
+        "(via .env.prod or the cPanel app env) so the MySQL/MariaDB backend is selected."
+    )
 
 # Security hardening
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
