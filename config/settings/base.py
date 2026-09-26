@@ -103,7 +103,7 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-# PostgreSQL-ready: when DATABASE_URL is provided, use PostgreSQL via dj-database-url
+# Universal database URL takes precedence (e.g. PostgreSQL via dj-database-url).
 try:
     import dj_database_url
 
@@ -114,6 +114,22 @@ try:
         DATABASES["default"]["CONN_MAX_AGE"] = 60
 except ImportError:  # pragma: no cover
     pass
+
+# MariaDB / MySQL (cPanel): when DB_USER is set, use Django's MySQL backend.
+# Credentials come from environment variables / the environment file. PyMySQL
+# (pure Python) is used as the MySQLdb driver - no native build required.
+_db_user = env("DB_USER", default="")
+if not env("DATABASE_URL", default="") and _db_user:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": env("DB_NAME", default="ratshiec_ratshie_db"),
+        "USER": _db_user,
+        "PASSWORD": env("DB_PASSWORD", default=""),
+        "HOST": env("DB_HOST", default="localhost"),
+        "PORT": env("DB_PORT", default="3306"),
+        "CONN_MAX_AGE": 60,
+        "OPTIONS": {"charset": "utf8mb4"},
+    }
 
 # ---------------------------------------------------------------------------
 # Password validation
