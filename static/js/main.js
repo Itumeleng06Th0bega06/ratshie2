@@ -10,20 +10,6 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* Mobile nav */
-  var toggle = document.querySelector(".nav__toggle");
-  var closeBtn = document.querySelector(".mobile-nav__close");
-  var mobileNav = document.querySelector(".mobile-nav");
-  function openNav() { if (mobileNav) mobileNav.classList.add("open"); document.body.style.overflow = "hidden"; }
-  function closeNav() { if (mobileNav) mobileNav.classList.remove("open"); document.body.style.overflow = ""; }
-  if (toggle) toggle.addEventListener("click", openNav);
-  if (closeBtn) closeBtn.addEventListener("click", closeNav);
-  if (mobileNav) mobileNav.addEventListener("click", function (e) { if (e.target === mobileNav) closeNav(); });
-  document.querySelectorAll(".mobile-nav a").forEach(function (a) {
-    a.addEventListener("click", closeNav);
-  });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeNav(); });
-
   /* FAQ accordion */
   document.querySelectorAll(".faq-item__q").forEach(function (q) {
     q.addEventListener("click", function () {

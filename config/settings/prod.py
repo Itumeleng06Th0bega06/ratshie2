@@ -73,6 +73,9 @@ LOGGING = {
         },
         "simple": {"format": "{levelname} {message}", "style": "{"},
     },
+    "filters": {
+        "skip_disallowed_host": {"()": "core.logging_filters.SkipDisallowedHost"},
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -88,6 +91,7 @@ LOGGING = {
         "mail_admins": {
             "class": "django.utils.log.AdminEmailHandler",
             "level": "ERROR",
+            "filters": ["skip_disallowed_host"],
         },
     },
     "root": {

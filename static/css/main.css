@@ -30,10 +30,23 @@
   --font-body: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --maxw: 1240px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Height of the fixed mobile bottom bar (excludes safe-area inset, which is
+     added on top). Declared here so page padding and the floating buttons can
+     all clear it from a single source. */
+  --mbh: 63px;
 }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+/* Horizontal-overflow guard. The real offenders are fixed below (header actions,
+   product cards, filters bar); this is a backstop so no single wide element can
+   make the page scroll sideways. `overflow-x: clip` is preferred over `hidden`
+   because `hidden` turns the element into a scroll container, which would break
+   `position: sticky` on `.nav`. Browsers without `clip` support keep `hidden`. */
+html, body { max-width: 100%; overflow-x: hidden; }
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
+}
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -104,15 +117,6 @@ p { margin: 0; }
 .btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; }
 .btn .ico { width: 18px; height: 18px; flex: 0 0 auto; }
 
-/* ---------- Top bar ---------- */
-.topbar { background: var(--paper); color: var(--text); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line); }
-.topbar__inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; flex-wrap: wrap; }
-.topbar a { display: inline-flex; align-items: center; gap: 6px; color: var(--text); }
-.topbar a:hover { color: var(--gold); }
-.topbar__links { display: flex; gap: 20px; flex-wrap: wrap; }
-.topbar svg { color: var(--muted); }
-.topbar svg:hover { color: var(--gold); }
-
 /* ---------- Navbar ---------- */
 .nav { position: sticky; top: 0; z-index: var(--z-header, 60); background: var(--paper);
   border-bottom: 1px solid var(--line); transition: box-shadow 0.2s var(--ease); }
@@ -138,20 +142,6 @@ p { margin: 0; }
 .nav__cart { position: relative; color: var(--text); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 10px; border-radius: 10px; }
 .nav__cart:hover { background: var(--cream); }
 .cart-badge { position: absolute; top: 2px; right: 0; background: var(--gold); color: #161600; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0 4px; }
-.nav__toggle { display: none; background: none; border: 0; color: var(--text); padding: 10px; cursor: pointer; }
-.nav__toggle svg { width: 26px; height: 26px; }
-
-/* ---------- Mobile nav panel ---------- */
-.mobile-nav { display: none; position: fixed; inset: 0; z-index: var(--z-drawer, 120); background: rgba(11,11,12,0.3); }
-.mobile-nav__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(86vw, 340px); background: var(--paper); padding: 24px; overflow-y: auto; border-left: 1px solid var(--line); transform: translateX(100%); transition: transform 0.28s var(--ease); }
-.mobile-nav.open .mobile-nav__panel { transform: translateX(0); }
-.mobile-nav__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 26px; }
-.mobile-nav__close { background: none; border: 0; color: var(--text); cursor: pointer; }
-.mobile-nav__menu { display: flex; flex-direction: column; gap: 4px; }
-.mobile-nav__menu a { color: var(--text); padding: 13px 12px; border-radius: 10px; font-weight: 500; }
-.mobile-nav__menu a:hover { background: var(--cream); color: var(--gold); }
-.mobile-nav__ctas { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
-.mobile-nav__ctas .btn { width: 100%; }
 
 /* ---------- Hero ---------- */
 .hero { position: relative; color: #fff; overflow: hidden; background: var(--ink); }
@@ -237,7 +227,11 @@ p { margin: 0; }
 .cat-card__cta { margin-top: 22px; }
 
 /* ---------- Product cards ---------- */
-.products-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+/* `minmax(0, 1fr)` rather than `1fr`: a bare `1fr` track has an automatic
+   minimum size, so one long word inside a card can push the track wider than
+   the viewport and cause the whole page to scroll sideways. */
+.products-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+.products-grid > * { min-width: 0; }
 .product-card { position: relative; background: var(--paper); border: 1px solid #ece8e0; border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s; }
 .product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); border-color: var(--gold-line); }
 
@@ -1342,15 +1336,19 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 .to-top:hover { transform: translateY(-4px); background: var(--gold); color: var(--coal); }
 .to-top svg { width: 24px; height: 24px; }
 
-/* ---------- Mobile bottom bar ---------- */
-.mobile-bar { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 65; background: var(--paper); backdrop-filter: blur(10px); border-top: 1px solid var(--line); }
-.mobile-bar__inner { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; padding: 10px 14px; }
-.mobile-bar a { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 13px 10px; border-radius: 11px; font-family: var(--font-display); font-weight: 600; font-size: 13px; }
-.mobile-bar a svg { width: 17px; height: 17px; }
-.mobile-bar .mb-call { background: var(--paper); color: var(--text); border: 1px solid var(--line); }
-.mobile-bar .mb-wa { background: #25d366; color: #07330f; }
-.mobile-bar .mb-quote { background: var(--gold); color: #161600; }
-.mobile-bar .mb-call:hover { background: var(--cream); }
+/* ---------- Mobile bottom bar (primary mobile navigation) ---------- */
+.mobile-bar { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 65; background: var(--paper); backdrop-filter: blur(10px); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.mobile-bar__inner { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: stretch; padding: 6px 4px; gap: 2px; }
+.mb-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 50px; padding: 6px 2px; border-radius: 10px; color: var(--muted); font-family: var(--font-display); font-weight: 600; font-size: 11px; line-height: 1.1; text-align: center; }
+.mb-item svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.mb-item > span:not(.mb-item__icon) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-item__icon { position: relative; display: inline-flex; }
+.mb-item__icon .cart-badge { top: -4px; right: -7px; }
+.mb-item.is-active { color: var(--gold); }
+.mb-item:active { background: var(--cream); }
+@media (hover: hover) {
+  .mb-item:hover { color: var(--gold); }
+}
 
 /* ---------- Scroll reveal ---------- */
 .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); }
@@ -1370,45 +1368,108 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
-  .services-grid, .products-grid { grid-template-columns: repeat(3, 1fr); }
-  .why-grid, .why-grid--3 { grid-template-columns: repeat(2, 1fr); }
+  .services-grid, .products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .why-grid, .why-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1024px) {
+  /* Tablet/mobile header: no hamburger. The bottom bar is the primary mobile
+     nav, so the header shrinks to logo + account + cart + quote and drops the
+     links/CTAs that the bottom bar (or the WhatsApp float) already covers. */
   .nav__menu { display: none; }
-  .nav__toggle { display: inline-flex; }
-  .nav__cta--outline { display: none; }
+  .nav__cta--outline, .nav__cta--wa { display: none; }
+  .nav__inner { gap: 12px; height: 62px; }
+  .nav__actions { gap: 4px; }
+  .account-link__ico { display: block; }
+  .account-link__label, .account-signup { display: none; }
+  .account-menu__label { display: none; }
+  .account-menu__dropdown { min-width: 0; width: max-content; max-width: calc(100vw - 32px); }
   .split, .pd, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
   .feature-grid { grid-template-columns: 1fr; }
   .pd__media { position: static; }
   .footer__top { grid-template-columns: 1fr 1fr; }
   .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* The bottom bar is the primary nav from the point the desktop menu stops
+     fitting: with the hamburger gone, leaving it at 768px used to leave
+     769-1024px widths with no navigation at all. Its height (plus the iOS
+     home-indicator inset) is reserved so nothing hides underneath it. */
+  .mobile-bar { display: block; }
+  body { padding-bottom: calc(var(--mbh) + env(safe-area-inset-bottom, 0px)); }
+  .wa-float { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
+  .to-top { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Compact logo for the shorter header. */
+  .brand img.logo-mark { height: 32px; }
 }
 @media (max-width: 768px) {
-  .services-grid, .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .container { padding: 0 16px; }
+  .services-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .why-grid, .why-grid--3 { grid-template-columns: 1fr; }
   .shop-cats { grid-template-columns: 1fr; }
   .trustbar__inner { grid-template-columns: repeat(2, 1fr); }
   .trustbar__item { border-bottom: 1px solid var(--line); }
   .form-row, .form-grid-3 { grid-template-columns: 1fr; }
-  .section { padding: 64px 0; }
-  .mobile-bar { display: block; }
-  body { padding-bottom: 74px; }
-  .wa-float { bottom: 96px; left: 16px; }
-  .to-top { bottom: 96px; right: 16px; }
+  .section { padding: 56px 0; }
   .hero__inner { min-height: 0; padding: 48px 0; }
-  .nav__actions { gap: 6px; }
-  .nav__actions .nav__cta--wa { padding: 10px 14px; }
   .footer__top { grid-template-columns: 1fr; gap: 34px; }
+  .footer__legal { gap: 14px; flex-wrap: wrap; }
+
+  /* Filters bar: let the controls use the full width instead of overflowing. */
+  .filters-bar { padding: 14px; gap: 10px; }
+  .filters-bar select, .filters-bar input[type="text"] { width: 100%; min-width: 0; }
+
+  /* Smaller WhatsApp float on phones; position is inherited from the 1024
+     block so it stays clear of the bottom bar. */
+  .wa-float { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); left: 16px; width: 50px; height: 50px; }
+  .wa-float svg { width: 26px; height: 26px; }
+  .to-top { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); right: 16px; }
 }
 @media (max-width: 520px) {
-  .services-grid, .products-grid { grid-template-columns: 1fr; }
   .trustbar__inner { grid-template-columns: 1fr 1fr; }
   .brand-text .sub { display: none; }
-  .form-card { padding: 26px; }
-  body { padding-bottom: 76px; }
+  .form-card { padding: 22px; }
+  .auth-card { padding: 24px; }
+  .nav__inner { height: 58px; }
+  .nav__cta { padding: 9px 12px; font-size: 13px; }
+  .nav__cart, .account-link { padding: 8px; }
+
+  /* Two-column product grid kept all the way down to 320px. The single-column
+     fallback is what previously made the mobile catalogue look like a
+     stretched desktop list. */
+  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .product-card__media { aspect-ratio: 1 / 1; }
+  .product-card__badges { top: 6px; left: 6px; gap: 4px; }
+  .product-card__badges .badge { font-size: 9px; padding: 3px 6px; letter-spacing: 0.02em; }
+  .product-card__body { padding: 10px; gap: 0; }
+  .product-card__cat { font-size: 10px; letter-spacing: 0.05em; }
+  .product-card h3 { font-size: 13px; margin-top: 4px; }
+  .product-card__sku { font-size: 11px; margin-top: 2px; }
+  /* Clamp the blurb to two lines: the full description stays on the product
+     page, this just stops it making every mobile card four rows taller. */
+  .product-card__desc {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; font-size: 11.5px; line-height: 1.35; margin-top: 4px;
+  }
+  /* Stack price above a full-width button: side-by-side they cannot fit a
+      320px screen and were the reason cards overflowed their column.
+      .product-card__foot is added to out-rank the equal-specificity base rule
+      further down the file, which would otherwise win by source order. */
+  .product-card__foot { padding-top: 8px; }
+  .product-card__foot .product-card__price-row { flex-wrap: wrap; gap: 6px; }
+  .product-card__foot .product-card__price { font-size: 13.5px; }
+  .product-card__foot .product-card__price .was { font-size: 11px; margin-left: 4px; }
+  .product-card__foot .product-card__price-row .card-add { flex: 1 0 100%; }
+  .product-card__foot .product-card__price-row .card-add .btn {
+    width: 100%; min-height: 40px; padding: 9px 6px; font-size: 11.5px; gap: 5px;
+    white-space: normal; border-radius: 8px;
+  }
+  .product-card__price-row .card-add .btn .ico { width: 14px; height: 14px; }
 }
 @media (max-width: 380px) {
   .trustbar__inner { grid-template-columns: 1fr; }
+  .products-grid { gap: 8px; }
+  .product-card__body { padding: 8px; }
 }
 
 /* ---------- Reduced motion ---------- */
@@ -1822,13 +1883,17 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 .product-card__price-row .card-add {
   flex: 0 0 auto;
   margin: 0;
+  min-width: 0;
+}
+.product-card__price {
+  min-width: 0;
 }
 
-/* Prevent wrapping in narrow cards */
+/* Narrow cards keep the price and the button on one line on desktop-sized
+   columns, but the mobile breakpoint above deliberately stacks them. Forcing
+   nowrap here used to win by source order and pushed the Add to cart form
+   past the card edge on 320px screens. */
 @media (max-width: 480px) {
-  .product-card__price-row {
-    flex-wrap: nowrap;
-  }
   .product-card__price .was {
     font-size: 12px;
   }
@@ -1944,8 +2009,10 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 
 /* Account menu (header) */
 .account-area { display: flex; align-items: center; gap: 12px; }
-.account-link { font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+.account-link { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; padding: 8px 4px; border-radius: 10px; }
 .account-link:hover { color: var(--accent); }
+/* The icon is only shown on mobile, where the text label collapses. */
+.account-link__ico { display: none; flex: 0 0 auto; }
 .account-menu { position: relative; }
 .account-menu__trigger {
   display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer;

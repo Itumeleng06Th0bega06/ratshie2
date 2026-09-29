@@ -36,29 +36,6 @@
 <body>
   {% include "includes/icons.html" %}
 
-  <!-- Top info bar -->
-  <div class="topbar">
-    <div class="container topbar__inner">
-      <div class="topbar__links">
-        <a href="tel:{{ site_config.phone|cut:' '|cut:'('|cut:')'|cut:'-' }}">
-          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-phone"></use></svg>
-          {{ site_config.phone_display }}
-        </a>
-        <a href="{{ whatsapp_link }}" target="_blank" rel="noopener">
-          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-whatsapp"></use></svg>
-          WhatsApp: {{ site_config.whatsapp_display }}
-        </a>
-        <a href="mailto:{{ site_config.email }}">
-          <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-mail"></use></svg>
-          {{ site_config.email }}
-        </a>
-      </div>
-      <div class="topbar__links">
-        <span><svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-pin"></use></svg> {{ site_config.address }}</span>
-      </div>
-    </div>
-  </div>
-
   <!-- Navbar -->
   <header class="nav">
     <span class="nav__accent-line" aria-hidden="true"></span>
@@ -93,8 +70,11 @@
             </div>
           </div>
           {% else %}
-          <a class="account-link" href="{% url 'customers:login' %}">Sign In</a>
-          <a class="btn btn--gold btn--sm" href="{% url 'customers:register' %}">Sign Up</a>
+          <a class="account-link" href="{% url 'customers:login' %}">
+            <svg class="account-link__ico" width="20" height="20" aria-hidden="true"><use href="#i-user"></use></svg>
+            <span class="account-link__label">Sign In</span>
+          </a>
+          <a class="btn btn--gold btn--sm account-signup" href="{% url 'customers:register' %}">Sign Up</a>
           {% endif %}
         </div>
         {% if enabled_cart %}
@@ -107,46 +87,9 @@
         <a class="nav__cta nav__cta--wa" href="{{ whatsapp_link }}?text=Hi%2C%20I%20would%20like%20to%20request%20a%20quote" target="_blank" rel="noopener">
           <svg width="17" height="17" aria-hidden="true"><use href="#i-whatsapp"></use></svg> WhatsApp
         </a>
-        <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileNav">
-          <svg aria-hidden="true"><use href="#i-menu"></use></svg>
-        </button>
       </div>
     </div>
   </header>
-
-  <!-- Mobile nav -->
-  <div class="mobile-nav" id="mobileNav">
-    <div class="mobile-nav__panel" role="dialog" aria-label="Menu">
-      <div class="mobile-nav__head">
-        <a href="{% url 'home' %}" class="brand">
-          <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }}" class="logo-mark" height="36">
-        </a>
-        <button class="mobile-nav__close" aria-label="Close menu">
-          <svg width="24" height="24" aria-hidden="true"><use href="#i-x"></use></svg>
-        </button>
-      </div>
-      <nav class="mobile-nav__menu" aria-label="Mobile">
-        <a href="{% url 'home' %}">Home</a>
-        <a href="{% url 'products:shop' %}">Shop</a>
-        <a href="{% url 'about' %}">About</a>
-        <a href="{% url 'contact' %}">Contact</a>
-        {% if user.is_authenticated %}
-        <a href="{% url 'customers:account' %}">My Account</a>
-        {% else %}
-        <a href="{% url 'customers:login' %}">Sign In</a>
-        <a href="{% url 'customers:register' %}">Sign Up</a>
-        {% endif %}
-      </nav>
-      <div class="mobile-nav__ctas">
-        <a class="btn btn--gold" href="{% url 'quotes:form' %}">Get a Quote</a>
-        <a class="btn btn--dark" href="{% url 'products:shop' %}">Shop All Products</a>
-        {% if enabled_cart %}
-        <a class="btn btn--outline" href="{% url 'orders:cart' %}">View Cart</a>
-        {% endif %}
-        <a class="btn btn--whatsapp" href="{{ whatsapp_link }}" target="_blank" rel="noopener">Chat on WhatsApp</a>
-      </div>
-    </div>
-  </div>
 
   {% include "components/messages.html" %}
 
@@ -232,23 +175,39 @@
        visitor tries to buy a members-only on-sale product). -->
   <div id="memberPromptHost"></div>
 
-  <!-- Mobile bottom bar -->
-  <div class="mobile-bar">
+  <!-- Mobile bottom bar (primary mobile navigation) -->
+  <nav class="mobile-bar" aria-label="Primary mobile">
     <div class="mobile-bar__inner">
-      <a class="mb-shop" href="{% url 'products:shop' %}">
-        <svg aria-hidden="true"><use href="#i-cart"></use></svg> Shop
+      <a class="mb-item {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" href="{% url 'home' %}">
+        <svg aria-hidden="true"><use href="#i-home"></use></svg>
+        <span>Home</span>
+      </a>
+      <a class="mb-item {% if request.resolver_match.namespace == 'products' %}is-active{% endif %}" href="{% url 'products:shop' %}">
+        <svg aria-hidden="true"><use href="#i-grid"></use></svg>
+        <span>Shop</span>
       </a>
       {% if enabled_cart %}
-      <a class="mb-cart" href="{% url 'orders:cart' %}">
-        <svg aria-hidden="true"><use href="#i-cart"></use></svg> Cart
-        <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+      <a class="mb-item {% if request.resolver_match.namespace == 'orders' %}is-active{% endif %}" href="{% url 'orders:cart' %}">
+        <span class="mb-item__icon">
+          <svg aria-hidden="true"><use href="#i-cart"></use></svg>
+          <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
+        </span>
+        <span>Cart</span>
       </a>
       {% endif %}
-      <a class="mb-wa" href="{{ whatsapp_link }}" target="_blank" rel="noopener">
-        <svg aria-hidden="true"><use href="#i-whatsapp"></use></svg> WhatsApp
+      {% if user.is_authenticated %}
+      <a class="mb-item {% if request.resolver_match.namespace == 'customers' %}is-active{% endif %}" href="{% url 'customers:account' %}">
+        <svg aria-hidden="true"><use href="#i-user"></use></svg>
+        <span>Account</span>
       </a>
+      {% else %}
+      <a class="mb-item {% if request.resolver_match.namespace == 'customers' %}is-active{% endif %}" href="{% url 'customers:login' %}">
+        <svg aria-hidden="true"><use href="#i-user"></use></svg>
+        <span>Sign In</span>
+      </a>
+      {% endif %}
     </div>
-  </div>
+  </nav>
 
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script src="{% static 'js/ui.js' %}" defer></script>
