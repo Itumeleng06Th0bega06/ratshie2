@@ -70,6 +70,41 @@
             <input type="email" id="email" name="email" required autocomplete="email">
           </div>
 
+          {% if cart_delivery %}
+            {% if cart_delivery.has_big_item or cart_delivery.custom_total %}
+            <div class="alert alert--info" style="margin-bottom:14px" role="status">
+              Delivery for this order:
+              {% if cart_delivery.standard_fee %}<strong>R {{ cart_delivery.standard_fee|floatformat:2 }}</strong> standard delivery{% endif %}
+              {% if cart_delivery.standard_fee and cart_delivery.custom_total %}, {% endif %}
+              {% if cart_delivery.custom_total %}<strong>R {{ cart_delivery.custom_total|floatformat:2 }}</strong> for items with their own delivery fee{% endif %}
+              {% if cart_delivery.has_big_item %}
+                {% if cart_delivery.standard_fee or cart_delivery.custom_total %}, {% endif %}
+                <strong>R {{ cart_delivery.big_item_fee|floatformat:2 }}</strong> large item delivery
+              {% endif %}.
+            </div>
+            {% endif %}
+          {% endif %}
+
+          {% if free_delivery.qualifies %}
+          <div class="alert alert--success" style="margin-bottom:14px" role="status">
+            <strong>Free delivery unlocked.</strong> Your order is over
+            R {{ free_delivery.minimum|floatformat:2 }}, so Standard Delivery is
+            <strong>R0.00</strong>. Nothing extra to pay.
+          </div>
+          {% elif free_delivery.excluded %}
+          <div class="alert alert--info" style="margin-bottom:14px" role="status">
+            This order includes a <strong>large item</strong>, so large item delivery is
+            charged at its own fee. Free delivery on orders over
+            R {{ free_delivery.minimum|floatformat:2 }} applies to small items only.
+          </div>
+          {% elif free_delivery.enabled %}
+          <div class="alert alert--info" style="margin-bottom:14px" role="status">
+            Spend <strong>R {{ free_delivery.shortfall|floatformat:2 }}</strong> more in this
+            order and Standard Delivery becomes <strong>free</strong> (from
+            R {{ free_delivery.minimum|floatformat:2 }}).
+          </div>
+          {% endif %}
+
           <div class="field">
             <label>How would you like to receive your order? <span class="req">*</span></label>
             <div style="display:grid;gap:10px;margin-top:8px" id="shipping-options">
@@ -82,7 +117,14 @@
                        style="margin-top:3px">
                 <span>
                   <strong>{{ m.label }}</strong>
-                  <span style="color:var(--green,#1a7f37);font-weight:700">{% if m.fee %}R {{ m.fee|floatformat:2 }}{% else %}Free{% endif %}</span>
+                  <span style="color:var(--green,#1a7f37);font-weight:700">
+                    {% if m.free_applied and m.base_fee %}
+                      Free
+                      <s style="color:var(--muted);font-weight:400">R {{ m.base_fee|floatformat:2 }}</s>
+                    {% elif m.fee %}
+                      R {{ m.fee|floatformat:2 }}
+                    {% else %}Free{% endif %}
+                  </span>
                   {% if m.note %}<span style="display:block;color:var(--muted);font-size:13px" class="ship-note">{{ m.note }}</span>{% endif %}
                   {% if m.location %}<span style="display:block;color:var(--muted);font-size:13px">{{ m.location }}</span>{% endif %}
                 </span>
@@ -101,6 +143,17 @@
           <div class="field">
             <label for="notes">Order Notes</label>
             <textarea id="notes" name="notes" placeholder="Vehicle details, collection time, anything important..."></textarea>
+          </div>
+
+          <div class="terms-check">
+            <label class="checkbox" for="accept_terms">
+              <input type="checkbox" id="accept_terms" name="accept_terms" value="1" required>
+              <span>I have read and accept the
+                <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a>,
+                and confirm the details above are correct.
+              </span>
+            </label>
+            <p class="field-hint">Your acceptance is recorded with this order, along with the date and time.</p>
           </div>
 
           <button type="submit" class="btn btn--gold btn--lg btn--block">Continue to Secure Payment</button>

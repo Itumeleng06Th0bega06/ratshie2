@@ -1,8 +1,12 @@
-"""Core views: home, about, contact, error handlers."""
+"""Core views: about, contact, legal pages, error handlers.
+
+The root URL is handled by :func:`home`, which forwards to the shop. There is no
+longer a marketing home page.
+"""
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, path
 from django.views.decorators.http import require_GET, require_POST
-from django.db.models import F as _F, Q
+from django.db.models import Q
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -14,33 +18,19 @@ from django.contrib.auth.views import (
 )
 from django.http import JsonResponse
 
-from products.models import Product
-from core.models import SiteConfig, FAQ, Testimonial
+from core.models import SiteConfig, FAQ
 from core.utils import service_whatsapp_message, wa_short_link
 from customers.models import Customer
 
 
 def home(request):
-    cfg = SiteConfig.load()
+    """The storefront is the shop; there is no separate landing page.
 
-    featured_products = Product.objects.filter(is_active=True, is_featured=True).order_by("name")[:8]
-    on_sale_products = (
-        Product.objects.filter(is_active=True, original_price__gt=_F("price")).order_by("name")[:8]
-    )
-
-    faqs = FAQ.objects.filter(is_active=True)[:6]
-    testimonials = Testimonial.objects.filter(is_active=True)[:6]
-
-    context = {
-        "cfg": cfg,
-        "featured_products": featured_products,
-        "on_sale_products": on_sale_products,
-        "faqs": faqs,
-        "testimonials": testimonials,
-        "wa_quote_msg": service_whatsapp_message(),
-        "wa_link": wa_short_link(),
-    }
-    return render(request, "core/home.html", context)
+    ``core:home`` is kept as a stable URL name so existing bookmarks and
+    in-flight links still resolve, but it now redirects to the catalogue
+    instead of rendering a marketing page.
+    """
+    return redirect("products:shop")
 
 
 def about(request):

@@ -15,11 +15,15 @@ import secrets
 class ShippingSettings(models.Model):
     """Singleton holding admin-configurable shipping methods used at checkout.
 
-    Standard Delivery has a configurable flat fee. Free Delivery is offered
-    once the order total (before shipping) reaches a configurable minimum.
-    Local Pickup is always free and shows a configurable location. The fee is
-    resolved server-side from this table - the browser only submits a method
-    code, never a price.
+    Standard Delivery has a configurable flat fee, which is charged at R0.00
+    once the order total (before shipping) reaches a configurable minimum - the
+    customer does not choose a separate "free delivery" option, the discount is
+    applied for them. That minimum is a small-items promotion: an order
+    containing a large item keeps its big item fee, because the cost of moving
+    something bulky is not covered by an order-value threshold. Local Pickup is
+    always free and shows a configurable location. The fee is resolved
+    server-side from this table - the browser only submits a method code, never a
+    price.
     """
 
     standard_enabled = models.BooleanField("Standard Delivery available", default=True)
@@ -27,16 +31,50 @@ class ShippingSettings(models.Model):
         "Standard Delivery fee (R)",
         max_digits=10,
         decimal_places=2,
-        default=Decimal("99.00"),
+        default=Decimal("75.00"),
         help_text="Flat fee charged for standard delivery to the customer's address.",
     )
-    free_enabled = models.BooleanField("Free Delivery available", default=True)
+    free_enabled = models.BooleanField(
+        "Offer free delivery over a minimum order value",
+        default=True,
+        help_text=(
+            "When enabled, an order of small items at or above the minimum below "
+            "is delivered free. This is applied automatically to Standard "
+            "Delivery - the customer is never given a separate 'free delivery' "
+            "choice. Large item delivery fees are not waived by this."
+        ),
+    )
     free_minimum = models.DecimalField(
-        "Free Delivery minimum order (R)",
+        "Small items free delivery minimum (R)",
         max_digits=10,
         decimal_places=2,
-        default=Decimal("500.00"),
-        help_text="Orders with a total at or above this amount (before shipping) qualify for free delivery.",
+        default=Decimal("800.00"),
+        help_text=(
+            "Small-item orders with a total at or above this amount (before "
+            "shipping) get Standard Delivery free, applied automatically. Below "
+            "this amount the standard fee is charged and checkout shows how much "
+            "more is needed to qualify. This does not apply to large item "
+            "delivery, which is always charged at its own fee."
+        ),
+    )
+    big_item_threshold = models.DecimalField(
+        "Big item reference value (R)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("1500.00"),
+        help_text=(
+            "Reference value only. It flags a product as worth reviewing for "
+            "big-item handling, but it never changes a charge on its own - a "
+            "product is only charged the big item fee when the admin explicitly "
+            "sets its Delivery type to 'Big item'."
+        ),
+    )
+    big_item_fee = models.DecimalField(
+        "Big item delivery fee (R)",
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("250.00"),
+        help_text="Delivery charge applied to products marked 'Big item'. Charged once per order, not per item.",
     )
     pickup_enabled = models.BooleanField("Local Pickup available", default=True)
     pickup_location = models.CharField(
@@ -123,6 +161,20 @@ class Order(models.Model):
     payfast_transaction_id = models.CharField(max_length=64, blank=True)
 
     notes = models.TextField(blank=True)
+    terms_accepted = models.BooleanField(
+        "Terms & Conditions accepted",
+        default=False,
+        help_text=(
+            "Recorded at checkout when the customer ticked the terms checkbox. "
+            "Kept for the order's audit trail; existing orders stay False."
+        ),
+    )
+    terms_accepted_at = models.DateTimeField(
+        "Terms accepted at",
+        null=True,
+        blank=True,
+        help_text="Server timestamp of the acceptance. Not client-supplied.",
+    )
     delivery_estimate_from = models.DateField(
         "Delivery estimate from",
         null=True,

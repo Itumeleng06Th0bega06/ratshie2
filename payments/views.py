@@ -223,18 +223,67 @@ def payment_cancel(request, reference):
     )
 
 
+def _client_ip(request) -> str:
+    """Best-effort client IP, honouring the cPanel/LiteSpeed proxy header."""
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "") or ""
+
+
+def _log_itn(request, data, outcome, status_code, reason=""):
+    """Log ITN receipt/decision with the fields needed to diagnose delivery.
+
+    Only a fixed allow-list of PayFast fields is ever logged. merchant_key,
+    passphrase, card data and auth credentials are never written to logs.
+    """
+    logger.info(
+        "PayFast ITN received | method=%s path=%s source_ip=%s post_bytes=%d "
+        "has_data=%s m_payment_id=%s pf_payment_id=%s payment_status=%s amount=%s "
+        "outcome=%s http_status=%s reason=%s",
+        request.method,
+        request.get_full_path(),
+        _client_ip(request),
+        len(request.POST),
+        bool(request.POST),
+        data.get("m_payment_id", "-"),
+        data.get("pf_payment_id", "-"),
+        data.get("payment_status", "-"),
+        data.get("amount", "-"),
+        outcome,
+        status_code,
+        reason or "-",
+    )
+
+
 @csrf_exempt
 @require_POST
 def payment_itn(request):
     """Server-to-server notification from PayFast. Must verify before trusting."""
     data = request.POST.copy()
     if not _verify_signature(data):
+        _log_itn(request, data, "rejected", 400, "invalid signature")
         return HttpResponseBadRequest("Invalid signature")
     # Best-practice ITN validation: re-confirm the payload with PayFast before
     # accepting it as authoritative (defends against forged/cached ITNs).
     if not _validated_by_payfast(data):
+        _log_itn(request, data, "rejected", 400, "payfast validate endpoint said INVALID")
         return HttpResponseBadRequest("ITN validation failed")
-    _update_payment_from_itn(data)
+    payment = _update_payment_from_itn(data)
+    if payment is None:
+        # Signature and PayFast validation both passed, so the notification is
+        # genuine - it simply could not be applied (unknown reference, or the
+        # amount did not match the server-side total). The order is left
+        # untouched, and we still answer 200 so PayFast does not retry a
+        # notification we will never be able to apply. The reason is logged so
+        # the discrepancy is visible to the administrator.
+        reason = "unknown payment reference" if not Payment.objects.filter(
+            reference=data.get("m_payment_id", "")
+        ).exists() else "amount mismatch vs order total"
+        logger.error("PayFast ITN not applied | %s | amount=%s", reason, data.get("amount", "-"))
+        _log_itn(request, data, "not_applied", 200, reason)
+        return HttpResponse("OK", status=200)
+    _log_itn(request, data, "accepted", 200, f"payment_status={payment.status}")
     # PayFast expects HTTP 200 for successful processing
     return HttpResponse("OK", status=200)
 

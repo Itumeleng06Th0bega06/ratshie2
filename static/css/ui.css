@@ -196,6 +196,15 @@ textarea { resize: vertical; }
 
 .toast.is-leaving { animation: toast-out 0.28s ease forwards; }
 
+/* The full-width mobile toast is flush to the viewport edge, so the horizontal
+   entrance/exit transforms above would push it off-screen for the length of the
+   animation. Drop in and out vertically instead. This must come after the
+   `animation` shorthands so it actually wins. */
+@media (max-width: 760px) {
+  .toast { animation-name: toast-in-block; }
+  .toast.is-leaving { animation-name: toast-out-block; }
+}
+
 .toast--success { border-left-color: var(--green, #1f9d61); background: #eefaf3; }
 .toast--error   { border-left-color: var(--red, #d94b3d);   background: #fdf0ee; }
 .toast--warning { border-left-color: var(--gold, #f0a000);  background: #fdf6e6; }
@@ -235,8 +244,18 @@ textarea { resize: vertical; }
   from { opacity: 0; transform: translateX(22px) translateY(-4px); }
   to   { opacity: 1; transform: none; }
 }
+@keyframes toast-in-block {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: none; }
+}
 @keyframes toast-out {
   to { opacity: 0; transform: translateX(22px); }
+}
+@media (max-width: 760px) {
+  .toast.is-leaving { animation-name: toast-out-block; }
+}
+@keyframes toast-out-block {
+  to { opacity: 0; transform: translateY(-10px); }
 }
 
 /* ---------------------------------------------------------------------------

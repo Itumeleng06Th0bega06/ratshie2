@@ -27,10 +27,17 @@ if not SECRET_KEY or "change-me" in SECRET_KEY or len(SECRET_KEY) < 50:
         "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(50))\""
     )
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=["ratshie.co.za", "www.ratshie.co.za"])
+ALLOWED_HOSTS = env(
+    "ALLOWED_HOSTS",
+    default=["ratshie.co.za", "www.ratshie.co.za", ".ratshie.co.za", "mail.ratshie.co.za"],
+)
 CSRF_TRUSTED_ORIGINS = env(
     "CSRF_TRUSTED_ORIGINS",
-    default=["https://ratshie.co.za", "https://www.ratshie.co.za"],
+    default=[
+        "https://ratshie.co.za",
+        "https://www.ratshie.co.za",
+        "https://mail.ratshie.co.za",
+    ],
 )
 
 # Production must never silently run on SQLite. base.py selects MySQL only when

@@ -17,9 +17,11 @@
   {% endblock %}
   <meta name="theme-color" content="#0b0b0c">
 
+  <link rel="icon" href="{% static 'img/brand/favicon.svg' %}" type="image/svg+xml">
   <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/brand/favicon-32.png' %}">
   <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/brand/favicon-16.png' %}">
   <link rel="apple-touch-icon" href="{% static 'img/brand/apple-touch-icon.png' %}">
+  <link rel="mask-icon" href="{% static 'img/brand/favicon.svg' %}" color="#f0a000">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,13 +42,13 @@
   <header class="nav">
     <span class="nav__accent-line" aria-hidden="true"></span>
     <div class="container nav__inner">
-      <a href="{% url 'home' %}" class="brand" aria-label="{{ site_config.site_name }} home">
+      <a href="{% url 'products:shop' %}" class="brand" aria-label="{{ site_config.site_name }} shop">
         <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" class="logo-mark" height="44" loading="eager">
       </a>
 
       <nav class="nav__menu" aria-label="Primary">
-        <a class="nav__link {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" href="{% url 'home' %}">Home</a>
         <a class="nav__link {% if request.resolver_match.namespace == 'products' %}is-active{% endif %}" href="{% url 'products:shop' %}">Shop</a>
+        <a class="nav__link {% if request.resolver_match.namespace == 'services' %}is-active{% endif %}" href="{% url 'services:list' %}">Services</a>
         <a class="nav__link {% if request.resolver_match.url_name == 'about' %}is-active{% endif %}" href="{% url 'about' %}">About</a>
         <a class="nav__link {% if request.resolver_match.url_name == 'contact' %}is-active{% endif %}" href="{% url 'contact' %}">Contact</a>
       </nav>
@@ -64,7 +66,7 @@
               <a role="menuitem" href="{% url 'orders:cart' %}">Your Cart</a>
               <form method="post" action="{% url 'customers:logout' %}" data-logout>
                 {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'home' %}">
+                <input type="hidden" name="next" value="{% url 'products:shop' %}">
                 <button type="submit" role="menuitem">Log Out</button>
               </form>
             </div>
@@ -107,17 +109,17 @@
           </div>
           <p style="margin-top:14px; max-width:34ch">
             {{ site_config.tagline }} Specialising in mechanical repairs, diagnostics,
-            quality spare parts and lubricants, plus mobile spares delivery within
-            {{ site_config.service_radius_km }} km.
+            quality spare parts and lubricants, delivered nationwide.
           </p>
         </div>
         <div>
           <h4>Quick Links</h4>
           <ul>
-            <li><a href="{% url 'home' %}">Home</a></li>
             <li><a href="{% url 'products:shop' %}">Shop</a></li>
+            <li><a href="{% url 'services:list' %}">Services</a></li>
             <li><a href="{% url 'about' %}">About</a></li>
             <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'faq' %}">FAQ</a></li>
           </ul>
         </div>
         <div>
@@ -148,8 +150,8 @@
               <span>{{ site_config.address }}</span>
             </li>
             <li>
-              <span class="ic"><svg aria-hidden="true"><use href="#i-clock"></use></svg></span>
-              <span>Mobile spares delivery within {{ site_config.service_radius_km }} km</span>
+              <span class="ic"><svg aria-hidden="true"><use href="#i-truck"></use></svg></span>
+              <span>Nationwide courier delivery on all orders</span>
             </li>
           </ul>
         </div>
@@ -178,13 +180,13 @@
   <!-- Mobile bottom bar (primary mobile navigation) -->
   <nav class="mobile-bar" aria-label="Primary mobile">
     <div class="mobile-bar__inner">
-      <a class="mb-item {% if request.resolver_match.url_name == 'home' %}is-active{% endif %}" href="{% url 'home' %}">
-        <svg aria-hidden="true"><use href="#i-home"></use></svg>
-        <span>Home</span>
-      </a>
       <a class="mb-item {% if request.resolver_match.namespace == 'products' %}is-active{% endif %}" href="{% url 'products:shop' %}">
         <svg aria-hidden="true"><use href="#i-grid"></use></svg>
         <span>Shop</span>
+      </a>
+      <a class="mb-item {% if request.resolver_match.namespace == 'services' %}is-active{% endif %}" href="{% url 'services:list' %}">
+        <svg aria-hidden="true"><use href="#i-wrench"></use></svg>
+        <span>Services</span>
       </a>
       {% if enabled_cart %}
       <a class="mb-item {% if request.resolver_match.namespace == 'orders' %}is-active{% endif %}" href="{% url 'orders:cart' %}">

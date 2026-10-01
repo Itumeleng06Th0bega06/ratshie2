@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import format_html, mark_safe
-from .models import Product, ProductEnquiry, ProductImage, ProductCategory
+from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
 
 
 class ProductImageInline(admin.StackedInline):
@@ -43,15 +43,31 @@ from django import forms
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import format_html, mark_safe
-from .models import Product, ProductEnquiry, ProductImage, ProductCategory
+from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
 
 
 class ProductAdminForm(forms.ModelForm):
-    """Form for Product admin with delivery mode validation."""
+    """Form for Product admin with delivery mode + delivery charge validation."""
 
     class Meta:
         model = Product
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Plain-language help so the admin does not have to guess which of the
+        # two "delivery" concepts they are editing.
+        if "delivery_type" in self.fields:
+            self.fields["delivery_type"].help_text = (
+                "Charging method. Standard/Free/Big item use the global rates in "
+                "Orders > Shipping settings. Custom uses the fee below."
+            )
+        if "delivery_fee" in self.fields:
+            self.fields["delivery_fee"].help_text = (
+                "Required only for 'Custom delivery fee'. Ignored for every other type."
+            )
+        if "delivery_mode" in self.fields:
+            self.fields["delivery_mode"].help_text = "Delivery timeframe, not the cost."
 
     def clean(self):
         cleaned = super().clean()
@@ -75,6 +91,22 @@ class ProductAdminForm(forms.ModelForm):
                         {"delivery_date_to": "End date must be after start date."}
                     )
         # When mode is standard, the admin save_model will clear date fields
+
+        # Delivery charge: a custom fee is mandatory for CUSTOM and can never be
+        # negative. A fee left behind on another type is cleared rather than
+        # stored, so it can never be mistaken for the amount actually charged.
+        dtype = cleaned.get("delivery_type")
+        dfee = cleaned.get("delivery_fee")
+        if dfee is not None and dfee < 0:
+            self.add_error("delivery_fee", "Delivery fee cannot be negative.")
+        if dtype == "custom":
+            if dfee is None:
+                self.add_error(
+                    "delivery_fee", "Enter a delivery fee for 'Custom delivery fee'."
+                )
+        elif dfee is not None:
+            cleaned["delivery_fee"] = None
+
         return cleaned
 
 
@@ -166,6 +198,18 @@ class ProductCategoryAdmin(admin.ModelAdmin):
     list_editable = ("sort_order", "is_active")
 
 
+@admin.register(ProductGroup)
+class ProductGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "product_count", "sort_order", "is_active")
+    search_fields = ("name", "slug", "description")
+    list_editable = ("sort_order", "is_active")
+    prepopulated_fields = {"slug": ("name",)}
+
+    @admin.display(description="Products")
+    def product_count(self, obj):
+        return obj.products.count()
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
@@ -173,6 +217,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "thumbnail",
         "name",
+        "product_group",
         "product_type",
         "brand",
         "sku",
@@ -187,6 +232,7 @@ class ProductAdmin(admin.ModelAdmin):
     )
     list_display_links = ("thumbnail", "name")
     list_editable = (
+        "product_group",
         "product_type",
         "price",
         "is_member_only",
@@ -194,7 +240,7 @@ class ProductAdmin(admin.ModelAdmin):
         "is_featured",
         "is_active",
     )
-    list_filter = ("product_type", "availability", "is_featured", "is_active", "is_available", "is_member_only", "brand")
+    list_filter = ("product_group", "product_type", "delivery_type", "availability", "is_featured", "is_active", "is_available", "is_member_only", "brand")
     search_fields = ("name", "sku", "brand", "description", "short_description", "vehicle_makes")
     list_per_page = 50
     prepopulated_fields = {"slug": ("name",)}
@@ -212,10 +258,28 @@ class ProductAdmin(admin.ModelAdmin):
                 ),
             },
         ),
-        ("Identification", {"fields": ("product_type", "name", "slug", "brand", "sku")}),
+        ("Identification", {"fields": ("product_type", "product_group", "name", "slug", "brand", "sku")}),
         ("Description", {"fields": ("short_description", "description")}),
         ("Pricing & discount", {"fields": ("original_price", "price", "discount_display", "availability")}),
-        ("Delivery", {"fields": ("delivery_mode", "delivery_date_from", "delivery_date_to"), "classes": ("collapse",)}),
+        (
+            "Delivery charge",
+            {
+                "fields": ("delivery_type", "delivery_fee"),
+                "description": (
+                    "How this product is charged to deliver. Standard, Free and Big "
+                    "item read the global rates from Orders &gt; Shipping settings. "
+                    "Only 'Custom delivery fee' uses the amount above."
+                ),
+            },
+        ),
+        (
+            "Delivery timeframe",
+            {
+                "fields": ("delivery_mode", "delivery_date_from", "delivery_date_to"),
+                "classes": ("collapse",),
+                "description": "When the order arrives. Separate from the charge above.",
+            },
+        ),
         ("Images", {"fields": ("image_status",)}),
         ("Vehicle compatibility", {"fields": ("vehicle_makes", "vehicle_models"), "classes": ("collapse",)}),
         ("Lubricant details", {"fields": ("viscosity", "volume", "oil_type", "spec"), "classes": ("collapse",)}),
@@ -282,6 +346,27 @@ class ProductAdmin(admin.ModelAdmin):
                 img_url,
             )
         return "—"
+
+    @admin.display(description="Delivery", empty_value="—")
+    def delivery_type_display(self, obj):
+        """Compact delivery summary: 'Free', 'Custom - R80.00', 'Big item'.
+
+        Reads the same calculator checkout charges, so this column can never
+        disagree with what a customer is actually billed.
+        """
+        from orders.services import product_delivery
+
+        info = product_delivery(obj)
+        if info["type"] == "free":
+            return mark_safe('<span style="color:#1a7f37;font-weight:600">Free</span>')
+        if info["type"] == "custom":
+            return f"Custom — R {info['fee']:,.2f}"
+        if info["type"] == "big_item":
+            return f"Big item — R {info['fee']:,.2f}"
+        return f"Standard — R {info['fee']:,.2f}"
+
+    delivery_type_display.short_description = "Delivery"
+    delivery_type_display.admin_order_field = "delivery_type"
 
     @admin.display(description="Stock")
     def stock_badge(self, obj):

@@ -4,7 +4,7 @@
   <div class="container page-hero__inner">
     {% if crumb_list %}
     <nav class="crumb" aria-label="Breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
+      <a href="{% url 'products:shop' %}">Shop</a>
       {% for name, target in crumb_list %}
       <span class="sep">/</span>
       {% if target %}<a href="{% url target %}">{{ name }}</a>{% else %}<span>{{ name }}</span>{% endif %}

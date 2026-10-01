@@ -78,6 +78,18 @@
           {% endif %}
         </div>
 
+        {% if product_delivery %}
+        <div class="pd__delivery">
+          <svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg>
+          {% if product_delivery.is_free %}
+            <span>Free delivery</span>
+          {% else %}
+            <span>Delivery: R {{ product_delivery.fee|floatformat:2 }}</span>
+            {% if product_delivery.type == 'big_item' %}<span class="pd__delivery-note">Large item delivery</span>{% endif %}
+          {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Specifications -->
         {% if product.specs_present %}
         <div class="pd__specs" style="margin-top:26px">
@@ -130,7 +142,7 @@
               Estimated delivery: {{ delivery_estimate }}
             </span>
             {% endif %}
-            <span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg> Mobile delivery within {{ site_config.service_radius_km }} km</span>
+            <span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg> Nationwide courier delivery</span>
             <span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16" aria-hidden="true"><use href="#i-pin"></use></svg> Collection from workshop</span>
           </div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; padding-top:12px; border-top:1px solid var(--line)">

@@ -30,6 +30,12 @@ else:
 SECRET_KEY = env("SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DEBUG", default=True if os.environ.get("RATSHIE_ENV") != "prod" else False)
 
+# Origins allowed to submit CSRF-protected POSTs. Kept here (not just in prod.py)
+# so dev picks the same list up from .env and a trusted origin added for
+# production is never silently missing locally. Django's own default is empty,
+# which would reject every cross-origin POST.
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default=[])
+
 # ---------------------------------------------------------------------------
 # Apps
 # ---------------------------------------------------------------------------

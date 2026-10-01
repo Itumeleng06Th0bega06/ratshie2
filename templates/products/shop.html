@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Shop — Spare Parts & Lubricants{% endblock %}
-{% block meta_description %}Shop Ratshie's unified catalogue of quality spare parts and lubricants with realistic demo pricing, secure PayFast checkout and mobile delivery around Kuruman.{% endblock %}
+{% block meta_description %}Shop Ratshie's unified catalogue of quality spare parts and lubricants with realistic demo pricing, secure PayFast checkout and nationwide courier delivery.{% endblock %}
 {% block canonical %}<link rel="canonical" href="{{ request.build_absolute_uri }}">{% endblock %}
 
 {% block content %}
@@ -8,9 +8,7 @@
   <div class="grid-lines" aria-hidden="true"></div>
   <div class="container shop-hero__inner">
     <nav class="crumb" aria-label="Breadcrumb">
-      <a href="{% url 'home' %}">Home</a>
-      <span class="sep">/</span>
-      <span>Shop</span>
+      <a href="{% url 'products:shop' %}">Shop</a>
     </nav>
     <div class="shop-hero__content" style="text-align:center;">
       <div class="shop-hero__text" style="max-width:720px; margin:0 auto;">
@@ -22,8 +20,34 @@
   </div>
 </section>
 
+{% if product_groups %}
+<section class="section" style="padding:26px 0 0">
+  <div class="container">
+    <nav class="group-filter" aria-label="Product groups">
+      <a class="group-filter__chip{% if not selected_group and not on_sale_only %} is-active{% endif %}"
+         href="{% url 'products:shop' %}">All</a>
+      {% for g in product_groups %}
+        <a class="group-filter__chip{% if selected_group.pk == g.pk %} is-active{% endif %}"
+           href="?group={{ g.slug }}">{{ g.name }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</section>
+{% endif %}
+
 <section class="section section--cream" id="shop-products">
   <div class="container">
+    {% if selected_group or on_sale_only %}
+    <div class="shop-result-head">
+      <h2 class="section-title" style="margin-top:0">
+        {% if selected_group %}{{ selected_group.name }}{% else %}Special Offers{% endif %}
+      </h2>
+      {% if selected_group and selected_group.description %}
+        <p class="lead" style="margin:8px 0 0">{{ selected_group.description }}</p>
+      {% endif %}
+      <a class="shop-result-head__clear" href="{% url 'products:shop' %}">Clear filter</a>
+    </div>
+    {% endif %}
     {% if products %}
     <div class="products-grid" data-stagger style="margin-top:0">
       {% for p in products %}
@@ -33,7 +57,7 @@
     {% else %}
     <div class="empty-state" style="margin-top:0">
       <svg class="svg-art" aria-hidden="true"><use href="#i-wrench"></use></svg>
-      <h3>No products available right now</h3>
+      <h3>No products in this selection right now</h3>
       <p>We may still be able to source the item you need. Send us an enquiry and we'll help.</p>
       <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
         <a class="btn btn--gold" href="{% url 'products:enquiry' %}">Make an Enquiry</a>

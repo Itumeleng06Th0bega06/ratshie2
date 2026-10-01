@@ -72,6 +72,7 @@
         <th>Total</th>
         <th>Payment</th>
         <th>Status</th>
+        <th>Terms</th>
         <th class="text-right">Actions</th>
       </tr>
     </thead>
@@ -89,6 +90,14 @@
         <td class="rui-orders-total">R {{ o.total|floatformat:2 }}</td>
         <td><span class="rui-badge rui-badge-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span></td>
         <td><span class="rui-badge rui-badge-{{ o.status }}">{{ o.get_status_display }}</span></td>
+        <td>
+          {% if o.terms_accepted %}
+            <span class="rui-badge rui-badge-completed" title="Terms accepted at checkout">Accepted</span>
+            {% if o.terms_accepted_at %}<span class="rui-orders-email">{{ o.terms_accepted_at|date:"d M Y H:i" }}</span>{% endif %}
+          {% else %}
+            <span class="rui-badge rui-badge-cancelled" title="No terms acceptance recorded">Not accepted</span>
+          {% endif %}
+        </td>
         <td class="text-right"><a class="rui-btn rui-btn-secondary rui-btn-sm" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">View</a></td>
       </tr>
       {% endfor %}
@@ -114,6 +123,11 @@
     <div class="rui-order-card__bottom">
       <span class="rui-orders-total">R {{ o.total|floatformat:2 }}</span>
       <span class="rui-badge rui-badge-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span>
+      {% if o.terms_accepted %}
+        <span class="rui-badge rui-badge-completed" title="Terms accepted at checkout">Terms accepted</span>
+      {% else %}
+        <span class="rui-badge rui-badge-cancelled" title="No terms acceptance recorded">Terms not accepted</span>
+      {% endif %}
     </div>
     <a class="rui-btn rui-btn-secondary rui-btn-sm" href="{% url cl.opts|admin_urlname:'change' o.pk|admin_urlquote %}">View Order</a>
   </div>

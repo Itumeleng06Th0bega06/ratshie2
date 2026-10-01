@@ -14,6 +14,6 @@ if str(BASE_DIR) not in sys.path:
 os.environ.setdefault('RATSHIE_ENV', 'prod')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-from django.core.wsgi import get_wsgi_application  # noqa: E402
+from django.config.wsgi import get_wsgi_application  # noqa: E402
 
 application = get_wsgi_application()

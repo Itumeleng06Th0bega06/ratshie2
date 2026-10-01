@@ -28,7 +28,7 @@
         </nav>
         <form method="post" action="{% url 'customers:logout' %}" data-logout>
           {% csrf_token %}
-          <input type="hidden" name="next" value="{% url 'home' %}">
+          <input type="hidden" name="next" value="{% url 'products:shop' %}">
           <button type="submit" class="btn btn--outline btn--block">Log Out</button>
         </form>
       </aside>

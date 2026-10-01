@@ -3,7 +3,8 @@ Product catalogue for Ratshie.
 
 Products are internally classified as either a Spare Part or a Lubricant for
 administration/organisation only. The public shop presents a single unified
-product catalogue (no public category navigation).
+product catalogue (no public category navigation), grouped for browsing and
+filtering via ProductGroup.
 """
 from django.db import models
 from django.utils.text import slugify
@@ -114,6 +115,36 @@ class ProductImage(models.Model):
         super().save(*args, **kwargs)
 
 
+class ProductGroup(models.Model):
+    """Publicly browsable subcategory (Filters, Braking, Engine, ...).
+
+    This is deliberately separate from ProductCategory. ProductCategory is the
+    two-bucket Spare Parts / Lubricants classification shared with enquiries and
+    quotes, and is intentionally not a product navigation axis. ProductGroup
+    provides storefront grouping and filtering without disturbing that.
+    """
+
+    name = models.CharField(max_length=80, unique=True)
+    slug = models.SlugField(max_length=90, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    image = models.ImageField(upload_to="product_groups/", blank=True)
+    sort_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = "Product group"
+        verbose_name_plural = "Product groups"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     """An individual spare part or lubricant for sale."""
 
@@ -175,6 +206,16 @@ class Product(models.Model):
         help_text=("Uncheck to hide Add to Cart / Buy buttons and show this item as unavailable."),
     )
 
+    # Storefront grouping / filtering (separate from the ProductCategory
+    # Spare Parts / Lubricants classification used by enquiries and quotes).
+    product_group = models.ForeignKey(
+        ProductGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="products",
+    )
+
     # Vehicle compatibility (spare parts)
     vehicle_makes = models.CharField(max_length=200, blank=True, help_text="Comma-separated makes.")
     vehicle_models = models.CharField(max_length=200, blank=True)
@@ -212,6 +253,15 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse("products:detail", kwargs={"slug": self.slug})
 
+    @staticmethod
+    def _attached(image):
+        """Return the image only if a file is actually attached to it.
+
+        Accessing ``.image.url`` on a row with no file raises ValueError, which
+        would take down the whole listing. Callers fall back to a placeholder.
+        """
+        return image if image is not None and image.image else None
+
     @property
     def primary_image(self):
         """Return the primary image or the first image in gallery."""
@@ -248,7 +298,7 @@ class Product(models.Model):
     @property
     def verified_image_url(self):
         """URL of the primary verified image (public display only)."""
-        img = self.verified_primary_image
+        img = self._attached(self.verified_primary_image)
         return img.image.url if img else None
 
     @property
@@ -259,10 +309,11 @@ class Product(models.Model):
         fall back to any stored image (placeholder) so the catalogue still
         renders while real images are being approved.
         """
-        if self.verified_primary_image:
-            return self.verified_primary_image
+        verified = self._attached(self.verified_primary_image)
+        if verified:
+            return verified
         if settings.DEBUG:
-            return self.primary_image
+            return self._attached(self.primary_image)
         return None
 
     @property
@@ -364,6 +415,37 @@ class Product(models.Model):
         help_text="End of delivery range (used when Delivery mode is 'Date range').",
     )
 
+    # Delivery charge. This is the *cost* of delivering one unit of this
+    # product, and is deliberately separate from ``delivery_mode`` above, which
+    # controls the delivery *timeframe*. STANDARD/FREE/BIG_ITEM read their
+    # amounts from the global ShippingSettings; only CUSTOM stores a per-product
+    # amount, so global prices are never duplicated onto every product row.
+    DELIVERY_TYPES = [
+        ("standard", "Standard delivery"),
+        ("free", "Free delivery"),
+        ("custom", "Custom delivery fee"),
+        ("big_item", "Big item"),
+    ]
+    delivery_type = models.CharField(
+        "Delivery type",
+        max_length=20,
+        choices=DELIVERY_TYPES,
+        default="standard",
+        help_text=(
+            "How this product is charged for delivery. Standard, Free and Big "
+            "Item use the global rates in Orders > Shipping settings; Custom "
+            "uses the fee below."
+        ),
+    )
+    delivery_fee = models.DecimalField(
+        "Delivery fee (R)",
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Only used when Delivery type is 'Custom delivery fee'.",
+    )
+
     @property
     def delivery_estimate_display(self):
         """Return formatted delivery estimate for this product given an order date."""
@@ -372,8 +454,15 @@ class Product(models.Model):
         f, t = delivery.product_delivery_window(self, timezone.localdate())
         return delivery.format_delivery_estimate(f, t)
 
+    @property
+    def delivery_charge(self):
+        """The delivery fee for this product, from the single shared calculator."""
+        from orders.services import product_delivery
+
+        return product_delivery(self)["fee"]
+
     def clean(self):
-        """Validate delivery mode and date fields."""
+        """Validate delivery mode, delivery date fields and delivery charge."""
         mode = self.delivery_mode
         if mode == "specific" and not self.delivery_date_from:
             raise ValidationError({"delivery_mode": "Specific date mode requires delivery_date_from."})
@@ -389,11 +478,29 @@ class Product(models.Model):
         # When mode is standard, ensure date fields are cleared at form level;
         # the model clean() just validates the current state.
 
+        # Delivery charge rules: a custom fee is required for CUSTOM and must
+        # never be negative. A fee left on any other type would be ignored by
+        # the calculator, which is a silent-data-trap for the next admin to read,
+        # so it is cleared rather than stored.
+        if self.delivery_type == "custom":
+            if self.delivery_fee is None:
+                raise ValidationError(
+                    {"delivery_fee": "Enter a delivery fee for 'Custom delivery fee'."}
+                )
+            if self.delivery_fee < 0:
+                raise ValidationError({"delivery_fee": "Delivery fee cannot be negative."})
+        elif self.delivery_fee is not None and self.delivery_fee < 0:
+            raise ValidationError({"delivery_fee": "Delivery fee cannot be negative."})
+
     def save(self, *args, **kwargs):
         # If mode is standard, clear date fields to avoid stale data
         if self.delivery_mode == "standard":
             self.delivery_date_from = None
             self.delivery_date_to = None
+        # Only CUSTOM carries a per-product fee; drop it otherwise so a stale
+        # value can never be mistaken for an active one.
+        if self.delivery_type != "custom":
+            self.delivery_fee = None
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)

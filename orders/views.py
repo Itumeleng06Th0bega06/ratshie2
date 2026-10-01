@@ -14,7 +14,12 @@ from products.models import Product
 from products.services import can_purchase_product, cart_restriction_errors, line_totals
 from customers.models import Customer
 from core.utils import cart_from_session, save_cart, cart_items
-from .services import resolve_shipping_method, shipping_methods
+from .services import (
+    cart_delivery,
+    free_delivery_status,
+    resolve_shipping_method,
+    shipping_methods,
+)
 
 
 def _build_lines(cart, user=None):
@@ -82,33 +87,18 @@ def cart_partial(request):
 
 @require_POST
 def cart_add(request, slug):
-    product = get_object_or_404(Product, slug=slug, is_active=True)
-    allowed, reason = can_purchase_product(request.user, product)
-    if not allowed and reason == "member_only":
-        if request.headers.get("HX-Request"):
-            return render(request, "components/member_purchase_prompt.html", {"product": product}, status=403)
-        messages.error(
-            request,
-            f"“{product.name}” is a members-only sale product. Sign in or register a free account to purchase it.",
-        )
-        return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
-    if not allowed:
-        messages.error(request, "Sorry, this item is currently unavailable.")
-        return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
-    cart = cart_from_session(request)
-    try:
-        qty = max(1, int(request.POST.get("quantity", 1)))
-    except (ValueError, TypeError):
-        qty = 1
-    current = int(cart.get(str(product.pk), {}).get("qty", 0))
-    cart[str(product.pk)] = {"qty": current + qty}
-    save_cart(request, cart)
-    if request.headers.get("HX-Request") or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return render(request, "components/cart_added.html", {"product": product, "cart_count": sum(int(v.get("qty", 0)) for v in cart.values())})
-    next_url = request.POST.get("next", "")
-    if next_url and next_url.startswith("/"):
-        return HttpResponseRedirect(next_url)
-    return HttpResponseRedirect(reverse("orders:cart"))
+    """Add-to-cart for the ``/orders/cart/add/`` URL.
+
+    This route is not linked from any template - the product card and product
+    page post to ``products:cart_add`` - but it is a live, reachable endpoint.
+    It used to carry its own copy of the member-only gate that redirected to the
+    product page instead of sign-in, so the same action behaved differently
+    depending on which URL was posted to. It now delegates to the products view,
+    making the sale gate a single implementation with a single outcome.
+    """
+    from products.views import cart_add as products_cart_add
+
+    return products_cart_add(request, slug)
 
 
 @require_POST
@@ -169,7 +159,11 @@ def checkout(request):
         return redirect("orders:cart")
     lines, subtotal, discount_total, total = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
-    methods = shipping_methods(total)
+    # Per-product delivery configuration drives the Standard Delivery fee, so
+    # products marked Free, Custom or Big item are charged correctly here.
+    cart_items_list = cart_items(cart)
+    cd = cart_delivery(cart_items_list)
+    methods = shipping_methods(total, cart_items_list)
     default_method = next((m for m in methods if m["code"] == Order.ShippingMethod.PICKUP), None) or methods[0] if methods else None
     return render(
         request,
@@ -182,7 +176,16 @@ def checkout(request):
             "total_qty": total_qty,
             "restricted_items": _restricted_lines(lines),
             "shipping_methods": methods,
+            "cart_delivery": cd,
+            # Resolved from the same cart delivery info, so the banner and the
+            # charged fee can never disagree (a big item cannot qualify).
+            "free_delivery": free_delivery_status(
+                total, has_big_item=bool(cd and cd["has_big_item"])
+            ),
             "selected_method": default_method["code"] if default_method else "",
+            # Per-product delivery breakdown, for the checkout summary. Same
+            # calculator the order total uses, so the two cannot disagree.
+            "cart_delivery": cart_delivery(cart_items(cart)),
             "restriction_errors": cart_restriction_errors(request.user, cart_items(cart))
             if not request.user.is_authenticated
             else [],
@@ -225,11 +228,16 @@ def checkout_submit(request):
     shipping_code = request.POST.get("shipping_method", "").strip()
     delivery_address = request.POST.get("delivery_address", "").strip()
     notes = request.POST.get("notes", "").strip()
+    # Terms acceptance is required and is enforced here, not in the browser, so
+    # the order cannot be created by posting the form without the checkbox.
+    terms_accepted = request.POST.get("accept_terms") in ("1", "on", "true", "yes")
 
     # Resolve the shipping method from config server-side, defaulting to local
     # pickup when the submitted code is missing/invalid so a tampered value can
     # never attach an unexpected fee.
-    shipping = resolve_shipping_method(shipping_code, total_before_shipping)
+    shipping = resolve_shipping_method(
+        shipping_code, total_before_shipping, cart_items=items
+    )
     if shipping is None:
         shipping = {
             "code": "",
@@ -248,6 +256,8 @@ def checkout_submit(request):
         errors.append("Please provide an email address for your order confirmation.")
     if shipping["needs_address"] and not delivery_address:
         errors.append("Please provide a delivery address.")
+    if not terms_accepted:
+        errors.append("Please accept the Terms & Conditions to place your order.")
 
     if errors:
         for e in errors:
@@ -270,6 +280,7 @@ def checkout_submit(request):
         customer.save()
 
     from payments.models import Payment
+    from django.utils import timezone
 
     # Create the order, its items and the payment record in one transaction. The
     # cart is only cleared once everything exists, so a mid-creation failure
@@ -286,6 +297,10 @@ def checkout_submit(request):
             shipping_method=shipping["code"],
             shipping_method_label=shipping["label"],
             notes=notes,
+            # Both acceptance values are recorded from the server's own clock and
+            # the validated flag, never from a client-supplied timestamp.
+            terms_accepted=True,
+            terms_accepted_at=timezone.now(),
             status=Order.Status.PAYMENT_PENDING,
             payment_status=Order.Status.PAYMENT_PENDING,
             payment_reference=Order._generate_reference(),
@@ -302,7 +317,7 @@ def checkout_submit(request):
 
         order.recalc_totals()
         # Pickup orders skip the courier-style delivery window entirely.
-        if shipping["code"] in (Order.ShippingMethod.STANDARD, Order.ShippingMethod.FREE):
+        if shipping["code"] == Order.ShippingMethod.STANDARD:
             order.recalc_delivery_estimate()
 
         Payment.objects.create(

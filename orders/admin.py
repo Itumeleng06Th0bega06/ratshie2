@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from .models import Order, OrderItem, OrderDeliveryHistory, OrderNotification, ShippingSettings
 from .notifications import send_order_confirmation, send_delivery_update
@@ -25,13 +26,35 @@ class ShippingSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Free Delivery",
+            "Big Item",
             {
+                "description": (
+                    "Charged only for products the admin has explicitly marked "
+                    "'Big item' in the product's Delivery charge section. The "
+                    "reference value below is guidance for reviewing a product; it "
+                    "never reclassifies or repricing a product on its own."
+                ),
+                "fields": (
+                    "big_item_threshold",
+                    "big_item_fee",
+                ),
+            },
+        ),
+        (
+            "Free Delivery on small items (automatic)",
+            {
+                "description": (
+                    "Free delivery is not a separate choice the customer picks. "
+                    "When a small-item order total reaches the minimum below, "
+                    "Standard Delivery is automatically charged R0.00. Large item "
+                    "delivery keeps its own fee and is never waived by this "
+                    "minimum, so a big order does not get free freight."
+                ),
                 "fields": (
                     "free_enabled",
                     "free_minimum",
-                )
-            },
+                ),
+            }
         ),
         (
             "Local Pickup",
@@ -109,6 +132,7 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "payment_status",
         "delivery_option",
+        "terms_status",
         "created_at",
     )
     list_editable = ("status", "payment_status")
@@ -122,6 +146,8 @@ class OrderAdmin(admin.ModelAdmin):
         "delivery_estimate_from",
         "delivery_estimate_to",
         "delivery_estimate_source",
+        "terms_accepted",
+        "terms_accepted_at",
     )
     save_on_top = True
     inlines = [OrderItemInline]
@@ -150,6 +176,17 @@ class OrderAdmin(admin.ModelAdmin):
     def items_count(self, obj):
         return obj.items.count()
 
+    @admin.display(description="Terms", ordering="terms_accepted")
+    def terms_status(self, obj):
+        """Audit flag: did this order record a terms acceptance?
+
+        Read-only and derived from the stored flag, so it is a record of what
+        happened at checkout rather than something staff can edit afterwards.
+        """
+        if not obj.terms_accepted:
+            return "—"
+        stamp = obj.terms_accepted_at
+        return format_html("Yes<br><small>{}</small>", stamp.strftime("%Y-%m-%d %H:%M")) if stamp else "Yes"
     def get_urls(self):
         info = self.model._meta.app_label, self.model._meta.model_name
         urls = super().get_urls()

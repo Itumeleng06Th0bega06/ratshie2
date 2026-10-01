@@ -1,20 +1,22 @@
 """Unified automotive shop views.
 
-The public shop is a single catalogue (no public category navigation). Products
-are internally classified as Spare Part or Lubricant via product_type for admin
-management only.
+The public shop is a single catalogue, grouped for browsing by the database-backed
+ProductGroup model (?group=<slug>). Products are separately classified as Spare
+Part or Lubricant via product_type for admin management only.
 """
 from urllib.parse import quote
 
+from django.db.models import F
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 
-from .models import Product, ProductEnquiry
+from .models import Product, ProductEnquiry, ProductGroup
 from customers.models import Customer
 from .services import can_purchase_product
+from orders.services import product_delivery
 from core.utils import (
     product_whatsapp_message,
     cart_from_session,
@@ -28,27 +30,51 @@ def _product_qs():
 
 
 def _sale_register_redirect(request, product):
-    """Send an anonymous visitor to registration when they try to add a
-    member-only / on-sale product. Server-enforced for every request type:
-    HTMX (HX-Redirect), the no-refresh fetch path (JSON redirect), or a plain
-    browser POST (302). The item is never added to the cart here."""
-    register_url = (
-        reverse("customers:register")
-        + "?next="
-        + quote(product.get_absolute_url())
-    )
-    messages.warning(request, "Please create an account to purchase sale products.")
+    """Send an anonymous visitor to sign in when they try to add a member-only /
+    on-sale product. Server-enforced for every request type: HTMX
+    (HX-Redirect), the no-refresh fetch path (JSON redirect), or a plain browser
+    POST (302). The item is never added to the cart here.
+
+    Sign-in rather than register, as requested. The sign-in page links straight
+    to account creation, so a first-time buyer is not stuck. ``next`` returns
+    them to the product they were trying to buy.
+    """
+    login_url = reverse("customers:login") + "?next=" + quote(product.get_absolute_url())
+    messages.warning(request, "Please sign in to purchase sale products.")
     if request.headers.get("HX-Request"):
         resp = HttpResponse(status=200)
-        resp["HX-Redirect"] = register_url
+        resp["HX-Redirect"] = login_url
         return resp
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        return JsonResponse({"redirect": register_url, "sale_required": True})
-    return HttpResponseRedirect(register_url)
+        return JsonResponse({"redirect": login_url, "sale_required": True})
+    return HttpResponseRedirect(login_url)
 
 
 def shop_index(request):
     qs = _product_qs().order_by("-is_featured", "name")
+
+    # ?on_sale=1 narrows to discounted products. is_on_sale is a property
+    # (original_price is not None and original_price > price), so translate it
+    # to the equivalent field-level filter.
+    on_sale_only = request.GET.get("on_sale") == "1"
+    if on_sale_only:
+        qs = qs.filter(original_price__gt=F("price"))
+
+    # ?group=<slug> filters by storefront group. Groups come from the database
+    # so the shop never hardcodes category names.
+    groups = ProductGroup.objects.filter(is_active=True).prefetch_related("products")
+    selected_group = None
+    group_slug = (request.GET.get("group") or "").strip()
+    if group_slug:
+        selected_group = groups.filter(slug=group_slug).first()
+        if selected_group is None:
+            # Unknown/removed group: return an empty result set rather than
+            # silently falling back to the full catalogue, so a stale or mistyped
+            # link can never look like a filtered view.
+            messages.error(request, "That product group is unavailable.")
+            qs = qs.none()
+        else:
+            qs = qs.filter(product_group=selected_group)
 
     cart = request.session.get("cart", {})
     cart_quantities = {int(k): int(v.get("qty", 0)) for k, v in cart.items()}
@@ -57,6 +83,9 @@ def shop_index(request):
         "products": qs,
         "cart_quantities": cart_quantities,
         "crumb_list": [("Shop", None)],
+        "on_sale_only": on_sale_only,
+        "product_groups": groups,
+        "selected_group": selected_group,
     }
 
     return render(request, "products/shop.html", context)
@@ -90,6 +119,9 @@ def product_detail(request, slug):
             "in_cart_qty": in_cart_qty,
             "added": chasing == "1",
             "delivery_estimate": product.delivery_estimate_display,
+            # Delivery charge from the same server-side calculator checkout
+            # uses, so the price shown here is the price charged.
+            "product_delivery": product_delivery(product),
             "crumb_list": [("Shop", "products:shop"), (product.name, None)],
         },
     )
