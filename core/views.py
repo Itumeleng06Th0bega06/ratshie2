@@ -1,7 +1,7 @@
 """Core views: about, contact, legal pages, error handlers.
 
-The root URL is handled by :func:`home`, which forwards to the shop. There is no
-longer a marketing home page.
+The root URL is not served here. It is a permanent redirect to the named Shop
+route, declared in ``core/urls.py`` as a ``RedirectView``.
 """
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, path
@@ -21,16 +21,6 @@ from django.http import JsonResponse
 from core.models import SiteConfig, FAQ
 from core.utils import service_whatsapp_message, wa_short_link
 from customers.models import Customer
-
-
-def home(request):
-    """The storefront is the shop; there is no separate landing page.
-
-    ``core:home`` is kept as a stable URL name so existing bookmarks and
-    in-flight links still resolve, but it now redirects to the catalogue
-    instead of rendering a marketing page.
-    """
-    return redirect("products:shop")
 
 
 def about(request):

@@ -35,14 +35,12 @@ class FAQAdmin(admin.ModelAdmin):
 @admin.register(Testimonial)
 class TestimonialAdmin(admin.ModelAdmin):
     list_display = ("customer_name", "vehicle", "rating", "is_active", "created_at")
-    list_filter = ("is_active", "rating")
 
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ("title", "level", "is_read", "created_at")
     list_editable = ("is_read",)
-    list_filter = ("is_read", "level")
     search_fields = ("title", "text")
     date_hierarchy = "created_at"
     readonly_fields = ("key", "created_at", "updated_at")

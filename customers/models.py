@@ -10,7 +10,7 @@ from django.core.validators import RegexValidator
 
 PHONE = RegexValidator(
     regex=r"^\+?[0-9\s\-()]{7,20}$",
-    message="Enter a valid phone number, e.g. +27 61 488 4254.",
+    message="Enter a valid phone number, e.g. +27 61 488 4252.",
 )
 
 

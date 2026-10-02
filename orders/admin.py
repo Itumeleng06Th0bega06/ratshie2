@@ -114,7 +114,6 @@ class OrderItemInline(admin.TabularInline):
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ("order", "product_name", "quantity", "unit_price", "line_total")
     search_fields = ("product_name", "order__reference", "product__name")
-    list_filter = ("order__status",)
 
     @admin.display(description="Line total")
     def line_total(self, obj):
@@ -136,7 +135,6 @@ class OrderAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_editable = ("status", "payment_status")
-    list_filter = ("status", "payment_status", "delivery_option")
     search_fields = ("reference", "payment_reference", "customer_name", "phone", "email", "notes")
     date_hierarchy = "created_at"
     readonly_fields = (
@@ -292,7 +290,6 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderDeliveryHistory)
 class OrderDeliveryHistoryAdmin(admin.ModelAdmin):
     list_display = ("order", "previous_from", "previous_to", "new_from", "new_to", "reason", "created_at", "notified_email", "notified_sms")
-    list_filter = ("created_at",)
     search_fields = ("order__reference", "reason")
     date_hierarchy = "created_at"
 
@@ -300,6 +297,5 @@ class OrderDeliveryHistoryAdmin(admin.ModelAdmin):
 @admin.register(OrderNotification)
 class OrderNotificationAdmin(admin.ModelAdmin):
     list_display = ("order", "kind", "channel", "status", "created_at")
-    list_filter = ("kind", "channel", "status", "created_at")
     search_fields = ("order__reference", "created_at")
     date_hierarchy = "created_at"

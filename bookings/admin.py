@@ -13,6 +13,5 @@ class BookingAdmin(admin.ModelAdmin):
         "status",
         "created_at",
     )
-    list_filter = ("status", "preferred_time")
     search_fields = ("customer__full_name", "service_name", "registration")
     readonly_fields = ("created_at",)

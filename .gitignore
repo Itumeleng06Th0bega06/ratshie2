@@ -9,6 +9,7 @@ __pycache__/
 .env.local
 .venv/
 venv/
+admin_superuser.py
 
 # Django / SQLite
 db.sqlite3

@@ -123,7 +123,6 @@ class ProductImageAdmin(admin.ModelAdmin):
         "sort_order",
         "is_primary",
     )
-    list_filter = ("status", "is_primary", "product__brand")
     search_fields = ("product__name", "product__sku", "alt_text", "source_url", "image_source")
     raw_id_fields = ("product",)
     list_select_related = ("product",)
@@ -224,6 +223,7 @@ class ProductAdmin(admin.ModelAdmin):
         "price",
         "sale_price_display",
         "discount",
+        "delivery_type_display",
         "purchase_restriction",
         "is_member_only",
         "is_available",
@@ -240,7 +240,6 @@ class ProductAdmin(admin.ModelAdmin):
         "is_featured",
         "is_active",
     )
-    list_filter = ("product_group", "product_type", "delivery_type", "availability", "is_featured", "is_active", "is_available", "is_member_only", "brand")
     search_fields = ("name", "sku", "brand", "description", "short_description", "vehicle_makes")
     list_per_page = 50
     prepopulated_fields = {"slug": ("name",)}
@@ -468,7 +467,6 @@ class ProductEnquiryAdmin(admin.ModelAdmin):
         "preferred_contact",
         "created_at",
     )
-    list_filter = ("status", "preferred_contact", "created_at")
     search_fields = ("product_name", "message", "vehicle_make", "vehicle_model", "customer__full_name")
     date_hierarchy = "created_at"
     readonly_fields = ("created_at",)

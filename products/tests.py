@@ -496,11 +496,39 @@ class ProductCardImageFitTests(SimpleTestCase):
 
 
 class NoHomePageTests(TestCase):
-    """The home page is removed: '/' redirects to the shop and no link says Home."""
+    """The shop is the landing page: '/' permanently redirects to '/shop/'."""
 
     def test_root_url_redirects_to_shop(self):
         response = self.client.get("/")
-        self.assertRedirects(response, "/shop/", fetch_redirect_response=False)
+        self.assertRedirects(
+            response, "/shop/", status_code=301, fetch_redirect_response=False
+        )
+
+    def test_root_redirect_is_permanent(self):
+        """301, not 302, so search engines treat the shop as the canonical entry."""
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.headers["Location"], "/shop/")
+
+    def test_redirect_target_is_the_named_shop_route(self):
+        """The target comes from reverse('products:shop'), not a hardcoded path."""
+        from django.urls import reverse, resolve
+
+        self.assertEqual(reverse("products:shop"), "/shop/")
+        view = resolve("/").func
+        self.assertEqual(view.view_class.__name__, "RedirectView")
+        self.assertEqual(view.view_initkwargs["pattern_name"], "products:shop")
+        self.assertTrue(view.view_initkwargs["permanent"])
+
+    def test_shop_url_still_serves_the_shop_view(self):
+        """/shop/ must be untouched by the redirect: same view, same 200."""
+        from django.urls import resolve
+
+        self.assertEqual(resolve("/shop/").view_name, "products:shop")
+        self.assertEqual(resolve("/shop/").func.__name__, "shop_index")
+        response = self.client.get("/shop/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "shop-hero", status_code=200)
 
     def test_root_url_lands_on_shop(self):
         """Following the redirect must render the catalogue, not a 404."""
@@ -509,6 +537,40 @@ class NoHomePageTests(TestCase):
         self.assertEqual(response.request["PATH_INFO"], "/shop/")
         # The shop page really rendered, rather than an error page.
         self.assertContains(response, "shop-hero", status_code=200)
+
+    def test_no_redirect_loop(self):
+        """One hop only: / -> /shop/ must terminate, never bounce back to /."""
+        response = self.client.get("/", follow=True)
+        self.assertEqual(len(response.redirect_chain), 1)
+        self.assertEqual(response.redirect_chain[0], ("/shop/", 301))
+        for _ in range(5):
+            self.assertNotEqual(response.request["PATH_INFO"], "/")
+
+    def test_home_url_name_still_resolves(self):
+        """reverse('home') keeps working so old bookmarks/links are not orphaned."""
+        from django.urls import reverse
+
+        self.assertEqual(reverse("home"), "/")
+
+    def test_slashless_shop_still_appends_slash(self):
+        """APPEND_SLASH must keep /shop working without looping."""
+        response = self.client.get("/shop")
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.headers["Location"], "/shop/")
+        self.assertEqual(self.client.get("/shop", follow=True).status_code, 200)
+
+    def test_other_routes_are_unaffected(self):
+        """The root route must not shadow sibling top-level paths."""
+        from django.urls import reverse
+
+        self.assertEqual(reverse("about"), "/about/")
+        self.assertEqual(reverse("contact"), "/contact/")
+        self.assertEqual(reverse("customers:login"), "/account/login/")
+        self.assertEqual(reverse("orders:cart"), "/orders/cart/")
+        self.assertEqual(reverse("terms"), "/terms/")
+        for url in ("/about/", "/contact/", "/terms/", "/account/login/"):
+            with self.subTest(url=url):
+                self.assertNotEqual(self.client.get(url).status_code, 301)
 
     def test_home_label_absent_from_navigation(self):
         html = self.client.get("/shop/").content.decode()

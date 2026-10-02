@@ -15,6 +15,5 @@ class QuoteAdmin(admin.ModelAdmin):
         "preferred_date",
         "created_at",
     )
-    list_filter = ("status", "quote_type", "preferred_contact")
     search_fields = ("customer__full_name", "description", "vehicle_make", "vehicle_model")
     readonly_fields = ("created_at",)

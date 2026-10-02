@@ -185,8 +185,8 @@ SITE_NAME = "Ratshie (Pty) Ltd"
 SITE_TAGLINE = "Vehicle repairs, diagnostics & mobile spares delivery in the Northern Cape"
 
 # Contact details - sourced from the official business summary
-BUSINESS_PHONE = env("BUSINESS_PHONE", default="+27614884254")
-BUSINESS_PHONE_DISPLAY = env("BUSINESS_PHONE_DISPLAY", default="061 488 4254")
+BUSINESS_PHONE = env("BUSINESS_PHONE", default="+27614884252")
+BUSINESS_PHONE_DISPLAY = env("BUSINESS_PHONE_DISPLAY", default="061 488 4252")
 BUSINESS_EMAIL = env("BUSINESS_EMAIL", default="admin@ratshie.co.za")
 WHATSAPP_NUMBER = env("WHATSAPP_NUMBER", default="27659017566")
 WHATSAPP_DISPLAY = env("WHATSAPP_DISPLAY", default="065 901 7566")
