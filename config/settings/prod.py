@@ -7,6 +7,7 @@ Fails fast if a weak SECRET_KEY is present - running production with a
 placeholder key is a security incident waiting to happen.
 """
 import os
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -14,6 +15,11 @@ from .base import *  # noqa: F401,F403
 from .base import env, BASE_DIR  # noqa: F401
 
 DEBUG = False
+
+# MEDIA_ROOT must point to public_html/media so LiteSpeed/Apache serves files directly
+# from the document root (no symlink required). MEDIA_URL remains /media/.
+MEDIA_ROOT = Path("/home3/ratshiec/public_html") / "media"
+
 SECRET_KEY = env("SECRET_KEY", default="")
 if not SECRET_KEY or "change-me" in SECRET_KEY or len(SECRET_KEY) < 50:
     secret_related = [
