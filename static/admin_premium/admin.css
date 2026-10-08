@@ -148,7 +148,7 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
 /* ---- Change list ---- */
 .change-list .filtered { min-height: 480px; background: var(--admin-bg, #f7f8fa); }
 #changelist { background: transparent; border: 0; }
-#changelist .results { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 12px; overflow-x: auto; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+#changelist .results { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 12px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
 #changelist-form { width: 100%; }
 
 #toolbar { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
@@ -169,21 +169,106 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
 #changelist-filter li.selected a { background: var(--admin-accent-soft, #fff4d6); color: var(--admin-accent-deep, #a96f00); font-weight: 600; }
 #changelist-filter li.selected a::after { content: "✕"; margin-left: 8px; font-size: 11px; }
 
-/* List table */
-#result_list { border-collapse: collapse; width: 100%; }
-#result_list thead th { background: var(--admin-surface-muted, #f1f4f7); color: var(--admin-text-muted, #475569); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; padding: 10px 12px; border-bottom: 1px solid var(--admin-border, #e5e7eb); text-align: left; white-space: nowrap; }
+/* List table — fixed layout + percentage columns: the table can never be
+   wider than its container, so nothing on this page scrolls sideways. */
+#result_list { border-collapse: collapse; width: 100%; table-layout: fixed; }
+#result_list th, #result_list td { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+#result_list thead th { background: var(--admin-surface-muted, #f1f4f7); color: var(--admin-text-muted, #475569); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; padding: 10px 12px; border-bottom: 1px solid var(--admin-border, #e5e7eb); text-align: left; white-space: normal; vertical-align: bottom; }
+#result_list thead th:first-child { border-top-left-radius: 11px; }
+#result_list thead th:last-child { border-top-right-radius: 11px; }
 #result_list thead th a { color: var(--admin-text-muted, #475569); }
 #result_list thead th.sorted { background: var(--admin-border-strong, #e5e7eb); }
 #result_list thead th .sortoptions a { color: var(--admin-accent-deep, #a96f00); }
-#result_list tbody td { padding: 10px 12px; border-bottom: 1px solid var(--admin-border, #e5e7eb); vertical-align: middle; color: var(--admin-text, #172033); }
+#result_list tbody td, #result_list tbody th { padding: 10px 12px; border-bottom: 1px solid var(--admin-border, #e5e7eb); vertical-align: middle; color: var(--admin-text, #172033); font-weight: 400; text-align: left; background: transparent; }
 #result_list tbody tr:hover { background: var(--admin-surface-hover, #f4f6f9); }
-#result_list tbody tr:last-child td { border-bottom: 0; }
-#result_list .action-checkbox { width: 32px; }
+#result_list tbody tr:last-child td, #result_list tbody tr:last-child th { border-bottom: 0; }
+#result_list .action-checkbox { width: 44px; }
+#result_list .action-checkbox-column { width: max(44px, 5%); text-align: center; }
 #result_list tbody tr.selected, #result_list tbody tr.selected:hover { background: var(--admin-accent-soft, #fff4d6); }
 
+/* Column widths: percentages always add up below 100%, the "max()" columns
+   only floor at a usable size, and the name column absorbs the remainder. */
+#result_list thead th.column-thumbnail { width: max(56px, 6%); }
+#result_list thead th.column-name { width: auto; }
+#result_list thead th.column-product_group { width: 15%; }
+#result_list thead th.column-price { width: 11%; }
+#result_list thead th.column-sale_price_display { width: 15%; }
+#result_list thead th.column-stock_badge { width: 15%; }
+#result_list thead th.column-is_active { width: max(56px, 5%); text-align: center; }
+
+/* Cells size themselves to the column, never the other way round. */
+#result_list tbody img { max-width: 100%; height: auto; object-fit: contain; }
+#result_list tbody input[type="text"], #result_list tbody input[type="number"], #result_list tbody select { width: 100%; max-width: 100%; box-sizing: border-box; }
+#result_list tbody input[type="checkbox"] { width: auto; max-width: none; }
+
+/* Tablet: same columns, tighter type and padding so the table still fits. */
+@media (max-width: 960px) {
+  #result_list thead th { font-size: 11px; padding: 8px; letter-spacing: .02em; }
+  #result_list tbody td, #result_list tbody th { padding: 8px; font-size: 13px; }
+}
+
+/* Phone: every row becomes its own card — image + name on top, then
+   label/value rows, then the select control. No table layout at all. */
+@media (max-width: 700px) {
+  #changelist .results { background: transparent; border: 0; box-shadow: none; overflow: visible; }
+  #result_list, #result_list thead, #result_list tbody { display: block; width: 100%; }
+  #result_list thead { display: none; }
+  #result_list tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 0 12px;
+    padding: 4px 0;
+    background: var(--admin-surface, #fff);
+    border: 1px solid var(--admin-border, #e5e7eb);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(16,24,40,.06);
+    overflow: hidden;
+  }
+  #result_list tbody tr:hover, #result_list tbody tr.selected, #result_list tbody tr.selected:hover { background: var(--admin-surface, #fff); }
+  #result_list tbody tr.selected { border-color: var(--admin-accent-border, rgba(240,160,0,.45)); }
+  #result_list tbody td, #result_list tbody th {
+    order: 3;
+    flex: 1 1 100%;
+    width: auto;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--admin-border, #e5e7eb);
+    font-size: 13px;
+    text-align: right;
+  }
+  #result_list tbody td::before, #result_list tbody th::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted, #64748b);
+    text-align: left;
+  }
+  #result_list tbody tr > *:last-child { border-bottom: 0; }
+
+  /* Card header: thumbnail + linked product name share the top line. */
+  #result_list tbody th.field-thumbnail { order: 1; flex: 0 0 auto; border-bottom: 0; padding: 12px 0 6px 14px; }
+  #result_list tbody th.field-thumbnail::before { content: none; }
+  #result_list tbody td.field-name { order: 2; flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 12px 14px 6px; display: block; font-size: 15px; font-weight: 700; color: var(--admin-text, #172033); text-align: left; }
+  #result_list tbody td.field-name::before { content: none; }
+
+  /* Bulk-select control closes the card. */
+  #result_list tbody td.action-checkbox { order: 4; border-top: 1px dashed var(--admin-border, #e5e7eb); border-bottom: 0; padding: 8px 14px; }
+  #result_list tbody td.action-checkbox::before { content: "Select"; }
+}
+
 /* Action bar */
-.actions { background: var(--admin-surface-muted, #f1f4f7) !important; border: 1px solid var(--admin-border, #e5e7eb) !important; border-radius: 10px; padding: 8px 12px !important; margin-bottom: 12px; }
-.actions select { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 8px; padding: 6px 8px; }
+.actions { background: var(--admin-surface-muted, #f1f4f7) !important; border: 1px solid var(--admin-border, #e5e7eb) !important; border-radius: 10px; padding: 8px 12px !important; margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.actions select { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
 .actions .button { background: linear-gradient(180deg, var(--admin-accent, #f0a000), var(--admin-accent-strong, #d19000)); color: #1a1a1a; border: 0; border-radius: 9px; padding: 8px 16px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(240,160,0,.3); }
 .actions .button:hover { filter: brightness(1.05); }
 .actions .action-counter, .actions span.clear { color: var(--admin-text-muted, #64748b); font-size: 12px; }
@@ -381,12 +466,11 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
 /* ---- Truncate long cells ---- */
 .truncate-cell { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ---- Keep the layout inside the viewport, scroll wide tables internally ---- */
+/* ---- Keep the layout inside the viewport (tables reflow, never scroll) ---- */
 .rui-shell { width: 100%; }
 .rui-main { min-width: 0; max-width: 100%; }
 .rui-topbar { width: 100%; flex-shrink: 0; }
 #content-start, .content, #content, .titles-and-tools, .module { min-width: 0; max-width: 100%; }
-#changelist { overflow-x: auto; }
 
 /* ---- Modern stacked inline cards (product images, etc.) ---- */
 .inline-group {
@@ -651,6 +735,8 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
 @media (max-width: 640px) {
   .rui-popup--bell { width: 300px; }
   .titles-and-tools { flex-direction: column; }
+  #changelist-search { flex-wrap: wrap; }
+  #changelist-search input[type="text"] { min-width: 0; flex: 1 1 160px; }
 }
 
 /* ---- Read-only order view ---- */

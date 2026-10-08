@@ -959,11 +959,31 @@ class ProductDeliveryAdminTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("delivery_fee", form.errors)
 
-    def test_admin_list_column_shows_delivery(self):
+    def test_admin_list_shows_catalog_product(self):
         create_product(name="Listed", delivery_type="big_item")
         response = self.client.get(reverse("admin:products_product_changelist"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Big item")
+        self.assertContains(response, "Listed")
+
+    def test_admin_list_shows_core_columns(self):
+        create_product(name="Listed", delivery_type="big_item")
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        # The shortened changelist keeps every essential column, delivery
+        # included via the change form rather than a wide table.
+        for token in (
+            'class="field-thumbnail"',
+            'class="field-name"',
+            'class="field-product_group nowrap"',
+            'class="field-price"',
+            'class="field-sale_price_display"',
+            'class="field-stock_badge"',
+            'class="field-is_active"',
+        ):
+            self.assertIn(token, html)
+        self.assertNotIn("Big item", html)
+        self.assertNotIn("overflow-x", html)
 
 
 class TermsAcceptanceAdminTests(TestCase):

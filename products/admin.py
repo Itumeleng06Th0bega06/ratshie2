@@ -217,27 +217,15 @@ class ProductAdmin(admin.ModelAdmin):
         "thumbnail",
         "name",
         "product_group",
-        "product_type",
-        "brand",
-        "sku",
         "price",
         "sale_price_display",
-        "discount",
-        "delivery_type_display",
-        "purchase_restriction",
-        "is_member_only",
-        "is_available",
-        "is_featured",
+        "stock_badge",
         "is_active",
     )
     list_display_links = ("thumbnail", "name")
     list_editable = (
         "product_group",
-        "product_type",
         "price",
-        "is_member_only",
-        "is_available",
-        "is_featured",
         "is_active",
     )
     search_fields = ("name", "sku", "brand", "description", "short_description", "vehicle_makes")
@@ -369,13 +357,30 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.display(description="Stock")
     def stock_badge(self, obj):
-        color = "#1a7f37" if obj.in_stock else "#b3560b" if obj.availability == "on_request" else "#c62828"
+        availability = obj.availability
+        if availability == "out_of_stock":
+            color = "#c62828"
+        elif availability == "in_stock":
+            color = "#1a7f37"
+        else:
+            color = "#b3560b"
         label = obj.get_availability_display()
+        if obj.in_stock and obj.stock:
+            label = f"{label} · {obj.stock}"
         return format_html('<span style="color:{};font-weight:600">{}</span>', color, label)
 
     @admin.display(description="Sale price", empty_value="—")
     def sale_price_display(self, obj):
-        return f"→ R {obj.price:,.2f}" if obj.is_on_sale else "—"
+        if not obj.is_on_sale:
+            return "—"
+        price = format_html('<span style="color:#1a7f37;font-weight:700">→ R {:,.2f}</span>', obj.price)
+        if obj.discount_percent is not None:
+            return format_html(
+                '{} <span style="color:#1a7f37;font-size:11px;font-weight:600">({} OFF)</span>',
+                price,
+                f"{obj.discount_percent}%",
+            )
+        return price
 
     @admin.display(description="Discount")
     def discount(self, obj):

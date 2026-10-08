@@ -1,5 +1,7 @@
 """UI template tags: page-scoped Django messages and toast mapping."""
 from django import template
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -56,3 +58,36 @@ _ICON_MAP = {"success": "i-check", "error": "i-alert", "warning": "i-bell", "inf
 def toast_icon(level_tag):
     kind = _KIND_MAP.get(str(level_tag or "").lower(), "info")
     return _ICON_MAP.get(kind, "i-info")
+
+
+@register.filter(name="label_cells")
+def label_cells(row, headers):
+    """Tag every changelist cell with its column label (``data-label``).
+
+    Django builds each cell as an HTML string, so the column header is the
+    only place a label can come from. CSS reads it back with
+    ``::before { content: attr(data-label) }`` to turn table rows into
+    stacked label/value cards on narrow screens.
+    """
+    headers = list(headers or [])
+    out = []
+    for index, cell in enumerate(row):
+        label = ""
+        if index < len(headers):
+            header = headers[index]
+            if isinstance(header, dict):
+                text = header.get("text", "")
+            else:
+                text = getattr(header, "text", "")
+            text = str(text)
+            # Headers that already carry markup (the select-all checkbox)
+            # have no readable label to reuse.
+            if text and "<" not in text:
+                label = escape(text)
+        if label and isinstance(cell, str):
+            if cell.startswith("<td"):
+                cell = mark_safe('<td data-label="%s"%s' % (label, cell[3:]))
+            elif cell.startswith("<th"):
+                cell = mark_safe('<th data-label="%s"%s' % (label, cell[3:]))
+        out.append(cell)
+    return out
