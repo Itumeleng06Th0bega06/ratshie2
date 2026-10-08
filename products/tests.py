@@ -130,11 +130,14 @@ class ProductCardAddToCartTests(TestCase):
         self.assertNotIn("data-add-to-cart", html)
         self.assertIn("UNAVAILABLE", html)
 
-    def test_member_only_anonymous_gets_sign_in_prompt(self):
+    def test_member_only_anonymous_still_gets_add_to_cart_button(self):
+        """The card button is never hidden by auth status: an anonymous visitor
+        sees the same Add to Cart button for member-only/sale products. The
+        server decides the outcome on submit (redirect to sign-in)."""
         make_product("Members only", is_member_only=True)
         html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertNotIn("data-add-to-cart", html)
-        self.assertIn("SIGN IN TO BUY", html)
+        self.assertIn("data-add-to-cart", html)
+        self.assertNotIn("SIGN IN TO BUY", html)
 
     def test_member_only_signed_in_still_offers_add_to_cart(self):
         from django.contrib.auth import get_user_model
@@ -143,6 +146,39 @@ class ProductCardAddToCartTests(TestCase):
         self.client.force_login(get_user_model().objects.create_user("u", password="p"))
         html = self.client.get(reverse("products:shop")).content.decode()
         self.assertIn("data-add-to-cart", html)
+
+
+class ProductDetailAddToCartTests(TestCase):
+    def test_sale_product_shows_add_to_cart_for_anonymous(self):
+        make_product(
+            "Members only sale",
+            is_member_only=True,
+            price=Decimal("80.00"),
+            original_price=Decimal("100.00"),
+        )
+        product = Product.objects.get(name="Members only sale")
+        html = self.client.get(reverse("products:detail", kwargs={"slug": product.slug})).content.decode()
+        self.assertIn("data-add-to-cart", html)
+        self.assertIn(">Add to Cart<", html)
+        self.assertIn('name="quantity"', html)
+        self.assertNotIn("SIGN IN TO BUY", html)
+
+    def test_sale_product_shows_add_to_cart_for_signed_in(self):
+        from django.contrib.auth import get_user_model
+
+        product = Product.objects.create(
+            name="Members only sale 2",
+            price=Decimal("80.00"),
+            original_price=Decimal("100.00"),
+            stock=5,
+            availability="in_stock",
+            is_available=True,
+            is_member_only=True,
+        )
+        self.client.force_login(get_user_model().objects.create_user("u2", password="p"))
+        html = self.client.get(reverse("products:detail", kwargs={"slug": product.slug})).content.decode()
+        self.assertIn("data-add-to-cart", html)
+        self.assertIn(">Add to Cart<", html)
 
 
 class ProductGroupFilterTests(TestCase):

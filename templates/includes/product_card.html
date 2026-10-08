@@ -32,10 +32,10 @@
             <span class="now">R {{ p.price|floatformat:2 }}</span>
           {% endif %}
         </div>
-        {% if not enabled_cart or not p.in_stock or p.is_member_only and not user.is_authenticated %}
-        <a class="btn btn--sm add-to-cart is-disabled" href="{{ p.get_absolute_url }}" aria-label="{{ p.name }} is unavailable">
-          <span>{% if p.is_member_only and not user.is_authenticated %}SIGN IN TO BUY{% else %}UNAVAILABLE{% endif %}</span>
-        </a>
+        {% if not enabled_cart or not p.in_stock %}
+          <a class="btn btn--sm add-to-cart is-disabled" href="{{ p.get_absolute_url }}" aria-label="{{ p.name }} is unavailable">
+            <span>UNAVAILABLE</span>
+          </a>
         {% else %}
         <form action="{% url 'products:cart_add' p.slug %}" method="post" class="card-add" data-add-to-cart>
           {% csrf_token %}
