@@ -271,7 +271,7 @@ p { margin: 0; }
 /* Real product photography must never be cropped, stretched or zoomed into.
    `contain` letterboxes the whole part inside the frame instead of cutting it
    off, and the padding keeps a consistent gutter around every image. */
-.product-card__media img { width: 100%; height: 100%; object-fit: contain; padding: 10px; transition: transform 0.45s var(--ease), opacity 0.2s; }
+.product-card__media img { width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: contain; padding: 10px; transition: transform 0.45s var(--ease), opacity 0.2s; }
 .product-card:hover .product-card__media img { transform: scale(1.03); }
 .product-card__media::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(240,160,0,0.0); transition: box-shadow 0.22s; pointer-events: none; }
 .product-card:hover .product-card__media::after { box-shadow: inset 0 0 0 1px rgba(240,160,0,0.28); }
@@ -705,6 +705,7 @@ p { margin: 0; }
 .cart-product-image {
   width: 100%;
   height: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
   padding: 8px;
 }
@@ -986,6 +987,7 @@ p { margin: 0; }
 .pd__main-image img {
   width: 100%;
   height: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: contain;
   padding: 24px;
   transition: transform 0.3s var(--ease);
@@ -1023,6 +1025,7 @@ p { margin: 0; }
 .pd__thumb img {
   width: 100%;
   height: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
   padding: 8px;
 }
