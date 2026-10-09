@@ -19,9 +19,13 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, OperationalError
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from django.utils.safestring import SafeString
 
+from core.admin_utils import safe_display
+from products import checks as product_checks
 from products.models import Product, ProductGroup, ProductImage
 
 User = get_user_model()
@@ -743,3 +747,127 @@ class AdminChangelistSaleRenderingTests(TestCase):
         make_product("Full price", price=Decimal("250.00"))
         response = self.client.get(reverse("admin:products_product_changelist"))
         self.assertEqual(response.status_code, 200)
+
+
+class SalePriceDisplayUnitTests(TestCase):
+    """sale_price_display formats numbers safely and returns safe HTML."""
+
+    def _admin(self):
+        from django.contrib.admin.sites import site
+
+        from products.admin import ProductAdmin
+
+        return ProductAdmin(Product, site)
+
+    def test_on_sale_row_returns_safe_html_with_number(self):
+        product = make_product("Sale", price=Decimal("450.00"), original_price=Decimal("550.00"))
+        out = self._admin().sale_price_display(product)
+        self.assertIsInstance(out, SafeString)
+        self.assertIn("→ R 450.00", str(out))
+        self.assertIn("OFF", str(out))
+
+    def test_regular_price_returns_dash(self):
+        product = make_product("Full", price=Decimal("250.00"))
+        self.assertEqual(self._admin().sale_price_display(product), "—")
+
+
+class SafeDisplayDecoratorTests(TestCase):
+    """safe_display swallows only display errors and re-raises real ones."""
+
+    def test_value_error_falls_back_to_dash_and_logs(self):
+        class Dummy:
+            @safe_display()
+            def show(self, obj):
+                raise ValueError("unexpected display value")
+
+        with self.assertLogs("core.admin_utils", level="ERROR") as logs:
+            result = Dummy().show(object())
+        self.assertEqual(result, "—")
+        self.assertTrue(any("show" in line for line in logs.output))
+
+    def test_successful_value_passes_through(self):
+        class Dummy:
+            @safe_display()
+            def show(self, obj):
+                return "ok"
+
+        self.assertEqual(Dummy().show(object()), "ok")
+
+    def test_database_error_propagates(self):
+        class Dummy:
+            @safe_display()
+            def show(self, obj):
+                raise OperationalError("missing column")
+
+        with self.assertRaises(OperationalError):
+            Dummy().show(object())
+
+
+class AdminDisplayFallbackTests(TestCase):
+    """A bad value in one display column must not 500 the whole changelist."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="admin", password="s3cret!x", is_staff=True, is_superuser=True
+        )
+        self.client.force_login(self.user)
+
+    def test_unexpected_display_value_renders_fallback_not_500(self):
+        make_product("Sale", price=Decimal("450.00"), original_price=Decimal("550.00"))
+        with mock.patch.object(
+            Product, "is_on_sale", new_callable=mock.PropertyMock, side_effect=ValueError("bad price")
+        ):
+            response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sale")
+
+    def test_database_error_in_display_still_500s(self):
+        """DB failures in a display method must propagate, not be hidden."""
+        make_product("Plain", price=Decimal("250.00"))
+        with mock.patch.object(
+            Product, "is_on_sale", new_callable=mock.PropertyMock, side_effect=OperationalError("table gone")
+        ):
+            with self.assertRaises(OperationalError):
+                self.client.get(reverse("admin:products_product_changelist"))
+
+    def test_changelist_tolerates_missing_optionals_and_no_images(self):
+        product = make_product("No images", price=Decimal("299.00"), original_price=None)
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No images")
+
+    def test_changeform_renders_with_missing_optional_fields(self):
+        product = make_product("No extras", price=Decimal("300.00"), original_price=None)
+        response = self.client.get(reverse("admin:products_product_change", args=[product.pk]))
+        self.assertEqual(response.status_code, 200)
+
+
+class ProductSaveFailurePropagatesTests(TestCase):
+    """Critical failures (saving, price calc) must keep failing loudly."""
+
+    def test_saving_product_with_null_price_raises(self):
+        with self.assertRaises(IntegrityError):
+            Product.objects.create(name="No price", price=None, stock=1)
+
+
+class AdminConfigurationChecksTests(SimpleTestCase):
+    """Our admin-config system checks behave correctly."""
+
+    def test_live_configuration_passes_project_checks(self):
+        self.assertEqual(product_checks.check_ratshie_admin_configuration(None), [])
+
+    def test_missing_display_reference_is_flagged(self):
+        class DummyModel:
+            pass
+
+        class FakeAdmin:
+            list_display = ("name", "not_a_field_or_method")
+            list_display_links = ()
+            list_editable = ()
+            readonly_fields = ()
+            ordering = ()
+            search_fields = ()
+            list_filter = ()
+
+        errors = product_checks._display_reference_errors(DummyModel, FakeAdmin)
+        self.assertTrue(any("not_a_field_or_method" in str(e) for e in errors))

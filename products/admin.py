@@ -3,6 +3,9 @@ from django.contrib import admin
 from django.utils.html import format_html, mark_safe
 from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
 
+from core.admin_utils import fmt_money, safe_display
+from . import checks  # noqa: F401  (registers ratshie.admin system checks)
+
 
 class ProductImageInline(admin.StackedInline):
     model = ProductImage
@@ -22,6 +25,7 @@ class ProductImageInline(admin.StackedInline):
     ordering = ("sort_order", "id")
     verbose_name_plural = "Product images (first = shown first; tick 'Primary' for the main image)"
 
+    @safe_display()
     def preview(self, obj):
         if obj.pk and obj.image:
             return format_html(
@@ -136,6 +140,7 @@ class ProductImageAdmin(admin.ModelAdmin):
     )
     actions = ["mark_verified", "mark_rejected", "mark_pending"]
 
+    @safe_display()
     def preview(self, obj):
         if obj.pk and obj.image:
             return format_html(
@@ -147,11 +152,13 @@ class ProductImageAdmin(admin.ModelAdmin):
 
     preview.short_description = "Preview"
 
+    @safe_display()
     def status_badge(self, obj):
         return _status_badge(obj)
 
     status_badge.short_description = "Status"
 
+    @safe_display()
     def optimized(self, obj):
         return obj.is_optimized
 
@@ -197,6 +204,7 @@ class ProductGroupAdmin(admin.ModelAdmin):
     list_editable = ("sort_order", "is_active")
     prepopulated_fields = {"slug": ("name",)}
 
+    @safe_display()
     @admin.display(description="Products")
     def product_count(self, obj):
         return obj.products.count()
@@ -293,6 +301,7 @@ class ProductAdmin(admin.ModelAdmin):
         "unset_member_only",
     ]
 
+    @safe_display()
     def member_only_note(self, obj):
         if not obj.is_on_sale and not obj.is_member_only:
             return mark_safe(
@@ -318,6 +327,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     member_only_note.short_description = "Guidance"
 
+    @safe_display()
     @admin.display(description="Img")
     def thumbnail(self, obj):
         img_url = obj.primary_image_url
@@ -329,6 +339,7 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return "—"
 
+    @safe_display()
     @admin.display(description="Stock")
     def stock_badge(self, obj):
         availability = obj.availability
@@ -343,11 +354,12 @@ class ProductAdmin(admin.ModelAdmin):
             label = f"{label} · {obj.stock}"
         return format_html('<span style="color:{};font-weight:600">{}</span>', color, label)
 
+    @safe_display()
     @admin.display(description="Sale price", empty_value="—")
     def sale_price_display(self, obj):
         if not obj.is_on_sale:
             return "—"
-        price = format_html('<span style="color:#1a7f37;font-weight:700">→ R {}</span>', f"{obj.price:,.2f}")
+        price = format_html('<span style="color:#1a7f37;font-weight:700">→ {}</span>', fmt_money(obj.price))
         if obj.discount_percent is not None:
             return format_html(
                 '{} <span style="color:#1a7f37;font-size:11px;font-weight:600">({} OFF)</span>',
@@ -356,6 +368,7 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return price
 
+    @safe_display()
     @admin.display(description="Discount (read-only)")
     def discount_display(self, obj):
         if not obj.original_price:
@@ -363,15 +376,16 @@ class ProductAdmin(admin.ModelAdmin):
         if obj.is_on_sale:
             return format_html(
                 '<span style="color:#1a7f37;font-weight:600">{} OFF</span> '
-                '<span style="color:#666">(saving R {:,})</span>',
+                '<span style="color:#666">(saving R {})</span>',
                 f"{obj.discount_percent}%",
-                obj.original_price - obj.price,
+                fmt_money(obj.original_price - obj.price),
             )
         return format_html(
             '<span style="color:#666">Original {} is not above current price — product is not on sale.</span>',
-            f"R {obj.original_price:,.2f}",
+            fmt_money(obj.original_price),
         )
 
+    @safe_display()
     @admin.display(description="Image status")
     def image_status(self, obj):
         verified = obj.verified_images
