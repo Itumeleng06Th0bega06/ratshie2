@@ -263,3 +263,30 @@
   .rui-chart-grid { stroke: rgba(255,255,255,.10); }
   .rui-chart-axis { fill: #d6c9a6; }
 }
+
+/* Popup triggers (Quick menu, bell) keep a stable visual size on touch.
+   Geometry is constant; the growth is the sticky-hover glow a touch browser
+   paints outside the layout box after a tap. Neutralise it on coarse-pointer
+   devices, drop the iOS tap highlight, and keep the :focus-visible keyboard
+   ring. Unlayered on purpose: unlayered rules beat every @layer, so this
+   reliably wins over focus:ring-* / focus:outline-none utilities too. */
+.rui-btn,
+.rui-icon-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+.rui-btn:focus:not(:focus-visible),
+.rui-icon-btn:focus:not(:focus-visible) {
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+}
+.rui-btn:focus-visible,
+.rui-icon-btn:focus-visible {
+  outline: 2px solid rgba(240, 160, 0, 0.5);
+  outline-offset: 2px;
+}
+@media (hover: none), (pointer: coarse) {
+  .rui-btn-primary:hover {
+    filter: none;
+    box-shadow: 0 1px 2px rgba(240, 160, 0, 0.3);
+  }
+}
