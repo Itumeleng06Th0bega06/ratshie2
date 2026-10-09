@@ -7,6 +7,7 @@ Fails fast if a weak SECRET_KEY is present - running production with a
 placeholder key is a security incident waiting to happen.
 """
 import os
+import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -73,6 +74,16 @@ X_FRAME_OPTIONS = "DENY"
 # Terminate SSL at the proxy / cPanel so Django can trust the forwarded scheme.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# cPanel's Python app pipes stderr/stdout as ASCII by default, which makes the
+# logger throw UnicodeEncodeError on any log line containing non-ASCII text
+# (e.g. "→") and masks the underlying error. Force UTF-8 on the OS streams so
+# 500s and Django's own logging never crash while formatting.
+for _stream in (sys.stderr, sys.stdout):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError, OSError):
+        pass
+
 # Log to a file on the server (logs/ folder, gitignored) instead of stdout.
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -97,6 +108,7 @@ LOGGING = {
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(LOG_DIR, "django.log"),
+            "encoding": "utf-8",
             "maxBytes": 5 * 1024 * 1024,
             "backupCount": 5,
             "formatter": "verbose",
