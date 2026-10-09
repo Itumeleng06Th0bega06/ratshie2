@@ -13,90 +13,31 @@ import secrets
 
 
 class ShippingSettings(models.Model):
-    """Singleton holding admin-configurable shipping methods used at checkout.
+    """Singleton holding the single, admin-configurable delivery fee.
 
-    Standard Delivery has a configurable flat fee, which is charged at R0.00
-    once the order total (before shipping) reaches a configurable minimum - the
-    customer does not choose a separate "free delivery" option, the discount is
-    applied for them. That minimum is a small-items promotion: an order
-    containing a large item keeps its big item fee, because the cost of moving
-    something bulky is not covered by an order-value threshold. Local Pickup is
-    always free and shows a configurable location. The fee is resolved
-    server-side from this table - the browser only submits a method code, never a
-    price.
+    Every online order is delivered to the customer's address and is charged one
+    flat fee, editable on this page. The fee is resolved server-side from this
+    table - the browser never submits a price - so a tampered or stale amount in
+    the checkout form can never change an order total or the amount sent to
+    PayFast.
     """
 
-    standard_enabled = models.BooleanField("Standard Delivery available", default=True)
     standard_fee = models.DecimalField(
-        "Standard Delivery fee (R)",
+        "Delivery fee (R)",
         max_digits=10,
         decimal_places=2,
         default=Decimal("75.00"),
-        help_text="Flat fee charged for standard delivery to the customer's address.",
-    )
-    free_enabled = models.BooleanField(
-        "Offer free delivery over a minimum order value",
-        default=True,
-        help_text=(
-            "When enabled, an order of small items at or above the minimum below "
-            "is delivered free. This is applied automatically to Standard "
-            "Delivery - the customer is never given a separate 'free delivery' "
-            "choice. Large item delivery fees are not waived by this."
-        ),
-    )
-    free_minimum = models.DecimalField(
-        "Small items free delivery minimum (R)",
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("800.00"),
-        help_text=(
-            "Small-item orders with a total at or above this amount (before "
-            "shipping) get Standard Delivery free, applied automatically. Below "
-            "this amount the standard fee is charged and checkout shows how much "
-            "more is needed to qualify. This does not apply to large item "
-            "delivery, which is always charged at its own fee."
-        ),
-    )
-    big_item_threshold = models.DecimalField(
-        "Big item reference value (R)",
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("1500.00"),
-        help_text=(
-            "Reference value only. It flags a product as worth reviewing for "
-            "big-item handling, but it never changes a charge on its own - a "
-            "product is only charged the big item fee when the admin explicitly "
-            "sets its Delivery type to 'Big item'."
-        ),
-    )
-    big_item_fee = models.DecimalField(
-        "Big item delivery fee (R)",
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("250.00"),
-        help_text="Delivery charge applied to products marked 'Big item'. Charged once per order, not per item.",
-    )
-    pickup_enabled = models.BooleanField("Local Pickup available", default=True)
-    pickup_location = models.CharField(
-        "Pickup location",
-        max_length=255,
-        default="Kuruman, Northern Cape",
-        help_text="Where customers can collect their order.",
-    )
-    pickup_instructions = models.TextField(
-        "Pickup instructions",
-        blank=True,
-        help_text="Optional notes shown to customers who choose local pickup.",
+        help_text="Flat fee charged on every delivery order.",
     )
 
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Shipping settings"
-        verbose_name_plural = "Shipping settings"
+        verbose_name = "Delivery settings"
+        verbose_name_plural = "Delivery settings"
 
     def __str__(self):
-        return "Shipping settings"
+        return "Delivery settings"
 
     @classmethod
     def load(cls):

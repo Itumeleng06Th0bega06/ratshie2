@@ -70,9 +70,6 @@
     <dl class="rui-ov-dl">
       <div><dt>Method</dt><dd>{{ original.shipping_method_label|default:"—" }}</dd></div>
       <div><dt>Cost</dt><dd>R {{ original.delivery_fee|floatformat:2 }}</dd></div>
-      {% if original.shipping_method == "pickup" and shipping_settings.pickup_location %}
-      <div><dt>Pickup location</dt><dd>{{ shipping_settings.pickup_location }}</dd></div>
-      {% endif %}
     </dl>
   </section>
 

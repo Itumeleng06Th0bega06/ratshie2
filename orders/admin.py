@@ -11,57 +11,18 @@ from .notifications import send_delivery_update
 
 @admin.register(ShippingSettings)
 class ShippingSettingsAdmin(admin.ModelAdmin):
-    """Admin UI for the singleton shipping-method configuration."""
+    """Admin UI for the singleton delivery-fee configuration."""
 
     fieldsets = (
         (
-            "Standard Delivery",
-            {
-                "fields": (
-                    "standard_enabled",
-                    "standard_fee",
-                )
-            },
-        ),
-        (
-            "Big Item",
+            "Delivery",
             {
                 "description": (
-                    "Charged only for products the admin has explicitly marked "
-                    "'Big item' in the product's Delivery charge section. The "
-                    "reference value below is guidance for reviewing a product; it "
-                    "never reclassifies or repricing a product on its own."
+                    "Every online order is delivered to the customer's address "
+                    "and is charged this one flat fee at checkout. Set it to 0.00 "
+                    "for free delivery on all orders."
                 ),
-                "fields": (
-                    "big_item_threshold",
-                    "big_item_fee",
-                ),
-            },
-        ),
-        (
-            "Free Delivery on small items (automatic)",
-            {
-                "description": (
-                    "Free delivery is not a separate choice the customer picks. "
-                    "When a small-item order total reaches the minimum below, "
-                    "Standard Delivery is automatically charged R0.00. Large item "
-                    "delivery keeps its own fee and is never waived by this "
-                    "minimum, so a big order does not get free freight."
-                ),
-                "fields": (
-                    "free_enabled",
-                    "free_minimum",
-                ),
-            }
-        ),
-        (
-            "Local Pickup",
-            {
-                "fields": (
-                    "pickup_enabled",
-                    "pickup_location",
-                    "pickup_instructions",
-                )
+                "fields": ("standard_fee",),
             },
         ),
     )
@@ -164,8 +125,6 @@ class OrderAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["shipping_settings"] = ShippingSettings.load()
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     @admin.display(description="# Items")

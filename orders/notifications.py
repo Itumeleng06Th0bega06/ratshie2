@@ -61,11 +61,6 @@ def send_order_confirmation(order):
     est = delivery.format_delivery_estimate(
         order.delivery_estimate_from, order.delivery_estimate_to
     )
-    pickup = None
-    if order.shipping_method == "pickup":
-        from .models import ShippingSettings
-
-        pickup = ShippingSettings.load()
     context = {
         "order": order,
         "customer_name": order.customer_name or (order.customer.full_name if order.customer else ""),
@@ -77,8 +72,6 @@ def send_order_confirmation(order):
         "delivery_address": order.delivery_address,
         "shipping_method_label": order.shipping_method_label,
         "shipping_fee": order.delivery_fee,
-        "pickup_location": pickup.pickup_location if pickup else "",
-        "pickup_instructions": pickup.pickup_instructions if pickup else "",
         "support_email": settings.BUSINESS_EMAIL,
         "support_phone": settings.BUSINESS_PHONE_DISPLAY,
     }

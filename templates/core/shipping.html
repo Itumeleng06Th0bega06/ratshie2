@@ -9,60 +9,39 @@
 <section class="section section--cream">
   <div class="container">
     <div class="legal-prose flow">
-      <h2>1. Our Delivery Options</h2>
-      <p>We aim to get your parts and items to you safely and simply. The available methods, fees and lead times are
-      shown live at checkout, but the general options are:</p>
+      <h2>1. Delivery to Your Door</h2>
+      <p>We deliver your parts and items to the address you give us at checkout. The delivery fee is shown in
+      your order summary <strong>before you confirm and pay</strong>, so you always know exactly what the
+      delivery will cost.</p>
 
-      <h2>2. Standard Delivery</h2>
-      <p>Courier delivery to your door anywhere in South Africa. A flat standard fee applies per order and is
-      calculated by us — always at checkout, never added later. Orders usually reach you within a short, predictable
-      window that we confirm with your order confirmation.</p>
+      <h2>2. One Simple Fee</h2>
+      <p>Every order is charged a single flat delivery fee. The fee is applied once per order — buying more
+      items does not multiply it. If we ever run a free-delivery promotion, the fee is simply set to
+      <strong>R0.00</strong> and that is what you will see at checkout. There are no hidden charges and we never
+      add delivery costs after you have ordered.</p>
 
-      <h2>3. Free Delivery on Small Items</h2>
-      <p>When your order total reaches a minimum amount, <strong>standard delivery is free</strong>. This is
-      applied automatically — you do not need to choose a special “free delivery” option. Checkout shows the
-      minimum, tells you how much more you need to get closer, and once you qualify the standard fee is struck
-      through and shown as <strong>R0.00</strong>, so you always see exactly what you’ll pay before you confirm.</p>
-      <p>This offer covers small items. <strong>Large item delivery</strong> is charged at its own fee and is
-      never waived by the minimum, however high your order total is — moving something bulky costs us more than
-      the standard courier run. If your cart contains a large item, checkout keeps that fee visible and does not
-      tell you to spend more to qualify.</p>
-
-      <h2>4. Local Pickup</h2>
-      <p>Prefer to collect? Choose <strong>Local Pickup</strong> at checkout for a <strong>R0.00</strong> fee. We’ll
-      WhatsApp you the moment your order is ready, with our address:
-      <strong>{{ cfg.address }}</strong>. Please contact us via WhatsApp or phone before you visit so we can have
-      everything packed and waiting for you.</p>
-
-      <h2>5. How Delivery Fees Are Calculated</h2>
+      <h2>3. How the Fee Is Calculated</h2>
       <ul>
-        <li>The fee is calculated on our side at checkout, based on the delivery method you select, your order
-        total, and how each item in your cart is delivered.</li>
-        <li>Each product carries its own delivery type: <strong>standard</strong> uses our flat fee, <strong>free</strong>
-        costs nothing, <strong>custom</strong> has its own set fee, and <strong>large item</strong> is charged at the
-        large item rate.</li>
-        <li>Buying more of the same kind of item does not multiply the fee. A standard fee and a large item fee are
-        each charged <strong>once per order</strong>, not per product.</li>
-        <li>It is added to your order total in <strong>one place</strong> — the order summary — before you pay.</li>
-        <li>The amount you see at checkout is the amount you pay. We never add delivery charges to your order after
-        it is confirmed.</li>
+        <li>The fee is set on our side and applied to your whole order — not per product.</li>
+        <li>It is added in <strong>one place</strong>, the order summary, before you pay.</li>
+        <li>The amount you see at checkout is the amount you pay.</li>
       </ul>
 
-      <h2>6. Delivery Times</h2>
-      <p>Delivery windows appear at checkout and with your confirmation. They depend on your location and our workshop
-      schedule HOLIDAYS and unforeseen delays excluded. If we’re ever running late we’ll let you know on WhatsApp
-      as soon as we do.</p>
+      <h2>4. Delivery Times</h2>
+      <p>Delivery windows are confirmed with your order confirmation and depend on your location and our workshop
+      schedule. Public holidays and unforeseen delays are excluded. If we are ever running late we will let you
+      know on WhatsApp as soon as we do.</p>
 
-      <h2>7. Failed Delivery / No-One Home</h2>
-      <p>If a delivery attempt is unsuccessful, we’ll contact you on WhatsApp to rearrange. Reasonable redelivery may
-      be arranged; repeated failed attempts may eventually be treated as Local Pickup so your order isn’t stuck in a
-      courier depot.</p>
+      <h2>5. Failed Delivery / No-One Home</h2>
+      <p>If a delivery attempt is unsuccessful, we will contact you on WhatsApp to rearrange. Reasonable redelivery
+      may be arranged; repeated failed attempts may eventually require you to collect your order so it is not stuck
+      in a courier depot.</p>
 
-      <h2>8. Damaged or Missing Items</h2>
+      <h2>6. Damaged or Missing Items</h2>
       <p>Receipt of an item is subject to our returns process — if anything arrives damaged or is missing, please
       tell us within 7 days (see our <a href="{% url 'refunds' %}">Refund &amp; Returns Policy</a>).</p>
 
-      <h2>9. Questions</h2>
+      <h2>7. Questions</h2>
       <ul>
         <li><strong>Email:</strong> {{ cfg.email }}</li>
         <li><strong>Phone / WhatsApp:</strong> {{ cfg.phone_display }} / {{ cfg.whatsapp_display }}</li>

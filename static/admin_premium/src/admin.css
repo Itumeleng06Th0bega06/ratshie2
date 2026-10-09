@@ -235,6 +235,7 @@
   .form-row label { @apply w-[180px] flex-none text-sm font-medium; color: var(--admin-text); }
   .form-row .fieldBox { @apply flex flex-wrap gap-3 items-center; }
   .help, .helptext { @apply text-xs; color: var(--admin-text-muted); }
+  fieldset.module > .description { @apply border-b; padding: 10px 16px; background-color: var(--admin-surface-muted); border-color: var(--admin-border); color: var(--admin-text-muted); line-height: 1.55; }
   .errorlist { @apply list-none p-0 m-0 text-xs text-red-600; }
 
   /* ---------- Misc ---------- */

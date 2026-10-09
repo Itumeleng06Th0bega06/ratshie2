@@ -14,12 +14,7 @@ from products.models import Product
 from products.services import can_purchase_product, cart_restriction_errors, line_totals
 from customers.models import Customer
 from core.utils import cart_from_session, save_cart, cart_items
-from .services import (
-    cart_delivery,
-    free_delivery_status,
-    resolve_shipping_method,
-    shipping_methods,
-)
+from .services import delivery_fee
 
 
 def _build_lines(cart, user=None):
@@ -159,12 +154,9 @@ def checkout(request):
         return redirect("orders:cart")
     lines, subtotal, discount_total, total = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
-    # Per-product delivery configuration drives the Standard Delivery fee, so
-    # products marked Free, Custom or Big item are charged correctly here.
-    cart_items_list = cart_items(cart)
-    cd = cart_delivery(cart_items_list)
-    methods = shipping_methods(total, cart_items_list)
-    default_method = next((m for m in methods if m["code"] == Order.ShippingMethod.PICKUP), None) or methods[0] if methods else None
+    # One flat delivery fee, resolved server-side from admin settings and shown
+    # before the customer confirms. The browser never supplies this amount.
+    fee = delivery_fee()
     return render(
         request,
         "orders/checkout.html",
@@ -173,19 +165,10 @@ def checkout(request):
             "subtotal": subtotal,
             "discount_total": discount_total,
             "total": total,
+            "delivery_fee": fee,
+            "grand_total": total + fee,
             "total_qty": total_qty,
             "restricted_items": _restricted_lines(lines),
-            "shipping_methods": methods,
-            "cart_delivery": cd,
-            # Resolved from the same cart delivery info, so the banner and the
-            # charged fee can never disagree (a big item cannot qualify).
-            "free_delivery": free_delivery_status(
-                total, has_big_item=bool(cd and cd["has_big_item"])
-            ),
-            "selected_method": default_method["code"] if default_method else "",
-            # Per-product delivery breakdown, for the checkout summary. Same
-            # calculator the order total uses, so the two cannot disagree.
-            "cart_delivery": cart_delivery(cart_items(cart)),
             "restriction_errors": cart_restriction_errors(request.user, cart_items(cart))
             if not request.user.is_authenticated
             else [],
@@ -218,34 +201,21 @@ def checkout_submit(request):
             messages.error(request, "Please update your cart and try again.")
         return redirect("orders:checkout")
 
-    # Recompute the order total server-side. Free-delivery eligibility and the
-    # shipping fee are decided from this value; the browser never supplies a fee.
-    _, _, _, total_before_shipping = _build_lines(cart, request.user)
+    # Recompute pricing server-side before creating the order. The delivery fee
+    # is read from admin settings here; the browser never supplies a fee.
+    _build_lines(cart, request.user)
 
     full_name = request.POST.get("full_name", "").strip()
     email = request.POST.get("email", "").strip()
     phone = request.POST.get("phone", "").strip()
-    shipping_code = request.POST.get("shipping_method", "").strip()
     delivery_address = request.POST.get("delivery_address", "").strip()
     notes = request.POST.get("notes", "").strip()
     # Terms acceptance is required and is enforced here, not in the browser, so
     # the order cannot be created by posting the form without the checkbox.
     terms_accepted = request.POST.get("accept_terms") in ("1", "on", "true", "yes")
 
-    # Resolve the shipping method from config server-side, defaulting to local
-    # pickup when the submitted code is missing/invalid so a tampered value can
-    # never attach an unexpected fee.
-    shipping = resolve_shipping_method(
-        shipping_code, total_before_shipping, cart_items=items
-    )
-    if shipping is None:
-        shipping = {
-            "code": "",
-            "label": "Delivery to be arranged",
-            "fee": Decimal("0"),
-            "needs_address": False,
-        }
-    delivery_option = "delivery" if shipping["needs_address"] else "collection"
+    # Every online order is delivered, charged one flat fee from admin settings.
+    fee = delivery_fee()
 
     errors = []
     if not full_name:
@@ -254,7 +224,7 @@ def checkout_submit(request):
         errors.append("Please provide a phone number.")
     if not email:
         errors.append("Please provide an email address for your order confirmation.")
-    if shipping["needs_address"] and not delivery_address:
+    if not delivery_address:
         errors.append("Please provide a delivery address.")
     if not terms_accepted:
         errors.append("Please accept the Terms & Conditions to place your order.")
@@ -291,11 +261,11 @@ def checkout_submit(request):
             customer_name=full_name,
             email=email,
             phone=phone,
-            delivery_option=delivery_option,
+            delivery_option=Order.DeliveryChoice.DELIVERY,
             delivery_address=delivery_address,
-            delivery_fee=shipping["fee"],
-            shipping_method=shipping["code"],
-            shipping_method_label=shipping["label"],
+            delivery_fee=fee,
+            shipping_method=Order.ShippingMethod.STANDARD,
+            shipping_method_label=Order.ShippingMethod.STANDARD.label,
             notes=notes,
             # Both acceptance values are recorded from the server's own clock and
             # the validated flag, never from a client-supplied timestamp.
@@ -316,9 +286,8 @@ def checkout_submit(request):
             )
 
         order.recalc_totals()
-        # Pickup orders skip the courier-style delivery window entirely.
-        if shipping["code"] == Order.ShippingMethod.STANDARD:
-            order.recalc_delivery_estimate()
+        # Delivery orders get a courier-style delivery window estimate.
+        order.recalc_delivery_estimate()
 
         Payment.objects.create(
             reference=order.payment_reference,

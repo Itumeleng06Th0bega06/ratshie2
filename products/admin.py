@@ -44,7 +44,7 @@ class ProductImageInline(admin.StackedInline):
 
 
 class ProductAdminForm(forms.ModelForm):
-    """Form for Product admin with delivery mode + delivery charge validation."""
+    """Form for Product admin with delivery timeframe validation."""
 
     class Meta:
         model = Product
@@ -52,17 +52,7 @@ class ProductAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Plain-language help so the admin does not have to guess which of the
-        # two "delivery" concepts they are editing.
-        if "delivery_type" in self.fields:
-            self.fields["delivery_type"].help_text = (
-                "Charging method. Standard/Free/Big item use the global rates in "
-                "Orders > Shipping settings. Custom uses the fee below."
-            )
-        if "delivery_fee" in self.fields:
-            self.fields["delivery_fee"].help_text = (
-                "Required only for 'Custom delivery fee'. Ignored for every other type."
-            )
+        # Plain-language help so the admin knows this controls timing, not cost.
         if "delivery_mode" in self.fields:
             self.fields["delivery_mode"].help_text = "Delivery timeframe, not the cost."
         if "availability" in self.fields:
@@ -98,21 +88,6 @@ class ProductAdminForm(forms.ModelForm):
                         {"delivery_date_to": "End date must be after start date."}
                     )
         # When mode is standard, the admin save_model will clear date fields
-
-        # Delivery charge: a custom fee is mandatory for CUSTOM and can never be
-        # negative. A fee left behind on another type is cleared rather than
-        # stored, so it can never be mistaken for the amount actually charged.
-        dtype = cleaned.get("delivery_type")
-        dfee = cleaned.get("delivery_fee")
-        if dfee is not None and dfee < 0:
-            self.add_error("delivery_fee", "Delivery fee cannot be negative.")
-        if dtype == "custom":
-            if dfee is None:
-                self.add_error(
-                    "delivery_fee", "Enter a delivery fee for 'Custom delivery fee'."
-                )
-        elif dfee is not None:
-            cleaned["delivery_fee"] = None
 
         return cleaned
 
@@ -270,22 +245,11 @@ class ProductAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Delivery charge",
-            {
-                "fields": ("delivery_type", "delivery_fee"),
-                "description": (
-                    "How this product is charged to deliver. Standard, Free and Big "
-                    "item read the global rates from Orders &gt; Shipping settings. "
-                    "Only 'Custom delivery fee' uses the amount above."
-                ),
-            },
-        ),
-        (
             "Delivery timeframe",
             {
                 "fields": ("delivery_mode", "delivery_date_from", "delivery_date_to"),
                 "classes": ("collapse",),
-                "description": "When the order arrives. Separate from the charge above.",
+                "description": "When the order is expected to arrive. Delivery is one flat fee for the whole order — there are no per-product delivery charges.",
             },
         ),
         ("Images", {"fields": ("image_status",)}),

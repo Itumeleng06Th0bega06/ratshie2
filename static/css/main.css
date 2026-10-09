@@ -89,6 +89,26 @@ p { margin: 0; }
 .mx-auto { margin-left: auto; margin-right: auto; }
 .flow > * + * { margin-top: 16px; }
 
+/* ---------- Legal prose (Terms, Privacy, Refunds, Shipping) ----------
+   Constrain the reading measure and let long unbroken strings (URLs, reference
+   codes) wrap instead of overflowing the container. The page-level
+   `overflow-x: hidden` guard would otherwise silently clip the overflow, so the
+   fix belongs here at the source. */
+.legal-prose {
+  max-width: 72ch;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.legal-prose h2 { font-size: clamp(19px, 2.4vw, 26px); }
+.legal-prose p,
+.legal-prose li { color: var(--text); }
+.legal-prose ul { padding-left: 20px; }
+.legal-prose li + li { margin-top: 8px; }
+.legal-prose a { color: var(--gold); text-decoration: underline; }
+
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;

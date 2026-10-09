@@ -431,37 +431,6 @@ class Product(models.Model):
         help_text="End of delivery range (used when Delivery mode is 'Date range').",
     )
 
-    # Delivery charge. This is the *cost* of delivering one unit of this
-    # product, and is deliberately separate from ``delivery_mode`` above, which
-    # controls the delivery *timeframe*. STANDARD/FREE/BIG_ITEM read their
-    # amounts from the global ShippingSettings; only CUSTOM stores a per-product
-    # amount, so global prices are never duplicated onto every product row.
-    DELIVERY_TYPES = [
-        ("standard", "Standard delivery"),
-        ("free", "Free delivery"),
-        ("custom", "Custom delivery fee"),
-        ("big_item", "Big item"),
-    ]
-    delivery_type = models.CharField(
-        "Delivery type",
-        max_length=20,
-        choices=DELIVERY_TYPES,
-        default="standard",
-        help_text=(
-            "How this product is charged for delivery. Standard, Free and Big "
-            "Item use the global rates in Orders > Shipping settings; Custom "
-            "uses the fee below."
-        ),
-    )
-    delivery_fee = models.DecimalField(
-        "Delivery fee (R)",
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Only used when Delivery type is 'Custom delivery fee'.",
-    )
-
     @property
     def delivery_estimate_display(self):
         """Return formatted delivery estimate for this product given an order date."""
@@ -472,13 +441,13 @@ class Product(models.Model):
 
     @property
     def delivery_charge(self):
-        """The delivery fee for this product, from the single shared calculator."""
-        from orders.services import product_delivery
+        """The flat delivery fee applied to this product at checkout."""
+        from orders.services import delivery_fee
 
-        return product_delivery(self)["fee"]
+        return delivery_fee()
 
     def clean(self):
-        """Validate delivery mode, delivery date fields and delivery charge."""
+        """Validate the delivery timeframe fields."""
         mode = self.delivery_mode
         if mode == "specific" and not self.delivery_date_from:
             raise ValidationError({"delivery_mode": "Specific date mode requires delivery_date_from."})
@@ -494,29 +463,11 @@ class Product(models.Model):
         # When mode is standard, ensure date fields are cleared at form level;
         # the model clean() just validates the current state.
 
-        # Delivery charge rules: a custom fee is required for CUSTOM and must
-        # never be negative. A fee left on any other type would be ignored by
-        # the calculator, which is a silent-data-trap for the next admin to read,
-        # so it is cleared rather than stored.
-        if self.delivery_type == "custom":
-            if self.delivery_fee is None:
-                raise ValidationError(
-                    {"delivery_fee": "Enter a delivery fee for 'Custom delivery fee'."}
-                )
-            if self.delivery_fee < 0:
-                raise ValidationError({"delivery_fee": "Delivery fee cannot be negative."})
-        elif self.delivery_fee is not None and self.delivery_fee < 0:
-            raise ValidationError({"delivery_fee": "Delivery fee cannot be negative."})
-
     def save(self, *args, **kwargs):
         # If mode is standard, clear date fields to avoid stale data
         if self.delivery_mode == "standard":
             self.delivery_date_from = None
             self.delivery_date_to = None
-        # Only CUSTOM carries a per-product fee; drop it otherwise so a stale
-        # value can never be mistaken for an active one.
-        if self.delivery_type != "custom":
-            self.delivery_fee = None
         if not self.slug:
             self.slug = slugify(self.name)
         if not (self.sku or "").strip():

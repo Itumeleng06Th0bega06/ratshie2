@@ -78,14 +78,13 @@
           {% endif %}
         </div>
 
-        {% if product_delivery %}
+        {% if delivery_fee %}
         <div class="pd__delivery">
           <svg width="16" height="16" aria-hidden="true"><use href="#i-truck"></use></svg>
-          {% if product_delivery.is_free %}
+          {% if delivery_fee == 0 %}
             <span>Free delivery</span>
           {% else %}
-            <span>Delivery: R {{ product_delivery.fee|floatformat:2 }}</span>
-            {% if product_delivery.type == 'big_item' %}<span class="pd__delivery-note">Large item delivery</span>{% endif %}
+            <span>Delivery: R {{ delivery_fee|floatformat:2 }}</span>
           {% endif %}
         </div>
         {% endif %}
