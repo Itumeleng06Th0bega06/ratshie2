@@ -41,14 +41,12 @@ Behaviour
 
 import io
 import json
-import os
 from pathlib import Path
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.utils.text import slugify
 
 from PIL import Image
 
@@ -57,8 +55,6 @@ from products.models import Product, ProductImage
 # Reuse the exact optimisation and naming rules the URL importer uses, so both
 # paths produce identically sized WebP assets.
 from products.management.commands.import_product_images import (  # noqa: E402
-    MAX_SIDE,
-    WEBP_QUALITY,
     _safe_path,
     _to_webp_bytes,
     _validate_image,

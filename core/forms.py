@@ -9,6 +9,8 @@ owner knows a scanner found the admin, and apply a short per-IP cooldown.
 """
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UsernameField
 from django.core.cache import cache
 from django.utils.translation import gettext as _
 
@@ -46,7 +48,42 @@ class HoneypottedAdminAuthenticationForm(AdminAuthenticationForm):
       login failure (no hints), raise a persistent bell card, and start a
       short per-IP cooldown after repeated hits. A legit login success clears
       the tally, so the site owner is never locked out.
+
+    The identifier field accepts either the username or the account's email
+    address (case-insensitive lookup). If more than one account shares the
+    email address, login is refused rather than picking an arbitrary account.
     """
+
+    error_messages = {
+        **AdminAuthenticationForm.error_messages,
+        "invalid_login": _(
+            "Please enter the correct username or email address and password "
+            "for a staff account. Note that both fields may be case-sensitive."
+        ),
+    }
+
+    username = UsernameField(
+        label=_("Username or email address"),
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": _("Username or email address"),
+                "autocomplete": "username",
+                "autocapitalize": "none",
+                "autocorrect": "off",
+            }
+        ),
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        # Allow admins to sign in with either their username or email address.
+        matches = get_user_model().objects.filter(email__iexact=username)[:2]
+        if len(matches) == 1:
+            return matches[0].get_username()
+        if len(matches) > 1:
+            # Ambiguous address: fail safely instead of selecting an account.
+            raise self.get_invalid_login_error()
+        return username
 
     def __init__(self, request=None, *args, **kwargs):
         super().__init__(request, *args, **kwargs)

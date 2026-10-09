@@ -28,7 +28,6 @@ import io
 import json
 import os
 import re
-import sys
 import urllib.error
 import urllib.request
 

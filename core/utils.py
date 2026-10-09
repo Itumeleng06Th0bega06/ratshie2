@@ -52,19 +52,6 @@ def product_whatsapp_message(product=None, product_name="", sku="", price=None, 
     return "\n".join(lines)
 
 
-def order_whatsapp_message(order, items=None):
-    lines = ["Hi, I would like to confirm my order with Ratshie.", "", f"Order: {order.reference}"]
-    if items:
-        subtotal = sum(i.unit_price * i.quantity for i in items if i.unit_price is not None)
-        lines.append(f"Total: R {subtotal:,.2f}")
-    lines.extend(["", "Order items:"])
-    for item in items or []:
-        price = item.unit_price or Decimal("0")
-        lines.append(f"- {item.product_name} x{item.quantity} = R {price * item.quantity:,.2f}")
-    lines.extend(["", "Please confirm availability and arrange delivery."])
-    return "\n".join(lines)
-
-
 def payfast_submit_url():
     if settings.PAYFAST_SANDBOX:
         return "https://sandbox.payfast.co.za/eng/process"
@@ -131,14 +118,6 @@ def cart_items(cart):
             continue
         items.append({"product": p, "qty": int(info.get("qty", 1))})
     return items
-
-
-def cart_summary(cart):
-    """Return (lines, subtotal, total_qty) for the stored cart."""
-    lines = cart_items(cart)
-    subtotal = sum(l["product"].price * l["qty"] for l in lines)
-    total_qty = sum(l["qty"] for l in lines)
-    return lines, subtotal, total_qty
 
 
 def product_wa_link(message):

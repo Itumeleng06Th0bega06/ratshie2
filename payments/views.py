@@ -11,11 +11,10 @@ from urllib.parse import urlencode
 from decimal import Decimal
 import logging
 
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from .models import Payment

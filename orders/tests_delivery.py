@@ -15,7 +15,6 @@ from orders.models import (
     OrderNotification,
 )
 from orders.notifications import send_order_confirmation, send_delivery_update
-from payments.models import Payment
 from products.models import Product
 
 

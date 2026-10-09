@@ -6,6 +6,8 @@ administration/organisation only. The public shop presents a single unified
 product catalogue (no public category navigation), grouped for browsing and
 filtering via ProductGroup.
 """
+import secrets
+
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
@@ -173,7 +175,13 @@ class Product(models.Model):
     short_description = models.CharField(max_length=220, blank=True)
     description = models.TextField(blank=True)
     brand = models.CharField(max_length=80, blank=True)
-    sku = models.CharField("SKU / Part number", max_length=80, blank=True)
+    sku = models.CharField(
+        "SKU / Part number",
+        max_length=80,
+        blank=True,
+        unique=True,
+        help_text="Leave blank to auto-generate (e.g. RAT-4K7P2M). Stable once assigned.",
+    )
 
     # Pricing (demo/seed pricing is fully editable from Django admin)
     price = models.DecimalField(
@@ -242,10 +250,18 @@ class Product(models.Model):
         ordering = ["name"]
         verbose_name_plural = "Products"
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+    @staticmethod
+    def generate_sku():
+        """Return a fresh RAT-XXXXXX SKU (unambiguous uppercase alphanumerics)."""
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        return "RAT-" + "".join(secrets.choice(alphabet) for _ in range(6))
+
+    def _next_unique_sku(self):
+        """Generate a SKU that does not collide with any existing product."""
+        while True:
+            candidate = self.generate_sku()
+            if not Product.objects.filter(sku=candidate).exclude(pk=self.pk).exists():
+                return candidate
 
     def __str__(self):
         return self.name
@@ -503,6 +519,8 @@ class Product(models.Model):
             self.delivery_fee = None
         if not self.slug:
             self.slug = slugify(self.name)
+        if not (self.sku or "").strip():
+            self.sku = self._next_unique_sku()
         super().save(*args, **kwargs)
 
 

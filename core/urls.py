@@ -26,8 +26,3 @@ urlpatterns = [
     path("shipping/", views.shipping_policy, name="shipping"),
     path("health/", views.health, name="health"),
 ]
-
-admin_patterns = [
-    path("notification/<int:pk>/read/", views.notification_mark_read, name="notification_mark_read"),
-    path("notification/read-all/", views.notification_mark_all_read, name="notification_mark_all_read"),
-]

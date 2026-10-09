@@ -1,5 +1,5 @@
-{% comment %}Inner page hero. Expects: title, optional crumb_list (list of (name, url_name)), optional lead{% endcomment %}
-<section class="page-hero">
+{% comment %}Inner page hero. Expects: title, optional crumb_list (list of (name, url_name)), optional lead, optional centered, optional plain{% endcomment %}
+<section class="page-hero{% if centered %} page-hero--center{% endif %}{% if plain %} page-hero--plain{% endif %}">
   <div class="grid-lines" aria-hidden="true"></div>
   <div class="container page-hero__inner">
     {% if crumb_list %}

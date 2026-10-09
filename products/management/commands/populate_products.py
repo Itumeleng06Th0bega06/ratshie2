@@ -3,9 +3,9 @@
 Design constraints (do not change without reading the product brief):
 
 * Uses the existing Product / ProductGroup models. No new product system.
-* Products are matched by SKU, falling back to name for hand-created rows that
-  have no SKU yet, so re-running is idempotent (update_or_create) and never
-  collides on the unique slug.
+* Products are matched by SKU, falling back to name for hand-created rows, so
+  re-running is idempotent (update_or_create) and never collides on the unique
+  slug. A hand-created product's auto-generated SKU is preserved.
 * NO brand names. Every product is a generic fitment description. Nothing here
   claims OEM / genuine / distributor status for any manufacturer.
 * NO manufacturer part numbers. SKUs are internal Ratshie references only.
@@ -337,11 +337,15 @@ class Command(BaseCommand):
 
             # Never clobber real prices a human has already entered. Match on SKU
             # first, then fall back to the same name so a hand-created product
-            # (which has no SKU yet) is updated in place instead of colliding on
-            # the unique slug.
+            # is updated in place instead of colliding on the unique slug. Since
+            # every product now carries an auto-generated SKU, match by name
+            # alone (no longer requiring an empty SKU).
             existing = Product.objects.filter(sku=sku).first()
             if existing is None:
-                existing = Product.objects.filter(name=name, sku="").first()
+                existing = Product.objects.filter(name=name).first()
+                # Preserve a hand-created product's auto-generated SKU.
+                if existing is not None and existing.sku and existing.sku != sku:
+                    defaults.pop("sku", None)
 
             # Never clobber real prices a human has already entered.
             if not force_prices and existing is not None and existing.price:

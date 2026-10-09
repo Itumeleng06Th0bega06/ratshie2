@@ -410,6 +410,9 @@ p { margin: 0; }
 .cta-band--compact .cta-band__inner { padding: 24px 0; }
 .cta-band--compact h2 { font-size: clamp(22px, 2.8vw, 30px); }
 .cta-band--compact p { margin-top: 8px; }
+.cta-band--center .cta-band__inner { flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 0; text-align: center; }
+.cta-band--center h2 { font-size: clamp(22px, 2.6vw, 32px); margin: 0; }
+.cta-band--center p { margin-top: 2px; max-width: 54ch; }
 
 /* ---------- Page hero (inner) ---------- */
 .page-hero { background: var(--ink); color: #fff; position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
@@ -419,6 +422,9 @@ p { margin: 0; }
 .page-hero__crumb { color: var(--muted-on-dark); font-size: 14px; }
 .page-hero__crumb a:hover { color: var(--gold-2); }
 .page-hero__lead { max-width: 720px; margin-top: 18px; color: var(--muted-on-dark); font-size: 17px; }
+.page-hero--center .page-hero__inner { text-align: center; }
+.page-hero--center .crumb { justify-content: center; }
+.page-hero--center .page-hero__lead { margin-left: auto; margin-right: auto; }
 
 /* ---------- Shop Hero ---------- */
 .shop-hero {
@@ -612,6 +618,38 @@ p { margin: 0; }
     padding: 24px 0;
     min-height: auto;
   }
+}
+
+/* ---------- Shared hero image backdrop ----------
+   One faded, monochrome Ford Ranger photograph sits behind the public
+   content/marketing heroes: inner pages (.page-hero), the shop/home band
+   (.shop-hero) and the contact workshop band (.workshop-hero). The Ford
+   Ranger is South Africa's best-selling Ford (built in Silverton) and the
+   photo is a Ranger in KZN. It is an absolutely positioned,
+   pointer-events-none pseudo-element, so it never affects hero height,
+   layout or document flow. A radial mask fades the image at the edges and
+   the low opacity keeps it subtle, so the heading, text, buttons and
+   breadcrumbs all stay fully readable above it; hero content paints on top
+   because each hero's inner wrapper is positioned with its own z-index.
+
+   Deliberately excluded: the cart (.cart-hero), checkout and the auth/account
+   heroes. Checkout opts out of this shared backdrop by passing plain=True to
+   the page_hero include, which adds .page-hero--plain. */
+.page-hero:not(.page-hero--plain)::before,
+.shop-hero::before,
+.workshop-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("../img/hero/hero-car.webp");
+  background-repeat: no-repeat;
+  background-position: center 50%;
+  background-size: cover;
+  opacity: 0.18;
+  -webkit-mask-image: radial-gradient(140% 165% at 50% 50%, #000 8%, transparent 76%);
+  mask-image: radial-gradient(140% 165% at 50% 50%, #000 8%, transparent 76%);
 }
 
 /* ==========================================================================

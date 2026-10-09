@@ -41,7 +41,7 @@
           {% csrf_token %}
           <button type="submit" class="btn btn--gold btn--sm add-to-cart" data-add-to-cart-url="{% url 'products:cart_add' p.slug %}" aria-label="Add {{ p.name }} to cart">
             <svg class="ico" aria-hidden="true"><use href="#i-cart"></use></svg>
-            <span>ADD TO CART</span>
+            <span>ADD</span>
           </button>
         </form>
         {% endif %}

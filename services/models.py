@@ -47,12 +47,3 @@ class Service(models.Model):
         if self.price is not None:
             return f"R {self.price:,.2f}"
         return "Price on request"
-
-
-SERVICE_STATUS = [
-    ("pending", "Pending"),
-    ("approved", "Approved"),
-    ("in_progress", "In Progress"),
-    ("completed", "Completed"),
-    ("cancelled", "Cancelled"),
-]

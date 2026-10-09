@@ -1,5 +1,5 @@
+from django import forms
 from django.contrib import admin
-from django.contrib import messages
 from django.utils.html import format_html, mark_safe
 from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
 
@@ -37,13 +37,6 @@ class ProductImageInline(admin.StackedInline):
         return mark_safe('<span style="color:#999">No image yet — use the Image field below to upload.</span>')
 
     preview.short_description = "Current image"
-
-
-from django import forms
-from django.contrib import admin
-from django.contrib import messages
-from django.utils.html import format_html, mark_safe
-from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -283,6 +276,14 @@ class ProductAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("created_at", "updated_at", "discount_display", "image_status", "member_only_note")
 
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request=request, obj=obj))
+        if obj is not None:
+            # SKU is auto-generated and must stay stable once assigned.
+            if "sku" not in fields:
+                fields.append("sku")
+        return fields
+
     actions = [
         "mark_featured",
         "unmark_featured",
@@ -291,12 +292,6 @@ class ProductAdmin(admin.ModelAdmin):
         "set_member_only",
         "unset_member_only",
     ]
-
-    @admin.display(description="Members only", boolean=True)
-    def purchase_restriction(self, obj):
-        return obj.is_member_only
-
-    purchase_restriction.short_description = "Members only"
 
     def member_only_note(self, obj):
         if not obj.is_on_sale and not obj.is_member_only:
@@ -334,27 +329,6 @@ class ProductAdmin(admin.ModelAdmin):
             )
         return "—"
 
-    @admin.display(description="Delivery", empty_value="—")
-    def delivery_type_display(self, obj):
-        """Compact delivery summary: 'Free', 'Custom - R80.00', 'Big item'.
-
-        Reads the same calculator checkout charges, so this column can never
-        disagree with what a customer is actually billed.
-        """
-        from orders.services import product_delivery
-
-        info = product_delivery(obj)
-        if info["type"] == "free":
-            return mark_safe('<span style="color:#1a7f37;font-weight:600">Free</span>')
-        if info["type"] == "custom":
-            return f"Custom — R {info['fee']:,.2f}"
-        if info["type"] == "big_item":
-            return f"Big item — R {info['fee']:,.2f}"
-        return f"Standard — R {info['fee']:,.2f}"
-
-    delivery_type_display.short_description = "Delivery"
-    delivery_type_display.admin_order_field = "delivery_type"
-
     @admin.display(description="Stock")
     def stock_badge(self, obj):
         availability = obj.availability
@@ -381,12 +355,6 @@ class ProductAdmin(admin.ModelAdmin):
                 f"{obj.discount_percent}%",
             )
         return price
-
-    @admin.display(description="Discount")
-    def discount(self, obj):
-        if obj.is_on_sale and obj.discount_percent is not None:
-            return f"{obj.discount_percent}% OFF"
-        return "—"
 
     @admin.display(description="Discount (read-only)")
     def discount_display(self, obj):

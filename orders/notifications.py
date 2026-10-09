@@ -5,7 +5,6 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.utils import timezone
 
 from core import delivery
 from core.sms import send_sms

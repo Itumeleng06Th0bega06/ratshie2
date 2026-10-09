@@ -1,10 +1,9 @@
 """Central purchase-authorization rules for the shop.
 
 Every cart / checkout / order / payment entry point must consult
-:func:`can_purchase_product` (or :func:`restricted_cart_items` for a whole
-cart) before letting a visitor add or buy goods. This is the single source of
-truth so sale/member restrictions are never duplicated (and never diverged)
-across views.
+:func:`can_purchase_product` before letting a visitor add or buy goods. This is
+the single source of truth so sale/member restrictions are never duplicated
+(and never diverged) across views.
 
 Rule (per product):
     * A product that is unavailable cannot be bought.
@@ -31,23 +30,6 @@ def can_purchase_product(user, product):
         if not authed:
             return False, "member_only"
     return True, None
-
-
-def restricted_cart_items(user, product_pks):
-    """Filter a list of product pks to those an anonymous user may not buy.
-
-    Returns a list of the restricted product objects. Used server-side to
-    reject/remove on-sale member-only items before checkout.
-    """
-    from products.models import Product
-
-    products = Product.objects.filter(pk__in=product_pks)
-    restricted = []
-    for p in products:
-        allowed, _ = can_purchase_product(user, p)
-        if not allowed:
-            restricted.append(p)
-    return restricted
 
 
 def cart_restriction_errors(user, product_lines):

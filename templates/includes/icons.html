@@ -1,7 +1,7 @@
 {% comment %}
 Reusable SVG "sprite" of inline symbols.
-Usage: {% include "includes/icon.html" with name="wrench" %}
-Better: a single sprite is defined here, then <svg><use href="#i-wrench"></use></svg>.
+Usage: {% include "includes/icons.html" %} once per page, then
+<svg class="icon"><use href="#i-wrench"></use></svg> anywhere.
 {% endcomment %}
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
   <defs>

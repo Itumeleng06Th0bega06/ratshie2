@@ -78,24 +78,3 @@ def payfast_summary():
             "To complete your order now, please contact us via WhatsApp."
         )
     return {"enabled": enabled, "message": message}
-
-
-def payfast_mode():
-    """Return 'sandbox' or 'live' based on environment configuration."""
-    return getattr(settings, "PAYFAST_MODE", "sandbox")
-
-
-def payfast_summary():
-    """Polished, non-technical snapshot used on the public payment UI.
-
-    Returns ``enabled`` (bool) and ``message`` (str) suitable for customers.
-    """
-    enabled = payfast_enabled()
-    if enabled:
-        message = "Online payments are available. You will be redirected to a secure PayFast page to complete your payment."
-    else:
-        message = (
-            "Online payment is currently being configured. "
-            "To complete your order now, please contact us via WhatsApp."
-        )
-    return {"enabled": enabled, "message": message}

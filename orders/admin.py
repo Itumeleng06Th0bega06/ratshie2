@@ -5,10 +5,8 @@ from django.shortcuts import render, redirect
 from django.urls import path
 from django.utils import timezone
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
 from .models import Order, OrderItem, OrderDeliveryHistory, OrderNotification, ShippingSettings
-from .notifications import send_order_confirmation, send_delivery_update
-from core import delivery
+from .notifications import send_delivery_update
 
 
 @admin.register(ShippingSettings)

@@ -8,7 +8,7 @@ change.
 Public holidays are supported through the optional PublicHoliday model; when
 no holidays exist the calculation degrades gracefully to weekends only.
 """
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.utils import timezone
 

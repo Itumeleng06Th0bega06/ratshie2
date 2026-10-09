@@ -19,7 +19,7 @@ from django.contrib.auth.views import (
 from django.http import JsonResponse
 
 from core.models import SiteConfig, FAQ
-from core.utils import service_whatsapp_message, wa_short_link
+from core.utils import service_whatsapp_message
 from customers.models import Customer
 
 

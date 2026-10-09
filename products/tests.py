@@ -6,6 +6,7 @@ Covers:
 - Product card hides Add to Cart when the product cannot be purchased.
 - ?group=<slug> filters the catalogue using the database-backed ProductGroup.
 - populate_products is idempotent, preserves real prices, and stays unbranded.
+- Products automatically receive a unique, stable RAT-XXXXXX SKU.
 - The mobile toast animation cannot push itself off-screen.
 
 Runs against Django's throwaway test database, so db.sqlite3 is untouched.
@@ -14,6 +15,7 @@ from decimal import Decimal
 import json
 from pathlib import Path
 import tempfile
+from unittest import mock
 
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -285,13 +287,15 @@ class PopulateProductsCommandTests(TestCase):
             Product.objects.filter(product_type=Product.ProductType.SPARE_PART).count(), 61
         )
 
-    def test_matches_hand_created_product_without_a_sku(self):
+    def test_matches_hand_created_product_and_preserves_its_sku(self):
         existing = make_product("Toyota Corolla Oil Filter", price=Decimal("999.00"))
+        original_sku = existing.sku
+        self.assertRegex(original_sku, r"^RAT-[0-9A-Z]{6}$")
         self._run()
         self.assertEqual(Product.objects.filter(name="Toyota Corolla Oil Filter").count(), 1)
         existing.refresh_from_db()
         self.assertEqual(existing.price, Decimal("999.00"))
-        self.assertEqual(existing.sku, "RSH-TOYOTA-COROLLA-OIL-FILTER")
+        self.assertEqual(existing.sku, original_sku)
         self.assertEqual(existing.product_group.slug, "filters")
 
     def test_every_group_has_products(self):
@@ -632,3 +636,81 @@ class NoHomePageTests(TestCase):
         from pathlib import Path
 
         self.assertFalse(Path("templates/core/home.html").exists())
+
+
+class AutoSkuTests(TestCase):
+    """Server-side automatic RAT-XXXXXX SKU generation.
+
+    - New products with a blank/whitespace SKU get a generated one on save.
+    - Generated SKUs never collide (retry on the improbable duplicate).
+    - Once assigned, a SKU never changes on subsequent saves.
+    - An explicitly typed, non-blank SKU is preserved untouched.
+    """
+
+    def test_new_product_receives_generated_sku(self):
+        product = make_product("Disc Rotor Set")
+        self.assertRegex(product.sku, r"^RAT-[0-9A-Z]{6}$")
+
+    def test_skus_are_unique_across_products(self):
+        skus = {make_product(name).sku for name in ("One", "Two", "Three")}
+        self.assertEqual(len(skus), 3)
+        for sku in skus:
+            self.assertRegex(sku, r"^RAT-[0-9A-Z]{6}$")
+
+    def test_saving_again_keeps_the_same_sku(self):
+        product = make_product()
+        original = product.sku
+        product.price = Decimal("349.00")
+        product.save()
+        product.refresh_from_db()
+        self.assertEqual(product.sku, original)
+
+    def test_whitespace_only_sku_is_treated_as_blank(self):
+        product = Product.objects.create(
+            name="Whitespace SKU", price=Decimal("120.00"), stock=4, sku="   "
+        )
+        self.assertRegex(product.sku, r"^RAT-[0-9A-Z]{6}$")
+
+    def test_explicit_sku_is_never_overwritten(self):
+        product = Product.objects.create(
+            name="Explicit SKU", price=Decimal("120.00"), stock=4, sku="RSH-OLD-123"
+        )
+        self.assertEqual(product.sku, "RSH-OLD-123")
+        product.save()
+        product.refresh_from_db()
+        self.assertEqual(product.sku, "RSH-OLD-123")
+
+    def test_generation_retries_when_the_first_collides(self):
+        Product.objects.create(
+            name="Collision holder", price=Decimal("120.00"), stock=4, sku="RAT-AAAAAA"
+        )
+        with mock.patch.object(
+            Product,
+            "generate_sku",
+            side_effect=["RAT-AAAAAA", "RAT-BBBBBB"],
+        ):
+            product = make_product("Retry product")
+        self.assertEqual(product.sku, "RAT-BBBBBB")
+
+
+class AdminSkuReadOnlyTests(TestCase):
+    """The SKU is editable on creation and read-only once a product exists."""
+
+    def _field_list(self, obj):
+        from django.contrib.admin.sites import AdminSite
+
+        from products.admin import ProductAdmin
+
+        admin_class = ProductAdmin(Product, AdminSite())
+        request = mock.Mock()
+        request.user = mock.MagicMock()
+        request.user.groups.all.return_value = []
+        request.user.has_perm.return_value = False
+        return admin_class.get_readonly_fields(request, obj=obj)
+
+    def test_new_product_allows_typing_a_sku(self):
+        self.assertNotIn("sku", self._field_list(None))
+
+    def test_existing_product_shows_sku_read_only(self):
+        product = make_product()
+        self.assertIn("sku", self._field_list(product))
