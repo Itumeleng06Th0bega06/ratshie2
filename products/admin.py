@@ -65,6 +65,16 @@ class ProductAdminForm(forms.ModelForm):
             )
         if "delivery_mode" in self.fields:
             self.fields["delivery_mode"].help_text = "Delivery timeframe, not the cost."
+        if "availability" in self.fields:
+            self.fields["availability"].help_text = (
+                "Shown to customers. In Stock / Limited Stock / Backorder items are "
+                "only buyable when the stock quantity below is greater than 0."
+            )
+        if "stock" in self.fields:
+            self.fields["stock"].help_text = (
+                "How many you have. Must be greater than 0 for the Add to Cart button "
+                "to appear on the storefront. Use 0 to mark an item sold out."
+            )
 
     def clean(self):
         cleaned = super().clean()
@@ -248,7 +258,17 @@ class ProductAdmin(admin.ModelAdmin):
         ),
         ("Identification", {"fields": ("product_type", "product_group", "name", "slug", "brand", "sku")}),
         ("Description", {"fields": ("short_description", "description")}),
-        ("Pricing & discount", {"fields": ("original_price", "price", "discount_display", "availability")}),
+        (
+            "Pricing, availability & stock",
+            {
+                "fields": ("original_price", "price", "discount_display", "availability", "stock"),
+                "description": (
+                    "The Add to Cart button only shows when Availability is In Stock / "
+                    "Limited Stock / Backorder AND Stock is greater than 0. Set Stock to "
+                    "0 to mark an item sold out."
+                ),
+            },
+        ),
         (
             "Delivery charge",
             {

@@ -157,6 +157,34 @@ class ProductCardAddToCartTests(TestCase):
         self.assertIn("data-add-to-cart", html)
 
 
+class ProductAdminStockFieldTests(TestCase):
+    """The Add to Cart button requires stock > 0, so the owner must be able to set
+    the stock quantity from the product admin. Regression: `stock` was omitted
+    from every fieldset, leaving new products stuck on 'UNAVAILABLE'."""
+
+    def test_product_admin_fieldset_exposes_stock(self):
+        from products.admin import ProductAdmin
+
+        all_fields = [f for _, opts in ProductAdmin.fieldsets for f in opts["fields"]]
+        self.assertIn("stock", all_fields)
+        self.assertIn("availability", all_fields)
+
+    def test_stock_input_renders_on_change_form(self):
+        admin_user = User.objects.create_superuser("boss", "boss@example.com", "pw")
+        self.client.force_login(admin_user)
+        product = make_product("Needs stock")
+        response = self.client.get(reverse("admin:products_product_change", args=[product.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="stock"')
+
+    def test_setting_stock_via_admin_unlocks_add_to_cart(self):
+        product = make_product("Counted later", stock=0)
+        self.assertNotIn("data-add-to-cart", self.client.get(reverse("products:shop")).content.decode())
+        product.stock = 3
+        product.save()
+        self.assertIn("data-add-to-cart", self.client.get(reverse("products:shop")).content.decode())
+
+
 class ProductDetailAddToCartTests(TestCase):
     def test_sale_product_shows_add_to_cart_for_anonymous(self):
         make_product(
