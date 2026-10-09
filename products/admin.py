@@ -347,7 +347,7 @@ class ProductAdmin(admin.ModelAdmin):
     def sale_price_display(self, obj):
         if not obj.is_on_sale:
             return "—"
-        price = format_html('<span style="color:#1a7f37;font-weight:700">→ R {:,.2f}</span>', obj.price)
+        price = format_html('<span style="color:#1a7f37;font-weight:700">→ R {}</span>', f"{obj.price:,.2f}")
         if obj.discount_percent is not None:
             return format_html(
                 '{} <span style="color:#1a7f37;font-size:11px;font-weight:600">({} OFF)</span>',

@@ -18,10 +18,13 @@ import tempfile
 from unittest import mock
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from products.models import Product, ProductGroup, ProductImage
+
+User = get_user_model()
 
 
 def make_product(name="Brake Pad Set", **kwargs):
@@ -714,3 +717,29 @@ class AdminSkuReadOnlyTests(TestCase):
     def test_existing_product_shows_sku_read_only(self):
         product = make_product()
         self.assertIn("sku", self._field_list(product))
+
+
+class AdminChangelistSaleRenderingTests(TestCase):
+    """An on-sale row must not crash the admin product changelist.
+
+    Regression: format_html() HTML-escapes its args before formatting, so a
+    Python format spec on a passed value (e.g. '{:,.2f}' with obj.price) raises
+    ValueError for on-sale rows.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="admin", password="s3cret!x", is_staff=True, is_superuser=True
+        )
+        self.client.force_login(self.user)
+
+    def test_changelist_renders_on_sale_rows(self):
+        make_product("Discounted", price=Decimal("450.00"), original_price=Decimal("550.00"))
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Discounted")
+
+    def test_status_200_even_with_no_on_sale_rows(self):
+        make_product("Full price", price=Decimal("250.00"))
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
