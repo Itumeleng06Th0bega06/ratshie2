@@ -19,8 +19,8 @@
     </p>
   </div>
   <div class="flex gap-2">
-    <a href="/admin/orders/order/?status__exact=pending" class="rui-btn rui-btn-secondary">Review orders</a>
-    <a href="/admin/products/product/add/" class="rui-btn rui-btn-primary">
+    <a href="{% url 'admin:orders_order_changelist' %}?status__exact=pending" class="rui-btn rui-btn-secondary">Review orders</a>
+    <a href="{% url 'admin:products_product_add' %}" class="rui-btn rui-btn-primary">
       <svg class="h-4 w-4"><use href="#i-plus"></use></svg> Add product
     </a>
   </div>
@@ -76,7 +76,7 @@
 
 <!-- KPI cards -->
 <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-  <a href="/admin/orders/order/" class="rui-kpi group">
+  <a href="{% url 'admin:orders_order_changelist' %}" class="rui-kpi group">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">Active Orders</span>
       <span class="rounded-lg bg-brand-50 p-2 text-brand-600"><svg class="h-4 w-4"><use href="#i-badge"></use></svg></span>
@@ -85,7 +85,7 @@
     <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_orders_count|default:0 }} lifetime</span></div>
   </a>
 
-  <a href="/admin/payments/payment/" class="rui-kpi">
+  <a href="{% url 'admin:payments_payment_changelist' %}" class="rui-kpi">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">Revenue Secured</span>
       <span class="rounded-lg bg-emerald-50 p-2 text-emerald-600"><svg class="h-4 w-4"><use href="#i-trend-up"></use></svg></span>
@@ -94,7 +94,7 @@
     <div class="rui-kpi-delta"><span class="text-ink-500">Paid + fulfilled</span></div>
   </a>
 
-  <a href="/admin/products/product/" class="rui-kpi">
+  <a href="{% url 'admin:products_product_changelist' %}" class="rui-kpi">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">Products Live</span>
       <span class="rounded-lg bg-brand-50 p-2 text-brand-600"><svg class="h-4 w-4"><use href="#i-cart"></use></svg></span>
@@ -103,7 +103,7 @@
     <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_sale_products|default:0 }} on sale</span></div>
   </a>
 
-  <a href="/admin/customers/customer/" class="rui-kpi">
+  <a href="{% url 'admin:customers_customer_changelist' %}" class="rui-kpi">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">Members</span>
       <span class="rounded-lg bg-sky-50 p-2 text-sky-600"><svg class="h-4 w-4"><use href="#i-user"></use></svg></span>
@@ -112,7 +112,7 @@
     <div class="rui-kpi-delta"><span class="text-ink-500">{{ dash_customers|default:0 }} total contacts</span></div>
   </a>
 
-  <a href="/admin/products/productimage/?status__exact=PENDING" class="rui-kpi">
+  <a href="{% url 'admin:products_productimage_changelist' %}?status__exact=PENDING" class="rui-kpi">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">Images to Verify</span>
       <span class="rounded-lg bg-amber-50 p-2 text-amber-600"><svg class="h-4 w-4"><use href="#i-eye"></use></svg></span>
@@ -121,7 +121,7 @@
     <div class="rui-kpi-delta"><span class="text-ink-500">Pending review</span></div>
   </a>
 
-  <a href="/admin/products/productenquiry/?status__exact=new" class="rui-kpi">
+  <a href="{% url 'admin:products_productenquiry_changelist' %}?status__exact=new" class="rui-kpi">
     <div class="flex items-center justify-between">
       <span class="rui-kpi-label">New Enquiries</span>
       <span class="rounded-lg bg-red-50 p-2 text-red-600"><svg class="h-4 w-4"><use href="#i-mail"></use></svg></span>
@@ -139,7 +139,7 @@
         <h3 class="rui-card-title">Recent orders</h3>
         <p class="mt-0.5 text-xs text-ink-500">Latest {{ dash_recent_orders|length }} orders across the shop</p>
       </div>
-      <a href="/admin/orders/order/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
+      <a href="{% url 'admin:orders_order_changelist' %}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
     </div>
     <div class="overflow-x-auto">
       <table class="rui-table">
@@ -156,7 +156,7 @@
           {% for o in dash_recent_orders %}
           <tr>
             <td class="font-semibold text-ink-800">
-              <a href="/admin/orders/order/{{ o.pk }}/change/" class="hover:text-brand-700">{{ o.reference }}</a>
+              <a href="{% url 'admin:orders_order_change' o.pk %}" class="hover:text-brand-700">{{ o.reference }}</a>
             </td>
             <td>{{ o.customer.full_name|default:"Guest" }}</td>
             <td class="text-ink-500">{{ o.created_at|date:"d M Y" }}</td>
@@ -183,23 +183,23 @@
     <div class="rui-card">
       <div class="rui-card-header"><h3 class="rui-card-title">Quick actions</h3></div>
       <div class="grid grid-cols-2 gap-3 p-4">
-        <a href="/admin/products/product/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Product</a>
-        <a href="/admin/orders/order/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Order</a>
-        <a href="/admin/customers/customer/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ Customer</a>
-        <a href="/admin/core/faq/add/" class="rui-btn rui-btn-secondary rui-btn-sm">+ FAQ</a>
+        <a href="{% url 'admin:products_product_add' %}" class="rui-btn rui-btn-secondary rui-btn-sm">+ Product</a>
+        <a href="{% url 'admin:orders_order_add' %}" class="rui-btn rui-btn-secondary rui-btn-sm">+ Order</a>
+        <a href="{% url 'admin:customers_customer_add' %}" class="rui-btn rui-btn-secondary rui-btn-sm">+ Customer</a>
+        <a href="{% url 'admin:core_faq_add' %}" class="rui-btn rui-btn-secondary rui-btn-sm">+ FAQ</a>
       </div>
     </div>
 
     <div class="rui-card">
       <div class="rui-card-header">
         <h3 class="rui-card-title">New members</h3>
-        <a href="/admin/customers/customer/?user__isnull=False" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
+        <a href="{% url 'admin:customers_customer_changelist' %}?user__isnull=False" class="text-xs font-semibold text-brand-600 hover:text-brand-700">View all →</a>
       </div>
       <ul class="divide-y divide-ink-100">
         {% for c in dash_new_members %}
         <li class="flex items-center gap-3 px-4 py-3">
           <span class="rui-avatar">{{ c.full_name|slice:":1"|upper }}</span>
-          <a href="/admin/customers/customer/{{ c.pk }}/change/" class="min-w-0">
+          <a href="{% url 'admin:customers_customer_change' c.pk %}" class="min-w-0">
             <span class="block truncate text-sm font-medium text-ink-900 hover:text-brand-700">{{ c.full_name }}</span>
             <span class="block truncate text-xs text-ink-500">{{ c.user.email|default:c.email|default:"—" }}</span>
           </a>
@@ -219,7 +219,7 @@
       <h3 class="rui-card-title">On sale now</h3>
       <p class="mt-0.5 text-xs text-ink-500">Products with discounted pricing</p>
     </div>
-    <a href="/admin/products/product/?is_member_only__exact=1" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Manage →</a>
+    <a href="{% url 'admin:products_product_changelist' %}?is_member_only__exact=1" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Manage →</a>
   </div>
   <div class="overflow-x-auto">
     <table class="rui-table">
@@ -229,7 +229,7 @@
       <tbody>
         {% for p in dash_sale_list %}
         <tr>
-          <td class="font-medium text-ink-800"><a href="/admin/products/product/{{ p.pk }}/change/" class="hover:text-brand-700">{{ p.name }}</a></td>
+          <td class="font-medium text-ink-800"><a href="{% url 'admin:products_product_change' p.pk %}" class="hover:text-brand-700">{{ p.name }}</a></td>
           <td class="text-ink-500">{{ p.sku|default:"—" }}</td>
           <td class="font-semibold">R {{ p.price|floatformat:2 }}</td>
           <td class="text-ink-400 line-through">R {{ p.original_price|floatformat:2 }}</td>

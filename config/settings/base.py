@@ -36,6 +36,11 @@ DEBUG = env("DEBUG", default=True if os.environ.get("RATSHIE_ENV") != "prod" els
 # which would reject every cross-origin POST.
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS", default=[])
 
+# Mount the Django admin off the obvious path for light-touch obscurity.
+# Override with a strong, unguessable token in production via
+# RATSHIE_ADMIN_URL (trailing slash required, e.g. "rod_mastertech/").
+ADMIN_URL = env.str("RATSHIE_ADMIN_URL", default="rod_mastertech/")
+
 # ---------------------------------------------------------------------------
 # Apps
 # ---------------------------------------------------------------------------

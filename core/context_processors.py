@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import Error as DatabaseError
 from django.db.models import F, Sum
-from django.urls import resolve
+from django.urls import resolve, reverse
 
 from core.models import SiteConfig
 from payments.payment_methods import get_payment_methods, payfast_enabled, payfast_mode, payfast_summary
@@ -78,9 +78,10 @@ def admin_command_bar(request):
 
     # Sidebar "active" flags based on the current admin path.
     path = request.path
+    admin_base = "/" + settings.ADMIN_URL
     ctx["is_dashboard_page"] = is_dashboard
-    ctx["is_product_list"] = path.startswith("/admin/products/product/") and not "/change/" in path and not "/add/" in path
-    ctx["is_order_list"] = path.startswith("/admin/orders/order/") and not "/change/" in path and not "/add/" in path
+    ctx["is_product_list"] = path.startswith(f"{admin_base}products/product/") and not "/change/" in path and not "/add/" in path
+    ctx["is_order_list"] = path.startswith(f"{admin_base}orders/order/") and not "/change/" in path and not "/add/" in path
 
     if is_dashboard:
         all_orders = Order.objects.all()
@@ -127,7 +128,7 @@ def admin_command_bar(request):
                 "key": f"order:{order.pk}",
                 "title": f"Order {order.reference}",
                 "text": f"Order {order.reference} — {order.get_status_display()}",
-                "url": f"/admin/orders/order/{order.pk}/change/",
+                "url": reverse("admin:orders_order_change", args=[order.pk]),
                 "level": "warning" if order.status == "pending" else "info",
             }
         )
@@ -137,7 +138,7 @@ def admin_command_bar(request):
                 "key": f"image:{img.pk}",
                 "title": "Verify product image",
                 "text": f"Verify image: {img.product.name}",
-                "url": f"/admin/products/productimage/{img.pk}/change/",
+                "url": reverse("admin:products_productimage_change", args=[img.pk]),
                 "level": "info",
             }
         )
@@ -147,7 +148,7 @@ def admin_command_bar(request):
                 "key": f"enquiry:{enquiry.pk}",
                 "title": "New product enquiry",
                 "text": f"New enquiry: {enquiry.product_name or enquiry.product}",
-                "url": f"/admin/products/productenquiry/{enquiry.pk}/change/",
+                "url": reverse("admin:products_productenquiry_change", args=[enquiry.pk]),
                 "level": "success",
             }
         )
@@ -178,7 +179,7 @@ def admin_command_bar(request):
             "title": n.title,
             "text": n.text,
             "level": n.level,
-            "url": n.url or "/admin/",
+            "url": n.url or reverse("admin:index"),
             "is_read": n.is_read,
         }
         for n in list(unread_qs[:10]) + list(recent_read)

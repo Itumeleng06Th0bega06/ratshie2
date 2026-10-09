@@ -8,9 +8,9 @@
     <div class="rui-mega relative" data-popup-wrap>
       <button type="button" class="rui-btn rui-btn-primary" data-popup-toggle aria-expanded="false">{% translate 'Quick menu' %}</button>
       <div class="rui-popup rui-popup--create" data-popup>
-        <a href="/admin/orders/order/add/" class="rui-popup-item">{% translate 'New order' %}</a>
-        <a href="/admin/customers/customer/add/" class="rui-popup-item">{% translate 'Add customer' %}</a>
-        <a href="/admin/core/faq/add/" class="rui-popup-item">{% translate 'Add FAQ' %}</a>
+        <a href="{% url 'admin:orders_order_add' %}" class="rui-popup-item">{% translate 'New order' %}</a>
+        <a href="{% url 'admin:customers_customer_add' %}" class="rui-popup-item">{% translate 'Add customer' %}</a>
+        <a href="{% url 'admin:core_faq_add' %}" class="rui-popup-item">{% translate 'Add FAQ' %}</a>
       </div>
     </div>
 
@@ -38,7 +38,7 @@
           {% endfor %}
         </div>
         <div class="border-t border-ink-100 px-4 py-3">
-          <a href="/admin/core/notification/" class="text-xs font-semibold text-brand-600 hover:text-brand-700">{% translate 'View all notifications →' %}</a>
+          <a href="{% url 'admin:core_notification_changelist' %}" class="text-xs font-semibold text-brand-600 hover:text-brand-700">{% translate 'View all notifications →' %}</a>
         </div>
       </div>
     </div>

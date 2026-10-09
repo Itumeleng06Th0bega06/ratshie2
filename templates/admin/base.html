@@ -73,6 +73,13 @@
 <div id="rui-modal-root"></div>
 <div id="rui-drawer-root"></div>
 {% block extrabody %}{% endblock extrabody %}
+<script {% csp_nonce_attr %}>
+window.RATSHIE = window.RATSHIE || {};
+window.RATSHIE.notifications = {
+  read: "{% url 'core_notifications:notification_mark_read' pk=0 %}",
+  readAll: "{% url 'core_notifications:notification_mark_all_read' %}",
+};
+</script>
 <script src="{% static "js/htmx.min.js" %}" {% csp_nonce_attr %}></script>
 <script src="{% static "js/ui.js" %}" {% csp_nonce_attr %}></script>
 <script src="{% static "admin_premium/admin.js" %}" {% csp_nonce_attr %}></script>

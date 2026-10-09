@@ -144,6 +144,8 @@
   }
 
   function wireNotifications() {
+    var urls = window.RATSHIE && window.RATSHIE.notifications;
+    if (!urls) return;
     document.querySelectorAll("[data-mark-read]").forEach(function (a) {
       a.addEventListener("click", function () {
         a.classList.remove("rui-notif-unread");
@@ -151,7 +153,7 @@
         if (dot) dot.classList.remove("bg-brand-500");
         if (dot) dot.classList.add("bg-ink-200");
         var pk = a.getAttribute("data-mark-read");
-        fetch("/admin/notifications/" + pk + "/read/", {
+        fetch(urls.read.replace("/0/", "/" + pk + "/"), {
           method: "POST",
           credentials: "same-origin",
           headers: { "X-CSRFToken": getCookie("csrftoken"), "X-Requested-With": "XMLHttpRequest" },
@@ -163,7 +165,7 @@
     if (markAll) {
       markAll.addEventListener("click", function (e) {
         e.preventDefault(); e.stopPropagation();
-        fetch("/admin/notifications/read-all/", {
+        fetch(urls.readAll, {
           method: "POST",
           credentials: "same-origin",
           headers: { "X-CSRFToken": getCookie("csrftoken"), "X-Requested-With": "XMLHttpRequest" },

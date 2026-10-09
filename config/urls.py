@@ -8,18 +8,21 @@ from core import views as core_views
 
 # Ratshie admin runs as a premium command centre with a curated sidebar
 # (see templates/admin/nav_sidebar.html + static/admin_premium/admin.css).
+# It mounts at settings.ADMIN_URL so the path is not guessable.
+
+ADMIN_URL = settings.ADMIN_URL
 
 
 urlpatterns = [
     path(
-        "admin/notifications/",
+        f"{ADMIN_URL}notifications/",
         include(
             (core_views.admin_urlpatterns, "core_notifications"),
             namespace="core_notifications",
         ),
     ),
     path(
-        "admin/password-reset/",
+        f"{ADMIN_URL}password-reset/",
         include(
             [
                 path("", core_views.RatShiePasswordResetView.as_view(), name="admin_password_reset"),
@@ -37,7 +40,7 @@ urlpatterns = [
             ]
         ),
     ),
-    path("admin/", admin.site.urls),
+    path(ADMIN_URL, admin.site.urls),
     path("", include("core.urls")),
     path("account/", include("customers.urls")),
     path("shop/", include("products.urls")),

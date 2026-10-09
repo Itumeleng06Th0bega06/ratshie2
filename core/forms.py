@@ -12,6 +12,7 @@ from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UsernameField
 from django.core.cache import cache
+from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from .models import Notification
@@ -140,7 +141,7 @@ class HoneypottedAdminAuthenticationForm(AdminAuthenticationForm):
                 "title": title,
                 "text": text[:300],
                 "level": "error",
-                "url": "/admin/",
+                "url": reverse("admin:index"),
                 "is_read": False,
             },
         )
