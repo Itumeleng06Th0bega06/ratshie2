@@ -29,10 +29,17 @@
             <span>Discount</span><span>-R {{ discount_total|floatformat:2 }}</span>
           </div>
           {% endif %}
+          {% for d in delivery_lines %}
+          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px">
+            <span>{% if d.type == 'custom' %}Delivery · {{ d.name }}{% else %}Standard delivery{% endif %}</span>
+            <span>{% if d.is_free %}Free{% else %}R {{ d.fee|floatformat:2 }}{% endif %}</span>
+          </div>
+          {% empty %}
           <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px">
             <span>Delivery</span>
-            <span>{% if delivery_fee %}R {{ delivery_fee|floatformat:2 }}{% else %}Free{% endif %}</span>
+            <span>Free</span>
           </div>
+          {% endfor %}
           <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:18px;font-weight:700">
             <span>Total</span><span>R {{ grand_total|floatformat:2 }}</span>
           </div>
@@ -72,8 +79,9 @@
           </div>
 
           <div class="alert alert--info" style="margin-bottom:14px" role="status">
-            Delivery is <strong>{% if delivery_fee %}R {{ delivery_fee|floatformat:2 }}{% else %}free{% endif %}</strong>
-            for this order, delivered to your address. This is the only delivery charge — we never add any after you order.
+            Delivery is <strong>{% if delivery_is_free %}free{% else %}R {{ delivery_fee|floatformat:2 }}{% endif %}</strong>
+            for this order, delivered to your address. The standard fee is charged once per order and each
+            custom-delivery product adds its own fee once (never per unit) — we never add any delivery cost after you order.
           </div>
 
           <div class="field">
@@ -86,15 +94,14 @@
             <textarea id="notes" name="notes" placeholder="Vehicle details, anything important..."></textarea>
           </div>
 
-          <div class="terms-check">
-            <label class="checkbox" for="accept_terms">
+          <div class="checkout-terms">
+            <label class="checkout-terms__label" for="accept_terms">
               <input type="checkbox" id="accept_terms" name="accept_terms" value="1" required>
-              <span>I have read and accept the
-                <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a>,
-                and confirm the details above are correct.
+              <span>I agree to the
+                <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a>.
               </span>
             </label>
-            <p class="field-hint">Your acceptance is recorded with this order, along with the date and time.</p>
+            <span id="terms-error" class="checkout-terms__error" role="alert"{% if not terms_error %} hidden{% endif %}>{{ terms_error }}</span>
           </div>
 
           <button type="submit" class="btn btn--gold btn--lg btn--block">Continue to Secure Payment</button>
@@ -103,4 +110,27 @@
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var form = document.querySelector('form[action="{% url 'orders:checkout_submit' %}"]');
+  if (!form) return;
+  var box = document.getElementById('accept_terms');
+  var err = document.getElementById('terms-error');
+  if (!box || !err) return;
+  var MSG = 'Please accept the Terms & Conditions to place your order.';
+  function show() { err.textContent = MSG; err.hidden = false; }
+  function hide() { err.textContent = ''; err.hidden = true; }
+  // Suppress the browser's native popup bubble and show the small inline
+  // message beside the checkbox instead. Submit stays blocked (server too).
+  box.addEventListener('invalid', function (e) {
+    e.preventDefault();
+    show();
+    box.focus();
+  });
+  box.addEventListener('change', function () { if (box.checked) hide(); });
+})();
+</script>
 {% endblock %}

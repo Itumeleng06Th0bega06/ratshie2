@@ -309,12 +309,13 @@ class MemberRestrictionIntegrationTests(TestCase):
 
 
 @override_settings(**TEST_PAYFAST)
-class FlatDeliveryFeeTests(TestCase):
-    """One flat, server-side delivery fee for every order.
+class DeliveryFeeTests(TestCase):
+    """Server-side delivery fee from each product's delivery settings.
 
-    There is no pickup, no free-delivery threshold and no per-product fee: every
-    order is delivered and charged the single admin-configured fee, which the
-    browser can never override.
+    Two options exist: 'standard' uses the single admin-configured global fee,
+    'custom' uses the product's own fee (R0.00 allowed). The cart fee is the sum
+    for each distinct product; quantity never multiplies a fee. There is no
+    pickup and no free-delivery threshold, and the browser can never override it.
     """
 
     def _checkout(self, **overrides):
@@ -337,7 +338,7 @@ class FlatDeliveryFeeTests(TestCase):
         settings.save()
         self.assertEqual(delivery_fee(), Decimal("123.45"))
 
-    def test_checkout_charges_the_flat_fee(self):
+    def test_checkout_charges_the_standard_fee(self):
         product = create_product()
         add_to_cart(self.client, product)
         self._checkout()
@@ -365,7 +366,7 @@ class FlatDeliveryFeeTests(TestCase):
         add_to_cart(self.client, product)
         self._checkout(delivery_fee="0.00", shipping_fee="0.00", shipping_method="pickup")
         order = Order.objects.get(customer_name="Ship Buyer")
-        # Pickup and any posted price are ignored: the flat fee always applies.
+        # Pickup and any posted price are ignored: the standard fee always applies.
         self.assertEqual(order.delivery_fee, shipping_config().standard_fee)
         self.assertEqual(order.shipping_method, Order.ShippingMethod.STANDARD)
 
@@ -416,15 +417,180 @@ class FlatDeliveryFeeTests(TestCase):
         product = create_product()
         info = cart_delivery([{"product": product, "qty": 1}])
         self.assertEqual(info["fee"], shipping_config().standard_fee)
+        # Repeated quantities of the same product are still charged once.
+        info = cart_delivery([{"product": product, "qty": 9}])
+        self.assertEqual(info["fee"], shipping_config().standard_fee)
+
+
+@override_settings(**TEST_PAYFAST)
+class ProductDeliveryFeeTests(TestCase):
+    """Per-product delivery fee, end to end (service -> cart -> order -> PayFast)."""
+
+    def _checkout(self, **overrides):
+        payload = {
+            "full_name": "Fee Buyer",
+            "email": "fee@b.com",
+            "phone": "071 555 8888",
+            "accept_terms": "1",
+            "delivery_address": "3 Short St",
+        }
+        payload.update(overrides)
+        return self.client.post(reverse("orders:checkout_submit"), payload)
+
+    def test_standard_product_uses_standard_fee(self):
+        from orders.services import product_delivery
+
+        product = create_product(delivery_type="standard")
+        info = product_delivery(product)
+        self.assertEqual(info["type"], "standard")
+        self.assertEqual(info["fee"], shipping_config().standard_fee)
+
+    def test_custom_product_uses_its_own_fee(self):
+        from orders.services import product_delivery
+
+        product = create_product(delivery_type="custom", delivery_fee=Decimal("25.00"))
+        info = product_delivery(product)
+        self.assertEqual(info["type"], "custom")
+        self.assertEqual(info["fee"], Decimal("25.00"))
+        self.assertFalse(info["is_free"])
+
+    def test_custom_zero_fee_is_free_delivery(self):
+        from orders.services import product_delivery
+
+        product = create_product(delivery_type="custom", delivery_fee=Decimal("0.00"))
+        info = product_delivery(product)
+        self.assertEqual(info["fee"], Decimal("0.00"))
+        self.assertTrue(info["is_free"])
+
+    def test_mixed_cart_sums_each_distinct_product(self):
+        from orders.services import cart_delivery
+
+        standard = create_product(name="Standard", delivery_type="standard")
+        custom = create_product(
+            name="Custom", delivery_type="custom", delivery_fee=Decimal("25.00")
+        )
+        info = cart_delivery(
+            [
+                {"product": standard, "qty": 1},
+                {"product": custom, "qty": 1},
+            ]
+        )
+        self.assertEqual(
+            info["fee"], shipping_config().standard_fee + Decimal("25.00")
+        )
+        self.assertEqual(len(info["lines"]), 2)
+        self.assertEqual(
+            [line["type"] for line in info["lines"]], ["standard", "custom"]
+        )
+
+    def test_standard_fee_charged_once_per_order(self):
+        from orders.services import cart_delivery
+
+        first = create_product(name="Standard A", delivery_type="standard")
+        second = create_product(name="Standard B", delivery_type="standard")
+        info = cart_delivery(
+            [
+                {"product": first, "qty": 1},
+                {"product": second, "qty": 2},
+            ]
+        )
+        # Two distinct standard products still add the standard fee only once.
+        self.assertEqual(info["fee"], shipping_config().standard_fee)
+        self.assertEqual([line["type"] for line in info["lines"]], ["standard"])
+
+    def test_custom_fees_add_per_distinct_product(self):
+        from orders.services import cart_delivery
+
+        first = create_product(
+            name="Custom A", delivery_type="custom", delivery_fee=Decimal("10.00")
+        )
+        second = create_product(
+            name="Custom B", delivery_type="custom", delivery_fee=Decimal("20.00")
+        )
+        info = cart_delivery(
+            [
+                {"product": first, "qty": 1},
+                {"product": second, "qty": 3},
+            ]
+        )
+        # No standard product, so only the two distinct custom fees apply.
+        self.assertEqual(info["fee"], Decimal("30.00"))
+
+    def test_repeated_quantity_is_charged_once(self):
+        from orders.services import cart_delivery
+
+        custom = create_product(delivery_type="custom", delivery_fee=Decimal("25.00"))
+        info = cart_delivery([{"product": custom, "qty": 4}])
+        self.assertEqual(info["fee"], Decimal("25.00"))
+
+    def test_zero_fee_custom_product_adds_nothing(self):
+        from orders.services import cart_delivery
+
+        standard = create_product(name="Standard", delivery_type="standard")
+        free = create_product(
+            name="Free", delivery_type="custom", delivery_fee=Decimal("0.00")
+        )
+        info = cart_delivery(
+            [
+                {"product": standard, "qty": 1},
+                {"product": free, "qty": 2},
+            ]
+        )
+        self.assertEqual(info["fee"], shipping_config().standard_fee)
+
+    def test_drawer_cart_checkout_order_and_payment_agree(self):
+        standard = create_product(name="Standard", delivery_type="standard")
+        custom = create_product(
+            name="Custom", delivery_type="custom", delivery_fee=Decimal("25.00")
+        )
+        add_to_cart(self.client, standard, qty=1)
+        add_to_cart(self.client, custom, qty=2)
+        fee = shipping_config().standard_fee + Decimal("25.00")
+        expected_total = standard.price + custom.price * 2 + fee
+
+        # The cart page, cart drawer and checkout all show the same total.
+        for response in (
+            self.client.get(reverse("orders:cart")),
+            self.client.get(reverse("orders:cart_drawer")),
+            self.client.get(reverse("orders:checkout")),
+        ):
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(f"R {expected_total:,.2f}", response.content.decode())
+
+        self._checkout()
+        order = Order.objects.get(customer_name="Fee Buyer")
+        payment = Payment.objects.get(order=order)
+        self.assertEqual(order.delivery_fee, fee)
+        self.assertEqual(order.total, expected_total)
+        self.assertEqual(payment.amount, order.total)
+
+    def test_historical_order_fee_survives_product_edit(self):
+        product = create_product(
+            delivery_type="custom", delivery_fee=Decimal("25.00")
+        )
+        add_to_cart(self.client, product)
+        self._checkout()
+        order = Order.objects.get(customer_name="Fee Buyer")
+        original_total = order.total
+
+        # Editing the product's delivery fee must not rewrite a placed order.
+        product.delivery_fee = Decimal("99.00")
+        product.save()
+
+        order.recalc_totals()
+        order.refresh_from_db()
+        self.assertEqual(order.delivery_fee, Decimal("25.00"))
+        self.assertEqual(order.total, original_total)
 
 
 class RemovedDeliveryRuleTests(TestCase):
-    """The old per-product / free / large-item delivery rules are gone."""
+    """The old pickup / free-threshold / large-item delivery rules are gone."""
 
-    def test_product_has_no_delivery_charge_fields(self):
-        product = Product.objects.create(name="Plain Part", price=Decimal("50.00"))
-        self.assertFalse(hasattr(product, "delivery_type"))
-        self.assertFalse(hasattr(product, "delivery_fee"))
+    def test_product_delivery_types_are_only_standard_and_custom(self):
+        self.assertEqual(
+            [value for value, _ in Product.DELIVERY_TYPES],
+            ["standard", "custom"],
+        )
 
     def test_product_still_has_a_delivery_timeframe(self):
         product = Product.objects.create(name="Timed Part", price=Decimal("50.00"))
@@ -444,9 +610,24 @@ class RemovedDeliveryRuleTests(TestCase):
         ):
             self.assertFalse(hasattr(settings, name))
 
-    def test_product_clean_ignores_delivery_charge(self):
-        product = Product.objects.create(name="Clean Part", price=Decimal("50.00"))
+    def test_product_clean_accepts_valid_delivery_settings(self):
+        product = Product.objects.create(
+            name="Clean Part",
+            price=Decimal("50.00"),
+            delivery_type="custom",
+            delivery_fee=Decimal("0.00"),
+        )
         product.full_clean()
+
+    def test_standard_product_clears_any_stale_custom_fee(self):
+        product = Product.objects.create(
+            name="Stale Fee Part",
+            price=Decimal("50.00"),
+            delivery_type="standard",
+            delivery_fee=Decimal("30.00"),
+        )
+        product.refresh_from_db()
+        self.assertIsNone(product.delivery_fee)
 
 
 class ProductDeliveryAdminTests(TestCase):
@@ -483,6 +664,50 @@ class ProductDeliveryAdminTests(TestCase):
             self.assertIn(token, html)
         self.assertNotIn("Big item", html)
         self.assertNotIn("overflow-x", html)
+
+    def test_changelist_shows_delivery_summary_column(self):
+        create_product(name="Listed")
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'class="field-delivery_summary"', response.content.decode()
+        )
+
+    def _form(self, **overrides):
+        from products.admin import ProductAdminForm
+
+        data = {
+            "name": "Admin Fee Product",
+            "price": "10.00",
+            "delivery_type": "standard",
+            "delivery_fee": "",
+            "delivery_mode": "standard",
+            "availability": "in_stock",
+            "stock": 1,
+            "product_type": "spare_part",
+        }
+        data.update(overrides)
+        return ProductAdminForm(data=data)
+
+    def test_admin_form_rejects_custom_type_without_fee(self):
+        form = self._form(delivery_type="custom", delivery_fee="")
+        self.assertFalse(form.is_valid())
+        self.assertIn("delivery_fee", form.errors)
+
+    def test_admin_form_rejects_negative_fee(self):
+        form = self._form(delivery_type="custom", delivery_fee="-5.00")
+        self.assertFalse(form.is_valid())
+        self.assertIn("delivery_fee", form.errors)
+
+    def test_admin_form_allows_zero_custom_fee(self):
+        form = self._form(delivery_type="custom", delivery_fee="0.00")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["delivery_fee"], Decimal("0.00"))
+
+    def test_admin_form_clears_fee_for_standard_type(self):
+        form = self._form(delivery_type="standard", delivery_fee="20.00")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data["delivery_fee"])
 
 
 class TermsAcceptanceAdminTests(TestCase):

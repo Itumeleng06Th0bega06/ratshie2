@@ -29,6 +29,11 @@
       <span class="cart-line__price">{{ line.product.display_price }}</span>
       {% endif %}
     </div>
+    {% if line.delivery_type %}
+    <div class="cart-line__delivery" style="color:var(--muted);font-size:13px;margin-top:4px">
+      {% if line.delivery_type == 'custom' %}{% if line.delivery_is_free %}Free delivery{% else %}Delivery: R {{ line.delivery_fee|floatformat:2 }}{% endif %}{% else %}Standard delivery{% endif %}
+    </div>
+    {% endif %}
     {% if line.restricted %}
     <div class="cart-line__restricted" role="note">Members-only sale item — sign in to purchase.</div>
     {% endif %}

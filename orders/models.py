@@ -13,13 +13,16 @@ import secrets
 
 
 class ShippingSettings(models.Model):
-    """Singleton holding the single, admin-configurable delivery fee.
+    """Singleton holding the admin-configurable standard delivery fee.
 
-    Every online order is delivered to the customer's address and is charged one
-    flat fee, editable on this page. The fee is resolved server-side from this
-    table - the browser never submits a price - so a tampered or stale amount in
-    the checkout form can never change an order total or the amount sent to
-    PayFast.
+    Every online order is delivered to the customer's address. This is the
+    standard fee used by products set to 'Use standard delivery fee'; products
+    set to 'Custom delivery fee' charge their own amount instead. The standard
+    fee is charged once per order when any standard product is present, and each
+    custom-delivery product adds its own fee once. The fee is resolved
+    server-side from the product settings and this table - the browser never
+    submits a price - so a tampered or stale amount in the checkout form can
+    never change an order total or the amount sent to PayFast.
     """
 
     standard_fee = models.DecimalField(
@@ -27,7 +30,7 @@ class ShippingSettings(models.Model):
         max_digits=10,
         decimal_places=2,
         default=Decimal("75.00"),
-        help_text="Flat fee charged on every delivery order.",
+        help_text="Standard fee for products set to use standard delivery.",
     )
 
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,0 +1,31 @@
+<div class="cart-drawer__summary-card" id="cart-drawer-summary" aria-live="polite">
+  <h3>Order summary</h3>
+  <div class="cart-drawer__row">
+    <span>Subtotal</span>
+    <span>R {{ subtotal|floatformat:2 }}</span>
+  </div>
+  {% if discount_total and discount_total > 0 %}
+  <div class="cart-drawer__row cart-drawer__row--saving">
+    <span>Sale savings</span>
+    <span>−R {{ discount_total|floatformat:2 }}</span>
+  </div>
+  {% endif %}
+  {% for d in delivery_lines %}
+  <div class="cart-drawer__row">
+    <span>{% if d.type == 'custom' %}Delivery · {{ d.name }}{% else %}Standard delivery{% endif %}</span>
+    <span>{% if d.is_free %}Free{% else %}R {{ d.fee|floatformat:2 }}{% endif %}</span>
+  </div>
+  {% empty %}
+  <div class="cart-drawer__row">
+    <span>Delivery</span>
+    <span>Free</span>
+  </div>
+  {% endfor %}
+  <div class="cart-drawer__row cart-drawer__row--total">
+    <span>Total</span>
+    <span>R {{ grand_total|floatformat:2 }}</span>
+  </div>
+  <p class="cart-drawer__note">Standard delivery is charged once per order; custom delivery adds each product's fee once.</p>
+  <a class="btn btn--gold btn--block" href="{% url 'orders:checkout' %}" data-cart-drawer-close>Checkout · R {{ grand_total|floatformat:2 }}</a>
+  <a class="btn btn--ghost-dark btn--block" href="{% url 'orders:cart' %}" data-cart-drawer-close>View full cart</a>
+</div>

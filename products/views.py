@@ -16,7 +16,7 @@ from django.contrib import messages
 from .models import Product, ProductEnquiry, ProductGroup
 from customers.models import Customer
 from .services import can_purchase_product
-from orders.services import delivery_fee
+from orders.services import product_delivery
 from core.utils import (
     product_whatsapp_message,
     cart_from_session,
@@ -119,9 +119,9 @@ def product_detail(request, slug):
             "in_cart_qty": in_cart_qty,
             "added": chasing == "1",
             "delivery_estimate": product.delivery_estimate_display,
-            # The same flat fee checkout charges, so the price shown here is the
-            # price the customer pays.
-            "delivery_fee": delivery_fee(),
+            # This product's own delivery charge, so the price shown here is the
+            # price the customer pays for this item's delivery.
+            "product_delivery": product_delivery(product),
             "crumb_list": [("Shop", "products:shop"), (product.name, None)],
         },
     )

@@ -1,0 +1,29 @@
+{% if lines %}
+<div class="cart-drawer__header">
+  <h2>Your Cart</h2>
+  <button type="button" class="icon-btn" aria-label="Close cart" data-cart-drawer-close>
+    <svg width="18" height="18" aria-hidden="true"><use href="#i-close"></use></svg>
+  </button>
+</div>
+<div class="cart-drawer__list" id="cart-drawer-lines">
+  {% include "orders/_cart_drawer_lines.html" %}
+</div>
+<div class="cart-drawer__summary">
+  {% include "orders/_cart_drawer_summary.html" %}
+</div>
+{% else %}
+<div class="cart-drawer__header">
+  <h2>Your Cart</h2>
+  <button type="button" class="icon-btn" aria-label="Close cart" data-cart-drawer-close>
+    <svg width="18" height="18" aria-hidden="true"><use href="#i-close"></use></svg>
+  </button>
+</div>
+<div class="cart-drawer__empty">
+  <svg class="svg-art" aria-hidden="true"><use href="#i-cart"></use></svg>
+  <h3>Your cart is empty</h3>
+  <p>Browse our shop and add products you'd like to order.</p>
+  <div class="cart-drawer__empty-actions">
+    <a class="btn btn--gold" href="{% url 'products:shop' %}" data-cart-drawer-continue>Continue Shopping</a>
+  </div>
+</div>
+{% endif %}

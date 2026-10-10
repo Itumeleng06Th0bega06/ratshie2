@@ -2046,12 +2046,30 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 .checkbox { display: flex; gap: 10px; align-items: flex-start; color: var(--text); cursor: pointer; }
 .checkbox input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--accent); }
 
-/* Terms & Conditions acceptance (checkout) */
-.terms-check { margin-bottom: 20px; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--cream); }
-.terms-check .checkbox { font-size: 14px; line-height: 1.5; }
-.terms-check .checkbox input { flex: 0 0 auto; }
-.terms-check a { color: var(--accent); font-weight: 700; text-decoration: underline; }
-.terms-check .field-hint { margin-bottom: 0; }
+/* Terms & Conditions acceptance (checkout) — a plain inline checkbox.
+   ui.css loads after this file and gives `.form-card input` width:100%,
+   14px padding, a border and an 11px radius; the attribute selector below is
+   more specific so the checkbox stays a normal small control. */
+.checkout-terms { margin-bottom: 20px; }
+.checkout-terms__label {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 14px; line-height: 1.5; color: var(--text); cursor: pointer;
+}
+.checkout-terms__label input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line, #c9ced6);
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: none;
+  accent-color: var(--green, #1f9d61);
+}
+.checkout-terms__label a { color: var(--accent); font-weight: 600; text-decoration: underline; }
+.checkout-terms__error { display: block; color: var(--red, #d94b3d); font-size: 13px; font-weight: 600; margin-top: 6px; }
+.checkout-terms__error[hidden] { display: none; }
 
 /* Member-only gate (detail page, anonymous) */
 .member-gate__box { background: var(--gold-soft); border: 1px solid var(--gold-line); border-radius: var(--radius); padding: 20px; }

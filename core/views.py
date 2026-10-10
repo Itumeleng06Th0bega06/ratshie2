@@ -161,7 +161,7 @@ def shipping_policy(request):
         request,
         "core/shipping.html",
         "Shipping & Delivery",
-        "How Ratshie delivers orders to your door, with one simple flat delivery fee.",
+        "How Ratshie delivers orders to your door, with a delivery fee calculated per product.",
         "Shipping & Delivery",
     )
 

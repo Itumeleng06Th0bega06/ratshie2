@@ -18,9 +18,12 @@ class ShippingSettingsAdmin(admin.ModelAdmin):
             "Delivery",
             {
                 "description": (
-                    "Every online order is delivered to the customer's address "
-                    "and is charged this one flat fee at checkout. Set it to 0.00 "
-                    "for free delivery on all orders."
+                    "The standard delivery fee used by every product set to "
+                    "'Use standard delivery fee'. Products set to 'Custom "
+                    "delivery fee' charge their own amount instead. The standard "
+                    "fee is charged once per order; each custom-delivery product "
+                    "adds its own fee once. Set this to 0.00 for free standard "
+                    "delivery."
                 ),
                 "fields": ("standard_fee",),
             },

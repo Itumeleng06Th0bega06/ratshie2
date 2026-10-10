@@ -13,14 +13,21 @@
   </div>
   {% endif %}
 
+  {% for d in delivery_lines %}
+  <div class="cart-summary__row">
+    <span>{% if d.type == 'custom' %}Delivery · {{ d.name }}{% else %}Standard delivery{% endif %}</span>
+    <span>{% if d.is_free %}Free{% else %}R {{ d.fee|floatformat:2 }}{% endif %}</span>
+  </div>
+  {% empty %}
   <div class="cart-summary__row">
     <span>Delivery</span>
-    <span>Calculated at checkout</span>
+    <span>Free</span>
   </div>
+  {% endfor %}
 
   <div class="cart-summary__row cart-summary__row--total">
     <span>Total</span>
-    <span>R {{ total|floatformat:2 }}</span>
+    <span>R {{ grand_total|floatformat:2 }}</span>
   </div>
 
   {% if discount_total and discount_total > 0 %}

@@ -1,4 +1,5 @@
 """Cart and checkout views for the Ratshie shop."""
+import json
 from decimal import Decimal
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -14,11 +15,20 @@ from products.models import Product
 from products.services import can_purchase_product, cart_restriction_errors, line_totals
 from customers.models import Customer
 from core.utils import cart_from_session, save_cart, cart_items
-from .services import delivery_fee
+from .services import cart_delivery
 
 
 def _build_lines(cart, user=None):
     items = cart_items(cart)
+    # One shared calculator so the cart page, drawer and checkout always agree.
+    delivery = cart_delivery(items)
+    # Only custom fees are attached to a specific product; the standard fee is
+    # one line for the whole order, so it has no product to map back to.
+    delivery_by_pk = {
+        d["product"].pk: d
+        for d in (delivery["lines"] if delivery else [])
+        if d["product"] is not None
+    }
     lines = []
     subtotal = Decimal("0")
     discount_total = Decimal("0")
@@ -27,6 +37,7 @@ def _build_lines(cart, user=None):
         qty = it["qty"]
         line_total, original_line_total, discount = line_totals(p.price, p.original_price, qty)
         allowed, reason = can_purchase_product(user, p)
+        d = delivery_by_pk.get(p.pk)
         lines.append(
             {
                 "product": p,
@@ -36,48 +47,112 @@ def _build_lines(cart, user=None):
                 "discount": discount,
                 "restricted": (not allowed and reason == "member_only"),
                 "image": p.public_image.image if p.public_image else None,
+                "delivery_type": d["type"] if d else "standard",
+                "delivery_fee": d["fee"] if d else None,
+                "delivery_is_free": d["is_free"] if d else False,
+                "delivery_label": d["label"] if d else "Standard delivery",
             }
         )
         subtotal += original_line_total
         discount_total += discount
     total = subtotal - discount_total
-    return lines, subtotal, discount_total, total
+    return lines, subtotal, discount_total, total, delivery
+
+
+def _delivery_context(delivery):
+    """Normalise a :func:`cart_delivery` result for templates."""
+    if delivery is None:
+        return {
+            "delivery_fee": Decimal("0.00"),
+            "delivery_is_free": True,
+            "delivery_lines": [],
+        }
+    return {
+        "delivery_fee": delivery["fee"],
+        "delivery_is_free": delivery["is_free"],
+        "delivery_lines": delivery["lines"],
+    }
 
 
 def cart_view(request):
     cart = cart_from_session(request)
-    lines, subtotal, discount_total, total = _build_lines(cart, request.user)
+    lines, subtotal, discount_total, total, delivery = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
-    return render(
-        request,
-        "orders/cart.html",
-        {
-            "lines": lines,
-            "subtotal": subtotal,
-            "discount_total": discount_total,
-            "total": total,
-            "total_qty": total_qty,
-            "cart_count": total_qty,
-            "restricted_items": _restricted_lines(lines),
-            "crumb_list": [("Cart", None)],
-        },
-    )
+    ctx = _delivery_context(delivery)
+    context = {
+        "lines": lines,
+        "subtotal": subtotal,
+        "discount_total": discount_total,
+        "total": total,
+        "total_qty": total_qty,
+        "cart_count": total_qty,
+        "grand_total": total + ctx["delivery_fee"],
+        "restricted_items": _restricted_lines(lines),
+        "crumb_list": [("Cart", None)],
+        **ctx,
+    }
+    return render(request, "orders/cart.html", context)
 
 
 def _restricted_lines(lines):
     return [l for l in lines if l.get("restricted")]
 
 
+def _cart_context(request):
+    """Build the shared context for the cart page and the cart drawer."""
+    cart = cart_from_session(request)
+    lines, subtotal, discount_total, total, delivery = _build_lines(cart, request.user)
+    total_qty = sum(l["qty"] for l in lines)
+    ctx = _delivery_context(delivery)
+    return {
+        "lines": lines,
+        "subtotal": subtotal,
+        "discount_total": discount_total,
+        "total": total,
+        "total_qty": total_qty,
+        "cart_count": total_qty,
+        "grand_total": total + ctx["delivery_fee"],
+        "restricted_items": _restricted_lines(lines),
+        **ctx,
+    }
+
+
+def _cart_fragment_response(request, context):
+    """Return the cart-page or cart-drawer fragment after a cart mutation."""
+    if request.POST.get("cart_target") == "drawer":
+        response = render(request, "orders/_cart_drawer_panel.html", context)
+    else:
+        response = render(request, "orders/_cart_panel.html", context)
+    # Lets the drawer/header badges stay in sync without a second request.
+    response["HX-Trigger"] = json.dumps({"cartCount": context["total_qty"]})
+    return response
+
+
 def cart_partial(request):
     """Return an HTML fragment (cart contents + summary) for HTMX quantity updates."""
     cart = cart_from_session(request)
-    lines, subtotal, discount_total, total = _build_lines(cart, request.user)
+    lines, subtotal, discount_total, total, delivery = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
+    ctx = _delivery_context(delivery)
     return render(
         request,
         "orders/_cart_panel.html",
-        {"lines": lines, "subtotal": subtotal, "discount_total": discount_total, "total": total, "total_qty": total_qty, "restricted_items": _restricted_lines(lines)},
+        {
+            "lines": lines,
+            "subtotal": subtotal,
+            "discount_total": discount_total,
+            "total": total,
+            "total_qty": total_qty,
+            "grand_total": total + ctx["delivery_fee"],
+            "restricted_items": _restricted_lines(lines),
+            **ctx,
+        },
     )
+
+
+def cart_drawer(request):
+    """Return the sliding cart-drawer fragment for the current session cart."""
+    return render(request, "orders/_cart_drawer_panel.html", _cart_context(request))
 
 
 @require_POST
@@ -125,7 +200,7 @@ def cart_set_qty(request, pk):
         cart[str(pk)] = {"qty": qty}
     save_cart(request, cart)
     if request.headers.get("HX-Request"):
-        return cart_partial(request)
+        return _cart_fragment_response(request, _cart_context(request))
     return HttpResponseRedirect(reverse("orders:cart"))
 
 
@@ -135,7 +210,7 @@ def cart_remove(request, pk):
     cart.pop(str(pk), None)
     save_cart(request, cart)
     if request.headers.get("HX-Request"):
-        return cart_partial(request)
+        return _cart_fragment_response(request, _cart_context(request))
     return HttpResponseRedirect(reverse("orders:cart"))
 
 
@@ -144,7 +219,7 @@ def cart_clear(request):
     request.session["cart"] = {}
     messages.info(request, "Your cart has been cleared.")
     if request.headers.get("HX-Request"):
-        return cart_partial(request)
+        return _cart_fragment_response(request, _cart_context(request))
     return HttpResponseRedirect(reverse("orders:cart"))
 
 
@@ -152,11 +227,11 @@ def checkout(request):
     cart = cart_from_session(request)
     if not cart:
         return redirect("orders:cart")
-    lines, subtotal, discount_total, total = _build_lines(cart, request.user)
+    lines, subtotal, discount_total, total, delivery = _build_lines(cart, request.user)
     total_qty = sum(l["qty"] for l in lines)
-    # One flat delivery fee, resolved server-side from admin settings and shown
+    # Delivery is resolved server-side from each product's settings and shown
     # before the customer confirms. The browser never supplies this amount.
-    fee = delivery_fee()
+    ctx = _delivery_context(delivery)
     return render(
         request,
         "orders/checkout.html",
@@ -165,14 +240,16 @@ def checkout(request):
             "subtotal": subtotal,
             "discount_total": discount_total,
             "total": total,
-            "delivery_fee": fee,
-            "grand_total": total + fee,
+            "grand_total": total + ctx["delivery_fee"],
             "total_qty": total_qty,
             "restricted_items": _restricted_lines(lines),
             "restriction_errors": cart_restriction_errors(request.user, cart_items(cart))
             if not request.user.is_authenticated
             else [],
             "crumb_list": [("Cart", "orders:cart"), ("Checkout", None)],
+            # One-shot: a rejected terms checkbox shows its message inline, once.
+            "terms_error": request.session.pop("checkout_terms_error", ""),
+            **ctx,
         },
     )
 
@@ -202,8 +279,10 @@ def checkout_submit(request):
         return redirect("orders:checkout")
 
     # Recompute pricing server-side before creating the order. The delivery fee
-    # is read from admin settings here; the browser never supplies a fee.
-    _build_lines(cart, request.user)
+    # is calculated from each product's delivery settings; the browser never
+    # supplies a fee.
+    _lines, _subtotal, _discount, _total, delivery = _build_lines(cart, request.user)
+    fee = delivery["fee"] if delivery else Decimal("0.00")
 
     full_name = request.POST.get("full_name", "").strip()
     email = request.POST.get("email", "").strip()
@@ -214,8 +293,8 @@ def checkout_submit(request):
     # the order cannot be created by posting the form without the checkbox.
     terms_accepted = request.POST.get("accept_terms") in ("1", "on", "true", "yes")
 
-    # Every online order is delivered, charged one flat fee from admin settings.
-    fee = delivery_fee()
+    # Every online order is delivered; the fee is the server-calculated total
+    # for the distinct products in the cart.
 
     errors = []
     if not full_name:
@@ -226,12 +305,17 @@ def checkout_submit(request):
         errors.append("Please provide an email address for your order confirmation.")
     if not delivery_address:
         errors.append("Please provide a delivery address.")
-    if not terms_accepted:
-        errors.append("Please accept the Terms & Conditions to place your order.")
+    # The terms rejection is shown inline, beside the checkbox, rather than as a
+    # floating toast. It is carried in the session until the next checkout GET,
+    # which renders it next to the box.
+    terms_error = "" if terms_accepted else "Please accept the Terms & Conditions to place your order."
 
     if errors:
         for e in errors:
             messages.error(request, e)
+    if errors or terms_error:
+        if terms_error:
+            request.session["checkout_terms_error"] = terms_error
         return redirect("orders:checkout")
 
     customer, _ = Customer.objects.get_or_create(

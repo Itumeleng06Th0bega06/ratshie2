@@ -52,7 +52,19 @@ class ProductAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Plain-language help so the admin knows this controls timing, not cost.
+        # Plain-language help so the admin knows the two delivery concepts are
+        # separate: timeframe vs charge.
+        if "delivery_type" in self.fields:
+            self.fields["delivery_type"].help_text = (
+                "How this product is charged for delivery. 'Use standard delivery "
+                "fee' reads the global fee in Orders > Delivery settings. 'Custom "
+                "delivery fee' uses the amount below."
+            )
+        if "delivery_fee" in self.fields:
+            self.fields["delivery_fee"].help_text = (
+                "Required only for 'Custom delivery fee'. Enter 0.00 for free "
+                "delivery on this product. Delivery is never negative."
+            )
         if "delivery_mode" in self.fields:
             self.fields["delivery_mode"].help_text = "Delivery timeframe, not the cost."
         if "availability" in self.fields:
@@ -88,6 +100,21 @@ class ProductAdminForm(forms.ModelForm):
                         {"delivery_date_to": "End date must be after start date."}
                     )
         # When mode is standard, the admin save_model will clear date fields
+
+        # Delivery charge: a custom fee is mandatory for CUSTOM and can never be
+        # negative. A fee left behind on the standard option is cleared rather
+        # than stored, so it can never be mistaken for the amount charged.
+        dtype = cleaned.get("delivery_type")
+        dfee = cleaned.get("delivery_fee")
+        if dfee is not None and dfee < 0:
+            self.add_error("delivery_fee", "Delivery fee cannot be negative.")
+        if dtype == "custom":
+            if dfee is None:
+                self.add_error(
+                    "delivery_fee", "Enter a delivery fee for 'Custom delivery fee'."
+                )
+        elif dfee is not None:
+            cleaned["delivery_fee"] = None
 
         return cleaned
 
@@ -205,6 +232,7 @@ class ProductAdmin(admin.ModelAdmin):
         "product_group",
         "price",
         "sale_price_display",
+        "delivery_summary",
         "stock_badge",
         "is_active",
     )
@@ -245,11 +273,24 @@ class ProductAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Delivery fee",
+            {
+                "fields": ("delivery_type", "delivery_fee", "delivery_summary"),
+                "description": (
+                    "How this product is charged for delivery. 'Use standard delivery "
+                    "fee' uses the global fee set in Orders &gt; Delivery settings. "
+                    "'Custom delivery fee' uses the amount above and may be R0.00 for "
+                    "free delivery. The standard fee is charged once per order; each "
+                    "custom-delivery product adds its own fee once, regardless of quantity."
+                ),
+            },
+        ),
+        (
             "Delivery timeframe",
             {
                 "fields": ("delivery_mode", "delivery_date_from", "delivery_date_to"),
                 "classes": ("collapse",),
-                "description": "When the order is expected to arrive. Delivery is one flat fee for the whole order — there are no per-product delivery charges.",
+                "description": "When the order is expected to arrive. Separate from the delivery charge above.",
             },
         ),
         ("Images", {"fields": ("image_status",)}),
@@ -266,7 +307,14 @@ class ProductAdmin(admin.ModelAdmin):
         ),
         ("Audit", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    readonly_fields = ("created_at", "updated_at", "discount_display", "image_status", "member_only_note")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "discount_display",
+        "image_status",
+        "member_only_note",
+        "delivery_summary",
+    )
 
     def get_readonly_fields(self, request, obj=None):
         fields = list(super().get_readonly_fields(request=request, obj=obj))
@@ -310,6 +358,35 @@ class ProductAdmin(admin.ModelAdmin):
         )
 
     member_only_note.short_description = "Guidance"
+
+    @safe_display()
+    @admin.display(description="Delivery fee")
+    def delivery_summary(self, obj):
+        """Read-only summary of how this product is charged for delivery.
+
+        Mirrors the exact server-side rule used at checkout, so staff can see at
+        a glance whether a product uses the global standard fee or carries its
+        own (possibly R0.00) custom fee.
+        """
+        from orders.services import product_delivery
+
+        if not obj.pk:
+            return "—"
+        info = product_delivery(obj)
+        if info["type"] == "custom":
+            if info["is_free"]:
+                return mark_safe(
+                    '<span style="color:#1a7f37;font-weight:600">Custom delivery: '
+                    "free (R0.00)</span>"
+                )
+            return format_html(
+                '<span style="color:#1a7f37;font-weight:600">Custom delivery: {}</span>',
+                fmt_money(info["fee"]),
+            )
+        return format_html(
+            '<span style="color:#667085">Standard delivery ({})</span>',
+            fmt_money(info["fee"]),
+        )
 
     @safe_display()
     @admin.display(description="Img")
