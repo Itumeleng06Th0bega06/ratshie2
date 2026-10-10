@@ -226,6 +226,7 @@ class ProductGroupAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
     inlines = [ProductImageInline]
+    change_list_template = "admin/products/product/changelist.html"
     list_display = (
         "thumbnail",
         "name",

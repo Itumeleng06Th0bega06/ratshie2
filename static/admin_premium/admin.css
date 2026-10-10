@@ -290,6 +290,85 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
   #result_list tbody td.action-checkbox::before { content: "Select"; }
 }
 
+/* ---- Products changelist: mobile image + name list ----
+   On phones the product table collapses to a compact, tappable list showing
+   only the thumbnail and the product name. Tapping a row opens that product's
+   existing change form. Desktop/tablet keep the full table. The list uses
+   custom classes only, so no Tailwind rebuild is needed. */
+.rui-prodlist { display: none; }
+@media (max-width: 700px) {
+  /* The table and the bulk-action bar are meaningless once rows are a simple
+     link list (there are no checkboxes left to select), and the inline "Save"
+     control edits hidden fields, so hide it too. */
+  body.app-products.model-product #changelist .results,
+  body.app-products.model-product #changelist .actions,
+  body.app-products.model-product #changelist .changelist-footer input[name="_save"] { display: none; }
+
+  .rui-prodlist {
+    display: block;
+    margin-top: 4px;
+    background: var(--admin-surface, #fff);
+    border: 1px solid var(--admin-border, #e5e7eb);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(16, 24, 40, .06);
+  }
+  .rui-prodlist__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    min-height: 60px;
+    border-bottom: 1px solid var(--admin-border, #e5e7eb);
+    color: var(--admin-text, #172033);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .15s ease;
+  }
+  .rui-prodlist__row:last-child { border-bottom: 0; }
+  .rui-prodlist__row:active,
+  .rui-prodlist__row:hover { background: var(--admin-surface-hover, #f4f6f9); }
+  .rui-prodlist__row:focus-visible {
+    outline: none;
+    background: var(--admin-surface-hover, #f4f6f9);
+    box-shadow: inset 0 0 0 2px var(--admin-accent, #f0a000);
+  }
+  .rui-prodlist__thumb {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    overflow: hidden;
+    background: var(--admin-surface-muted, #f1f4f7);
+    border: 1px solid var(--admin-border, #e5e7eb);
+  }
+  .rui-prodlist__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .rui-prodlist__fallback { display: inline-flex; color: var(--admin-text-muted, #94a3b8); }
+  .rui-prodlist__fallback svg { width: 22px; height: 22px; }
+  .rui-prodlist__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .rui-prodlist__chevron {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    color: var(--admin-text-muted, #cbd5e1);
+  }
+}
+
 /* Action bar */
 .actions { background: var(--admin-surface-muted, #f1f4f7) !important; border: 1px solid var(--admin-border, #e5e7eb) !important; border-radius: 10px; padding: 8px 12px !important; margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .actions select { background: var(--admin-surface, #fff); border: 1px solid var(--admin-border, #e5e7eb); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
@@ -522,6 +601,35 @@ button.default:hover, .button.default:hover { filter: brightness(1.05); }
   .rui-btn-primary:hover {
     filter: none;
     box-shadow: 0 1px 2px rgba(240, 160, 0, 0.3);
+  }
+}
+
+/* ---- Quick-menu trigger (topbar) ----
+   On narrow screens the topbar gets tight. The trigger is a shrinkable flex
+   item, so it used to be squashed until "Quick menu" wrapped onto two lines,
+   which read as the rectangle turning into a tall square with a clipped
+   label. Below the admin's mobile breakpoint keep it a compact, single-line,
+   non-shrinking rectangle with a sensible minimum width. Desktop sizes are
+   untouched. */
+@media (max-width: 900px) {
+  .rui-quickmenu {
+    flex: 0 0 auto;
+    min-width: 5rem;
+    white-space: nowrap;
+    height: auto;
+    aspect-ratio: auto;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+}
+
+/* At phone widths the account name is the widest topbar item and would
+   otherwise wrap onto two lines and clip. Keep the avatar (the account popup
+   still shows the full name). Mirrors the public site's mobile behaviour. */
+@media (max-width: 560px) {
+  .rui-account-name {
+    display: none;
   }
 }
 

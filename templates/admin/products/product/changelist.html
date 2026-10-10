@@ -1,0 +1,31 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{# Products changelist.
+   Desktop keeps Django's full sortable table plus search, filters and
+   actions. On phones the table (and the unusable bulk-action bar) are hidden
+   by CSS and the compact image + name list below is shown instead. Tapping a
+   row opens that product's existing change form; every field stays editable
+   there. The list uses custom classes only, so no Tailwind rebuild is needed. #}
+
+{% block result_list %}
+  {{ block.super }}
+
+  {% if cl.result_list %}
+  <div class="rui-prodlist" role="list" aria-label="{% translate 'Products' %}">
+    {% for product in cl.result_list %}
+    <a class="rui-prodlist__row" role="listitem" href="{% url cl.opts|admin_urlname:'change' product.pk|admin_urlquote %}">
+      <span class="rui-prodlist__thumb">
+        {% if product.primary_image_url %}
+        <img src="{{ product.primary_image_url }}" alt="" loading="lazy" decoding="async">
+        {% else %}
+        <span class="rui-prodlist__fallback" aria-hidden="true"><svg><use href="#i-gearbox"></use></svg></span>
+        {% endif %}
+      </span>
+      <span class="rui-prodlist__name">{{ product.name }}</span>
+      <svg class="rui-prodlist__chevron" aria-hidden="true"><use href="#i-chevron-right"></use></svg>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endblock %}

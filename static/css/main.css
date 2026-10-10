@@ -434,6 +434,15 @@ p { margin: 0; }
 .cta-band--center h2 { font-size: clamp(22px, 2.6vw, 32px); margin: 0; }
 .cta-band--center p { margin-top: 2px; max-width: 54ch; }
 
+/* Slim variant: compact paddings, smaller heading/body text and small buttons.
+   Used for the "Can't find the part?" band on the shop page so it no longer
+   dominates the page. */
+.cta-band--slim .cta-band__inner { padding: 20px 0; gap: 10px; }
+.cta-band--slim h2 { font-size: clamp(18px, 2.2vw, 24px); }
+.cta-band--slim p { margin-top: 4px; font-size: 13px; }
+.cta-band--slim .btn { padding: 8px 16px; font-size: 13px; border-radius: 10px; gap: 8px; }
+.cta-band--slim .btn.cb-outline { border-width: 1.5px; }
+
 /* ---------- Page hero (inner) ---------- */
 .page-hero { background: var(--ink); color: #fff; position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
 .page-hero .grid-lines { position: absolute; inset: 0; opacity: 0.4; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 60px 60px; }
@@ -1494,7 +1503,15 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   .form-row, .form-grid-3 { grid-template-columns: 1fr; }
   .section { padding: 56px 0; }
   .hero__inner { min-height: 0; padding: 48px 0; }
-  .footer__top { grid-template-columns: 1fr; gap: 34px; }
+  /* Mobile footer: two tidy columns. The brand/about block and the contact
+     list span the full width (they hold long, wrapping text), while the two
+     link groups sit side by side so the footer stops reading as one long
+     vertical stack. Falls back gracefully on very narrow screens. */
+  .footer__top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 22px; }
+  .footer__about { grid-column: 1 / -1; }
+  .footer__col { min-width: 0; }
+  .footer__col--contact { grid-column: 1 / -1; }
+  .footer__contact a, .footer__contact span { overflow-wrap: anywhere; }
   .footer__legal { gap: 14px; flex-wrap: wrap; }
 
   /* Filters bar: let the controls use the full width instead of overflowing. */
@@ -1515,6 +1532,10 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   .nav__inner { height: 58px; }
   .nav__cta { padding: 9px 12px; font-size: 13px; }
   .nav__cart, .account-link { padding: 8px; }
+
+  /* Keep the footer columns comfortable but slightly tighter on small phones. */
+  .footer__top { gap: 24px 16px; }
+  .footer h4 { margin-bottom: 14px; }
 
   /* Two-column product grid kept all the way down to 320px. The single-column
      fallback is what previously made the mobile catalogue look like a

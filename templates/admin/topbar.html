@@ -6,7 +6,7 @@
 
   <div class="ml-auto flex items-center gap-2 sm:gap-3">
     <div class="rui-mega relative" data-popup-wrap>
-      <button type="button" class="rui-btn rui-btn-primary" data-popup-toggle aria-expanded="false">{% translate 'Quick menu' %}</button>
+      <button type="button" class="rui-btn rui-btn-primary rui-quickmenu" data-popup-toggle aria-expanded="false">{% translate 'Quick menu' %}</button>
       <div class="rui-popup rui-popup--create" data-popup>
         <a href="{% url 'admin:orders_order_add' %}" class="rui-popup-item">{% translate 'New order' %}</a>
         <a href="{% url 'admin:customers_customer_add' %}" class="rui-popup-item">{% translate 'Add customer' %}</a>
@@ -46,7 +46,7 @@
     <div class="rui-mega relative" data-popup-wrap>
       <button type="button" class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-ink-100" data-popup-toggle aria-label="{% translate 'Account menu' %}" aria-expanded="false">
         <span class="rui-avatar">{{ user.get_username|first|upper }}</span>
-        <span class="text-sm font-medium text-ink-700">{{ user.get_short_name|default:user.get_username }}</span>
+        <span class="rui-account-name text-sm font-medium text-ink-700">{{ user.get_short_name|default:user.get_username }}</span>
         <svg class="h-4 w-4 text-ink-400" aria-hidden="true"><use href="#i-chevron-left" transform="rotate(-90)"/></svg>
       </button>
       <div class="rui-popup rui-popup--right rui-popup--account" data-popup>

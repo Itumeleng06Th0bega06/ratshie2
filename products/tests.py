@@ -870,6 +870,47 @@ class AdminDisplayFallbackTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class ProductChangelistMobileListTests(TestCase):
+    """The products changelist adds a mobile image + name list.
+
+    See templates/admin/products/product/changelist.html: on phones each row
+    shows only the thumbnail and the name and links to that product's existing
+    change form, while the desktop table keeps rendering from the same template.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="admin", password="s3cret!x", is_staff=True, is_superuser=True
+        )
+        self.client.force_login(self.user)
+
+    def test_mobile_list_links_each_row_to_its_change_form(self):
+        product = make_product("Brake Pad Set", price=Decimal("250.00"))
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "rui-prodlist")
+        change_url = reverse("admin:products_product_change", args=[product.pk])
+        self.assertContains(response, 'href="%s"' % change_url)
+
+    def test_mobile_list_renders_thumbnail_and_name(self):
+        product = make_product("Has Image", price=Decimal("250.00"))
+        ProductImage.objects.create(
+            product=product,
+            image="products/test/has-image.png",
+            status=ProductImage.Status.VERIFIED,
+        )
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        html = response.content.decode()
+        self.assertIn("rui-prodlist__thumb", html)
+        self.assertIn("rui-prodlist__name", html)
+
+    def test_desktop_table_still_rendered(self):
+        make_product("Brake Pad Set", price=Decimal("250.00"))
+        response = self.client.get(reverse("admin:products_product_changelist"))
+        # Django's table is still emitted alongside the mobile-only list.
+        self.assertContains(response, 'id="result_list"')
+
+
 class ProductSaveFailurePropagatesTests(TestCase):
     """Critical failures (saving, price calc) must keep failing loudly."""
 
