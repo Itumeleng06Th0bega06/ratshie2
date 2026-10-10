@@ -331,12 +331,18 @@ textarea { resize: vertical; }
   z-index: var(--z-drawer, 120);
   width: min(88vw, 340px);
   transform: translateX(-105%);
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Keep `visibility` visible until the slide-out finishes, so closing
+     animates instead of snapping away. */
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.28s;
   background: var(--paper, #ffffff);
   box-shadow: var(--shadow-lg, 0 24px 60px rgba(0, 0, 0, 0.22));
   visibility: hidden;
 }
-.dui-drawer.open { transform: translateX(0); visibility: visible; }
+.dui-drawer.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+}
 .dui-drawer__backdrop {
   position: fixed;
   inset: 0;
@@ -344,9 +350,148 @@ textarea { resize: vertical; }
   z-index: var(--z-drawer, 120);
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
-.dui-drawer__backdrop.open { visibility: visible; opacity: 1; }
+.dui-drawer__backdrop.open {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.25s ease, visibility 0s;
+}
+
+/* Right-hand drawer variant (e.g. the unified cart). */
+.dui-drawer--right {
+  left: auto;
+  right: 0;
+  transform: translateX(105%);
+}
+.dui-drawer--right.open { transform: translateX(0); }
+
+/* ---------------------------------------------------------------------------
+   Cart drawer — ONE container holding both the (scrollable) product list and
+   the order summary pinned to the bottom of the same panel.
+--------------------------------------------------------------------------- */
+.cart-drawer {
+  z-index: calc(var(--z-drawer, 120) + 1);
+  width: min(92vw, 420px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The HTMX swap target: header + list + summary all live inside this flex box. */
+.cart-drawer__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.cart-drawer__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #ece8e0;
+}
+.cart-drawer__header h2 { margin: 0; font-size: 1.05rem; }
+
+/* Product list scrolls; the summary below never covers it. */
+.cart-drawer__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cart-drawer__summary {
+  flex: 0 0 auto;
+  border-top: 1px solid #ece8e0;
+  background: var(--paper, #fff);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.cart-drawer__items { list-style: none; margin: 0; padding: 0; }
+.cart-drawer__item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "media details remove"
+    "media controls controls";
+  gap: 8px 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f1eee9;
+}
+.cart-drawer__media {
+  grid-area: media;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.cart-drawer__media img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+.cart-drawer__media .svg-art { width: 28px; height: 28px; }
+.cart-drawer__details { grid-area: details; min-width: 0; }
+.cart-drawer__details h3 { margin: 0 0 3px; font-size: 0.95rem; line-height: 1.25; }
+.cart-drawer__details h3 a { color: inherit; text-decoration: none; }
+.cart-drawer__details h3 a:hover { color: var(--gold); }
+.cart-drawer__meta { color: var(--muted); font-size: 0.72rem; }
+.cart-drawer__unit { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.cart-drawer__was { color: var(--muted); text-decoration: line-through; font-size: 0.78rem; }
+.cart-drawer__now { font-family: var(--font-display); font-weight: 700; }
+.cart-drawer__each { color: var(--muted); font-size: 0.7rem; }
+.cart-drawer__remove { grid-area: remove; align-self: start; }
+.cart-drawer__remove .icon-btn { width: 34px; height: 34px; border-radius: 9px; }
+.cart-drawer__remove .icon-btn:hover { background: #fee; border-color: var(--red); color: var(--red); }
+.cart-drawer__controls {
+  grid-area: controls;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.cart-drawer__total { font-size: 0.85rem; white-space: nowrap; }
+.cart-drawer__total-label { color: var(--muted); font-weight: 500; margin-right: 4px; font-size: 0.72rem; }
+.cart-drawer__total-value { font-family: var(--font-display); font-weight: 700; }
+
+.cart-drawer__summary-card { padding: 16px 20px 18px; }
+.cart-drawer__summary-card h3 { margin: 0 0 10px; font-size: 0.95rem; }
+.cart-drawer__row { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 0.9rem; }
+.cart-drawer__row--saving span:last-child { color: var(--green, #1a7f37); font-weight: 600; }
+.cart-drawer__row--total {
+  border-top: 1px solid #ece8e0;
+  margin-top: 8px;
+  padding-top: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.cart-drawer__note { color: var(--muted); font-size: 0.72rem; margin: 10px 0 14px; }
+.cart-drawer__summary-card .btn { margin-top: 0; }
+.cart-drawer__summary-card .btn + .btn { margin-top: 8px; }
+
+.cart-drawer__empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+}
+.cart-drawer__empty .svg-art { width: 44px; height: 44px; opacity: 0.5; margin-bottom: 10px; }
+.cart-drawer__empty h3 { margin: 0 0 4px; }
+.cart-drawer__empty p { color: var(--muted); font-size: 0.9rem; margin: 0 0 18px; }
+
+/* Full-width on phones — never wider than the viewport (no h-scroll). */
+@media (max-width: 560px) {
+  .cart-drawer { width: 100%; max-width: 100%; }
+}
 
 /* Reduced motion: static, instant. */
 @media (prefers-reduced-motion: reduce) {
@@ -354,6 +499,7 @@ textarea { resize: vertical; }
     animation-duration: 0.001s !important;
     animation-delay: 0s !important;
     transition-duration: 0.001s !important;
+    transition-delay: 0s !important;
     scroll-behavior: auto !important;
   }
 }

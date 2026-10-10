@@ -79,7 +79,8 @@
           {% endif %}
         </div>
         {% if enabled_cart %}
-        <a href="{% url 'orders:cart' %}" class="nav__cart" aria-label="Your cart">
+        <a href="{% url 'orders:cart' %}" class="nav__cart" aria-label="Open cart"
+           data-drawer-open data-drawer-target="cartDrawer">
           <svg width="20" height="20" aria-hidden="true"><use href="#i-cart"></use></svg>
           <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
         </a>
@@ -188,7 +189,8 @@
         <span>Services</span>
       </a>
       {% if enabled_cart %}
-      <a class="mb-item {% if request.resolver_match.namespace == 'orders' %}is-active{% endif %}" href="{% url 'orders:cart' %}">
+      <a class="mb-item {% if request.resolver_match.namespace == 'orders' %}is-active{% endif %}" href="{% url 'orders:cart' %}"
+         data-drawer-open data-drawer-target="cartDrawer">
         <span class="mb-item__icon">
           <svg aria-hidden="true"><use href="#i-cart"></use></svg>
           <span class="cart-badge js-cart-count" {% if not cart_count %}style="display:none"{% endif %}>{{ cart_count }}</span>
@@ -209,6 +211,19 @@
       {% endif %}
     </div>
   </nav>
+
+  {% if enabled_cart %}
+  <!-- Unified cart drawer: product list + price summary share ONE animated panel. -->
+  <div class="dui-drawer dui-drawer--right cart-drawer" id="cartDrawer"
+       role="dialog" aria-modal="true" aria-label="Your cart" aria-hidden="true"
+       data-drawer-backdrop="cartDrawerBackdrop">
+    <div class="cart-drawer__body" id="cart-drawer-body"
+         hx-get="{% url 'orders:cart_drawer' %}"
+         hx-trigger="load, cart:open from:body"
+         hx-swap="innerHTML"></div>
+  </div>
+  <div class="dui-drawer__backdrop" id="cartDrawerBackdrop" data-drawer-close data-drawer-target="cartDrawer"></div>
+  {% endif %}
 
   <script src="{% static 'js/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/ui.js' %}" defer></script>

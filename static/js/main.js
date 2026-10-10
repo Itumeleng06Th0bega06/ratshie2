@@ -200,6 +200,32 @@
     });
   }
 
+  /* Refresh the unified cart drawer every time it is opened so it always
+     reflects the current session cart (including adds made without a reload). */
+  document.addEventListener("click", function (e) {
+    var trigger = e.target.closest('[data-drawer-open][data-drawer-target="cartDrawer"]');
+    if (!trigger) return;
+    document.body.dispatchEvent(new CustomEvent("cart:open"));
+  });
+
+  /* Cart mutations rendered inside the drawer carry
+     `HX-Trigger: {"cartCount": N}`; keep the header/mobile badges in sync. */
+  document.body.addEventListener("cartCount", function (e) {
+    var detail = e.detail || {};
+    var value = detail.value != null ? detail.value : detail;
+    updateCartBadge(parseInt(value, 10) || 0);
+  });
+
+  /* The drawer fragment carries a hidden `data-cart-count` marker. Reading it
+     after a swap keeps the badge correct even when the posting element (and
+     therefore the HX-Trigger event source) has been replaced. */
+  document.addEventListener("htmx:afterSwap", function (e) {
+    var body = document.getElementById("cart-drawer-body");
+    if (!body || (e.target !== body && !body.contains(e.target))) return;
+    var marker = body.querySelector("[data-cart-count]");
+    if (marker) updateCartBadge(parseInt(marker.getAttribute("data-cart-count"), 10) || 0);
+  });
+
   /* No-refresh add-to-cart (progressive enhancement; server still enforces rules).
      Handles member-only 403 -> opens prompt, else updates badge + button state. */
   function getCookie(name) {

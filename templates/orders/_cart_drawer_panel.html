@@ -1,7 +1,8 @@
 {% if lines %}
+<span hidden data-cart-count="{{ total_qty }}"></span>
 <div class="cart-drawer__header">
   <h2>Your Cart</h2>
-  <button type="button" class="icon-btn" aria-label="Close cart" data-cart-drawer-close>
+  <button type="button" class="icon-btn" aria-label="Close cart" data-drawer-close>
     <svg width="18" height="18" aria-hidden="true"><use href="#i-close"></use></svg>
   </button>
 </div>
@@ -12,9 +13,10 @@
   {% include "orders/_cart_drawer_summary.html" %}
 </div>
 {% else %}
+<span hidden data-cart-count="0"></span>
 <div class="cart-drawer__header">
   <h2>Your Cart</h2>
-  <button type="button" class="icon-btn" aria-label="Close cart" data-cart-drawer-close>
+  <button type="button" class="icon-btn" aria-label="Close cart" data-drawer-close>
     <svg width="18" height="18" aria-hidden="true"><use href="#i-close"></use></svg>
   </button>
 </div>
@@ -23,7 +25,7 @@
   <h3>Your cart is empty</h3>
   <p>Browse our shop and add products you'd like to order.</p>
   <div class="cart-drawer__empty-actions">
-    <a class="btn btn--gold" href="{% url 'products:shop' %}" data-cart-drawer-continue>Continue Shopping</a>
+    <a class="btn btn--gold" href="{% url 'products:shop' %}" data-drawer-close>Continue Shopping</a>
   </div>
 </div>
 {% endif %}

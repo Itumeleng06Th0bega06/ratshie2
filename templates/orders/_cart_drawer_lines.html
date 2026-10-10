@@ -19,7 +19,7 @@
       {% endif %}
     </div>
     <div class="cart-drawer__details">
-      <h3><a href="{{ line.product.get_absolute_url }}" data-cart-drawer-close>{{ line.product.name }}</a></h3>
+      <h3><a href="{{ line.product.get_absolute_url }}" data-drawer-close>{{ line.product.name }}</a></h3>
       {% if line.product.brand %}<div class="cart-drawer__meta">{{ line.product.brand }}</div>{% endif %}
       {% if line.product.sku %}<div class="cart-drawer__meta">SKU: {{ line.product.sku }}</div>{% endif %}
       <div class="cart-drawer__unit">

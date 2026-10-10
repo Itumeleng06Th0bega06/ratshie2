@@ -26,6 +26,6 @@
     <span>R {{ grand_total|floatformat:2 }}</span>
   </div>
   <p class="cart-drawer__note">Standard delivery is charged once per order; custom delivery adds each product's fee once.</p>
-  <a class="btn btn--gold btn--block" href="{% url 'orders:checkout' %}" data-cart-drawer-close>Checkout · R {{ grand_total|floatformat:2 }}</a>
-  <a class="btn btn--ghost-dark btn--block" href="{% url 'orders:cart' %}" data-cart-drawer-close>View full cart</a>
+  <a class="btn btn--gold btn--block" href="{% url 'orders:checkout' %}" data-drawer-close>Checkout · R {{ grand_total|floatformat:2 }}</a>
+  <a class="btn btn--ghost-dark btn--block" href="{% url 'products:shop' %}" data-drawer-close>Continue Shopping</a>
 </div>

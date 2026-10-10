@@ -226,14 +226,20 @@
 
   /* Drawer helpers: `[data-drawer-open][data-drawer-target]` etc. */
   function openDrawer(el) {
+    if (!el) return;
     el.classList.add("open");
+    el.setAttribute("aria-hidden", "false");
     var backdrop = document.getElementById(el.getAttribute("data-drawer-backdrop"));
     if (backdrop) backdrop.classList.add("open");
     document.body.style.overflow = "hidden";
+    var focusable = el.querySelector('[data-drawer-focus], button, a[href], input, select, textarea');
+    if (focusable) focusable.focus();
   }
 
   function closeDrawer(el) {
+    if (!el) return;
     el.classList.remove("open");
+    el.setAttribute("aria-hidden", "true");
     var backdrop = document.getElementById(el.getAttribute("data-drawer-backdrop"));
     if (backdrop) backdrop.classList.remove("open");
     if (!document.querySelector(".dui-drawer.open")) {
@@ -252,10 +258,16 @@
       if (target) openDrawer(target);
       return;
     }
-    var closer = e.target.closest('.dui-drawer [data-drawer-close], .dui-drawer__backdrop');
-    if (closer) {
-      closeDrawer(closer.closest(".dui-drawer, .dui-drawer__backdrop").closest(".dui-drawer"));
+    // Close via an element inside the drawer (button/link) OR the sibling
+    // backdrop, which names its drawer through `data-drawer-target`.
+    var closer = e.target.closest("[data-drawer-close]");
+    if (!closer) return;
+    var drawer = closer.closest(".dui-drawer");
+    if (!drawer) {
+      var id = closer.getAttribute("data-drawer-target");
+      if (id) drawer = document.getElementById(id);
     }
+    if (drawer) closeDrawer(drawer);
   });
 
   document.addEventListener("keydown", function (e) {

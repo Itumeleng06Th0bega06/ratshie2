@@ -583,9 +583,57 @@ class ProductDeliveryFeeTests(TestCase):
         self.assertEqual(order.total, original_total)
 
 
+class CartDrawerUITests(TestCase):
+    """The header cart control opens ONE right-side drawer holding both the
+    product list and the price summary."""
+
+    def test_base_page_mounts_the_drawer_and_trigger(self):
+        product = create_product()
+        add_to_cart(self.client, product)
+        html = self.client.get(reverse("products:shop")).content.decode()
+        # A single right-side drawer, hidden until opened.
+        self.assertIn('id="cartDrawer"', html)
+        self.assertIn("dui-drawer--right", html)
+        # Header icon and mobile bar item are drawer triggers.
+        self.assertIn('data-drawer-open data-drawer-target="cartDrawer"', html)
+        # Backdrop closes it; shared drawer controller attribute is used.
+        self.assertIn('id="cartDrawerBackdrop"', html)
+        self.assertIn("data-drawer-close", html)
+
+    def test_drawer_fragment_contains_list_and_summary_together(self):
+        standard = create_product(name="Standard", delivery_type="standard")
+        custom = create_product(
+            name="Custom", delivery_type="custom", delivery_fee=Decimal("25.00")
+        )
+        add_to_cart(self.client, standard, qty=1)
+        add_to_cart(self.client, custom, qty=3)
+        response = self.client.get(reverse("orders:cart_drawer"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        # Product list and summary share one fragment/container.
+        self.assertIn("cart-drawer__list", html)
+        self.assertIn("cart-drawer__summary", html)
+        self.assertIn("Standard", html)
+        self.assertIn("Custom", html)
+        # Qty 3 must not multiply the once-per-product custom fee.
+        fee = shipping_config().standard_fee + Decimal("25.00")
+        expected_total = standard.price + custom.price * 3 + fee
+        self.assertIn(f"R {expected_total:,.2f}", html)
+        # Badge-sync marker for no-refresh quantity changes.
+        self.assertIn("data-cart-count", html)
+        # The dead previous-attempt hook must not linger, and the drawer must
+        # not embed the cart page's separate summary card.
+        self.assertNotIn("data-cart-drawer-", html)
+        self.assertNotIn("cart-summary-mobile", html)
+
+    def test_drawer_empty_state(self):
+        html = self.client.get(reverse("orders:cart_drawer")).content.decode()
+        self.assertIn("cart-drawer__empty", html)
+        self.assertIn('data-cart-count="0"', html)
+
+
 class RemovedDeliveryRuleTests(TestCase):
     """The old pickup / free-threshold / large-item delivery rules are gone."""
-
     def test_product_delivery_types_are_only_standard_and_custom(self):
         self.assertEqual(
             [value for value, _ in Product.DELIVERY_TYPES],
