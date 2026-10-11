@@ -223,30 +223,6 @@ class ProductGroupAdmin(admin.ModelAdmin):
         return obj.products.count()
 
 
-class StockStatusFilter(admin.SimpleListFilter):
-    """Filter the product list by the automatic stock status."""
-
-    title = "stock status"
-    parameter_name = "stock_status"
-
-    def lookups(self, request, model_admin):
-        return (
-            ("out", "Out of Stock (0)"),
-            ("limited", "Limited Stock (1–9)"),
-            ("in", "In Stock (10+)"),
-        )
-
-    def queryset(self, request, queryset):
-        value = self.value()
-        if value == "out":
-            return queryset.filter(stock__lte=0)
-        if value == "limited":
-            return queryset.filter(stock__gte=1, stock__lt=Product.STOCK_LIMITED_MIN)
-        if value == "in":
-            return queryset.filter(stock__gte=Product.STOCK_LIMITED_MIN)
-        return queryset
-
-
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
@@ -270,7 +246,6 @@ class ProductAdmin(admin.ModelAdmin):
         "stock",
         "is_active",
     )
-    list_filter = (StockStatusFilter,)
     search_fields = ("name", "sku", "brand", "description", "short_description", "vehicle_makes")
     list_per_page = 50
     prepopulated_fields = {"slug": ("name",)}

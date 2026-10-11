@@ -253,24 +253,13 @@ class ProductStockAdminTests(TestCase):
         )
         self.client.force_login(self.admin)
 
-    def test_changelist_shows_stock_column_and_filter(self):
+    def test_changelist_shows_stock_columns(self):
         make_product(name="Listed", stock=3)
         response = self.client.get(reverse("admin:products_product_changelist"))
         html = response.content.decode()
         self.assertEqual(response.status_code, 200)
         self.assertIn('class="field-stock"', html)
         self.assertIn('class="field-stock_badge"', html)
-        # The automatic stock filter is offered.
-        self.assertIn("stock status", html)
-
-    def test_stock_filter_isolates_out_of_stock(self):
-        soldout = make_product(name="Sold Out One", stock=0)
-        avail = make_product(name="Available One", stock=20)
-        response = self.client.get(
-            reverse("admin:products_product_changelist"), {"stock_status": "out"}
-        )
-        self.assertContains(response, soldout.name)
-        self.assertNotContains(response, avail.name)
 
     def test_availability_is_read_only_on_change_form(self):
         product = make_product(name="Readonly A", stock=4)

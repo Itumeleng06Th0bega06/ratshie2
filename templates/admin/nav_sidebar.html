@@ -29,6 +29,10 @@
           <span class="rui-sidebar-label">{% translate 'Orders' %}</span>
           {% if orders_count %}<span class="rui-sidebar-count">{{ orders_count }}</span>{% endif %}
         </a>
+        <a href="{% url 'admin:orders_shippingsettings_changelist' %}" class="rui-sidebar-link {% if request.resolver_match.url_name == 'orders_shippingsettings_changelist' or request.resolver_match.url_name == 'orders_shippingsettings_change' %}rui-active{% endif %}" data-tip="{% translate 'Delivery settings' %}">
+          <svg aria-hidden="true"><use href="#i-truck"></use></svg>
+          <span class="rui-sidebar-label">{% translate 'Delivery settings' %}</span>
+        </a>
         <a href="{% url 'admin:quotes_quote_changelist' %}" class="rui-sidebar-link" data-tip="{% translate 'Quotes' %}">
           <svg aria-hidden="true"><use href="#i-mail"></use></svg>
           <span class="rui-sidebar-label">{% translate 'Quotes' %}</span>

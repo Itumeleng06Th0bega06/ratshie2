@@ -758,6 +758,42 @@ class ProductDeliveryAdminTests(TestCase):
         self.assertIsNone(form.cleaned_data["delivery_fee"])
 
 
+class ShippingSettingsAdminTests(TestCase):
+    """The standard delivery fee is editable in the admin and easy to reach."""
+
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser(
+            "feeadmin", "fee@b.com", "pw12345!"
+        )
+        self.client.force_login(self.admin)
+
+    def test_sidebar_links_to_delivery_settings(self):
+        response = self.client.get(reverse("admin:index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, reverse("admin:orders_shippingsettings_changelist")
+        )
+
+    def test_admin_can_open_delivery_settings_before_one_exists(self):
+        from orders.models import ShippingSettings
+
+        self.assertFalse(ShippingSettings.objects.exists())
+        response = self.client.get(
+            reverse("admin:orders_shippingsettings_changelist")
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_can_change_the_standard_fee(self):
+        settings = shipping_config()
+        response = self.client.post(
+            reverse("admin:orders_shippingsettings_change", args=[settings.pk]),
+            {"standard_fee": "123.45"},
+        )
+        self.assertEqual(response.status_code, 302)
+        settings.refresh_from_db()
+        self.assertEqual(settings.standard_fee, Decimal("123.45"))
+
+
 class TermsAcceptanceAdminTests(TestCase):
     """Staff can see the acceptance record, but cannot rewrite it."""
 
