@@ -1476,9 +1476,10 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 }
 @media (max-width: 1024px) {
   /* Tablet/mobile header: no hamburger. The bottom bar is the primary mobile
-     nav, so the header shrinks to logo + account + cart + quote and drops the
+     nav, so the header shrinks to logo + account and drops the cart plus the
      links/CTAs that the bottom bar (or the WhatsApp float) already covers. */
   .nav__menu { display: none; }
+  .nav__cart { display: none; }
   .nav__cta--outline, .nav__cta--wa { display: none; }
   .nav__inner { gap: 12px; height: 62px; }
   .nav__actions { gap: 4px; }

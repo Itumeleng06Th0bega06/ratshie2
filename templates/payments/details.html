@@ -12,11 +12,6 @@
         <p style="color:var(--muted);margin-top:10px">Pay securely with PayFast — a leading South African online payment gateway.</p>
       </div>
 
-      <div class="pay-note" style="margin-top:14px;justify-content:center">
-        <svg aria-hidden="true"><use href="#i-lock"></use></svg>
-        <span>Your payment is securely processed by PayFast.</span>
-      </div>
-
       <div class="pay-summary reveal" style="margin-top:24px">
         {% if payment.customer %}
         <div class="pay-summary__row"><span class="k">Customer</span><span>{{ payment.customer.full_name }}</span></div>
@@ -41,10 +36,6 @@
           Pay Securely with PayFast
         </button>
       </form>
-      <div class="pay-note">
-        <svg aria-hidden="true"><use href="#i-lock"></use></svg>
-        <span>Your payment is securely processed by PayFast. We do not store your card details.</span>
-      </div>
       {% else %}
       <div class="pay-coming reveal" style="margin-top:24px">
         <div class="pay-coming__icon"><svg aria-hidden="true"><use href="#i-clock"></use></svg></div>
