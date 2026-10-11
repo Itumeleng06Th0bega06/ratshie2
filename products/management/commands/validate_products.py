@@ -1,4 +1,4 @@
-﻿"""Validate product images across the catalogue.
+"""Validate product images across the catalogue.
 
 Reports each active product with, in order of severity:
     VERIFIED  -> has a valid, optimised (WebP), VERIFIED primary image that is
