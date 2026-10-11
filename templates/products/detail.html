@@ -82,6 +82,12 @@
         {% endif %}
 
         <div class="pd__pricing">
+          {% if product.is_new %}
+            <span class="badge badge--gold" style="margin-bottom:6px">New</span>
+          {% endif %}
+          {% if product.is_genuine %}
+            <span class="badge badge--nyc" style="margin-bottom:6px">Genuine</span>
+          {% endif %}
           {% if product.stock_warning_label %}
             <span class="badge {{ product.stock_badge_class }}" style="margin-bottom:6px">{{ product.stock_warning_label }}</span>
           {% endif %}

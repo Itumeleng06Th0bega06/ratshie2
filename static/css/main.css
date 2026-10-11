@@ -444,25 +444,27 @@ p { margin: 0; }
 .alert--info { background: #eef2ff; color: #2f3f9f; border-color: #d6ddff; }
 
 /* ---------- CTA band ---------- */
-.cta-band { background: var(--gold); color: #161600; }
-.cta-band__inner { display: flex; align-items: center; justify-content: space-between; gap: 30px; flex-wrap: wrap; padding: 44px 0; }
+.cta-band { background: var(--gold); color: #161600; padding: 44px 0; }
+.cta-band__inner { display: flex; align-items: center; justify-content: space-between; gap: 30px; flex-wrap: wrap; }
 .cta-band h2 { font-size: clamp(26px, 3.4vw, 40px); }
 .cta-band p { margin-top: 10px; font-weight: 500; }
 .cta-band .btn.cb { background: #161600; color: #fff; }
 .cta-band .btn.cb:hover { background: #000; transform: translateY(-2px); }
 .cta-band .btn.cb-outline { border: 2px solid #161600; color: #161600; background: transparent; }
 .cta-band .btn.cb-outline:hover { background: #161600; color: #fff; }
-.cta-band--compact .cta-band__inner { padding: 24px 0; }
+.cta-band--compact { padding: 24px 0; }
 .cta-band--compact h2 { font-size: clamp(22px, 2.8vw, 30px); }
 .cta-band--compact p { margin-top: 8px; }
-.cta-band--center .cta-band__inner { flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 0; text-align: center; }
+.cta-band--center { padding: 24px 0; }
+.cta-band--center .cta-band__inner { flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
 .cta-band--center h2 { font-size: clamp(22px, 2.6vw, 32px); margin: 0; }
 .cta-band--center p { margin-top: 2px; max-width: 54ch; }
 
 /* Slim variant: compact paddings, smaller heading/body text and small buttons.
    Used for the "Can't find the part?" band on the shop page so it no longer
    dominates the page. */
-.cta-band--slim .cta-band__inner { padding: 20px 0; gap: 10px; }
+.cta-band--slim { padding: 20px 0; }
+.cta-band--slim .cta-band__inner { gap: 10px; }
 .cta-band--slim h2 { font-size: clamp(18px, 2.2vw, 24px); }
 .cta-band--slim p { margin-top: 4px; font-size: 13px; }
 .cta-band--slim .btn { padding: 8px 16px; font-size: 13px; border-radius: 10px; gap: 8px; }

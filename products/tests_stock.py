@@ -90,32 +90,34 @@ class StockStatusTests(TestCase):
 
 
 class StockBadgeSurfaceTests(TestCase):
-    """The same calculation drives the card and the product page."""
+    """Stock status is a tag on the product page only: shop cards keep just the
+    sale tag, but the same calculation drives both surfaces."""
 
-    def test_card_shows_out_of_stock_badge(self):
-        make_product(name="Soldout Widget", stock=0)
-        html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertIn("Out of Stock", html)
-        self.assertIn("badge--out", html)
+    def test_detail_shows_out_of_stock_badge(self):
+        product = make_product(name="Soldout Widget", stock=0)
+        self.assertNotIn(
+            "badge--out",
+            self.client.get(reverse("products:shop")).content.decode(),
+        )
+        detail_html = self.client.get(product.get_absolute_url()).content.decode()
+        self.assertIn("Out of Stock", detail_html)
+        self.assertIn("badge--out", detail_html)
 
-    def test_card_shows_limited_stock_badge(self):
-        make_product(name="Limited Widget", stock=4)
-        html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertIn("Limited Stock", html)
-        self.assertIn("badge--limited", html)
+    def test_detail_shows_limited_stock_badge(self):
+        product = make_product(name="Limited Widget", stock=4)
+        self.assertNotIn(
+            "badge--limited",
+            self.client.get(reverse("products:shop")).content.decode(),
+        )
+        detail_html = self.client.get(product.get_absolute_url()).content.decode()
+        self.assertIn("Limited Stock", detail_html)
+        self.assertIn("badge--limited", detail_html)
 
     def test_card_shows_no_stock_badge_at_ten(self):
         make_product(name="Plenty Widget", stock=10)
         html = self.client.get(reverse("products:shop")).content.decode()
         self.assertNotIn("Limited Stock", html)
         self.assertNotIn("Out of Stock", html)
-
-    def test_card_and_detail_agree(self):
-        product = make_product(name="Consistent Widget", stock=3)
-        card_html = self.client.get(reverse("products:shop")).content.decode()
-        detail_html = self.client.get(product.get_absolute_url()).content.decode()
-        self.assertIn("Limited Stock", card_html)
-        self.assertIn("Limited Stock", detail_html)
 
     def test_detail_out_of_stock_hides_add_to_cart(self):
         product = make_product(name="Soldout Widget", stock=0)

@@ -14,12 +14,9 @@
     {% endif %}
   </a>
   <div class="product-card__body">
-    {% if p.is_on_sale or p.is_new or p.is_genuine or p.stock_warning_label %}
+    {% if p.is_on_sale %}
     <div class="product-card__badges">
-      {% if p.is_on_sale %}<span class="badge badge--sale">{{ p.discount_percent }}% Off</span>{% endif %}
-      {% if p.is_new %}<span class="badge badge--gold">New</span>{% endif %}
-      {% if p.is_genuine %}<span class="badge badge--nyc">Genuine</span>{% endif %}
-      {% if p.stock_warning_label %}<span class="badge {{ p.stock_badge_class }}">{{ p.stock_warning_label }}</span>{% endif %}
+      <span class="badge badge--sale">{{ p.discount_percent }}% Off</span>
     </div>
     {% endif %}
     <h3><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
