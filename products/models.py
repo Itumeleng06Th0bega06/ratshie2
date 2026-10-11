@@ -154,6 +154,10 @@ class Product(models.Model):
         SPARE_PART = "spare_part", "Spare Part"
         LUBRICANT = "lubricant", "Lubricant"
 
+    # Availability is derived from the real stock quantity, never hand-picked,
+    # so the badge can never disagree with what is actually on the shelf. The
+    # stored ``availability`` values below are kept for historical rows and for
+    # a plain-language label; the authoritative field is ``stock``.
     AVAILABILITY = [
         ("in_stock", "In Stock"),
         ("limited", "Limited Stock"),
@@ -161,6 +165,10 @@ class Product(models.Model):
         ("on_request", "On Request"),
         ("out_of_stock", "Out of Stock"),
     ]
+
+    # A product with at least this many units shows no stock warning badge.
+    # 1..9 shows "Limited Stock"; 0 shows "Out of Stock".
+    STOCK_LIMITED_MIN = 10
 
     product_type = models.CharField(
         "Product type",
@@ -208,7 +216,16 @@ class Product(models.Model):
 
     # Stock / availability
     availability = models.CharField(max_length=20, choices=AVAILABILITY, default="in_stock")
-    stock = models.PositiveIntegerField(default=0)
+    stock = models.PositiveIntegerField(
+        "Stock quantity",
+        default=0,
+        help_text=(
+            "How many units you physically have. This is the source of truth: "
+            "10 or more shows no warning badge, 1–9 shows 'Limited Stock', and "
+            "0 shows 'Out of Stock' and blocks purchase. The badge is automatic "
+            "and is never selected by hand."
+        ),
+    )
     is_available = models.BooleanField(
         default=True,
         help_text=("Uncheck to hide Add to Cart / Buy buttons and show this item as unavailable."),
@@ -385,8 +402,56 @@ class Product(models.Model):
         return f"R {self.original_price - self.price:,.2f}"
 
     @property
+    def stock_status(self):
+        """Automatic stock status derived from the real quantity only.
+
+        Returns ``"in"`` (10+), ``"limited"`` (1-9) or ``"out"`` (0). This is
+        the single shared calculation used by product cards, the product page,
+        cart and checkout, so every surface always agrees.
+        """
+        if not self.stock or self.stock <= 0:
+            return "out"
+        if self.stock < self.STOCK_LIMITED_MIN:
+            return "limited"
+        return "in"
+
+    @property
+    def stock_warning_label(self):
+        """Customer-facing badge text, or "" when no warning is needed.
+
+        ``10+`` returns an empty string so no badge is rendered at all.
+        """
+        if self.stock_status == "out":
+            return "Out of Stock"
+        if self.stock_status == "limited":
+            return "Limited Stock"
+        return ""
+
+    @property
+    def stock_badge_class(self):
+        """CSS modifier for the stock badge, or "" when there is no warning."""
+        if self.stock_status == "out":
+            return "badge--out"
+        if self.stock_status == "limited":
+            return "badge--limited"
+        return ""
+
+    @property
     def in_stock(self):
-        return self.is_available and self.availability in ("in_stock", "limited", "backorder") and self.stock > 0
+        """Whether the product can be bought right now.
+
+        Purely quantity-based (plus the manual ``is_available`` kill switch), so
+        the availability dropdown can never make a sold-out item look buyable.
+        """
+        return bool(self.is_available) and self.stock_status != "out"
+
+    def _derive_availability(self):
+        """Return the stored availability value that matches the real stock."""
+        return {
+            "in": "in_stock",
+            "limited": "limited",
+            "out": "out_of_stock",
+        }[self.stock_status]
 
     @property
     def specs_present(self):
@@ -515,6 +580,9 @@ class Product(models.Model):
         # value can never be mistaken for an active one.
         if self.delivery_type != "custom":
             self.delivery_fee = None
+        # The stored availability is derived from the real quantity, so a
+        # hand-picked badge can never disagree with the stock on the shelf.
+        self.availability = self._derive_availability()
         if not self.slug:
             self.slug = slugify(self.name)
         if not (self.sku or "").strip():

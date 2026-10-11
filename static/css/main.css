@@ -301,6 +301,10 @@ p { margin: 0; }
 .badge--nyc { background: #111; color: #fff; }
 .badge--green { background: #e6f7ee; color: #137a44; }
 .badge--ink { background: var(--ink); color: #fff; }
+/* Automatic stock badges (quantity is the only source of truth):
+   1-9 -> Limited Stock, 0 -> Out of Stock, 10+ -> no badge at all. */
+.badge--limited { background: #fff3e0; color: #b3560b; }
+.badge--out { background: #fdecec; color: #c62828; }
 .product-card__body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
 .product-card__cat { color: var(--gold); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .product-card h3 { font-size: 16px; margin-top: 8px; }

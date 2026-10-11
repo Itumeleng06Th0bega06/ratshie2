@@ -39,6 +39,11 @@
       {% if line.restricted %}
       <div class="cart-drawer__restricted-note" role="note">Members-only sale item — sign in to purchase.</div>
       {% endif %}
+      {% if line.product.stock_warning_label %}
+      <div class="cart-drawer__stock" role="note" style="color:{% if line.product.stock_status == 'out' %}#c62828{% else %}#b3560b{% endif %};font-size:12px;margin-top:2px">
+        {{ line.product.stock_warning_label }}{% if line.product.stock_status == 'limited' %} — only {{ line.product.stock }} left{% endif %}
+      </div>
+      {% endif %}
     </div>
     <form action="{% url 'orders:cart_remove' line.product.pk %}" method="post" class="cart-drawer__remove"
           hx-post="{% url 'orders:cart_remove' line.product.pk %}" hx-target="#cart-drawer-body" hx-swap="innerHTML" hx-disabled-elt="find button">
@@ -55,7 +60,7 @@
         <input type="hidden" name="cart_target" value="drawer">
         <button type="submit" aria-label="Decrease quantity of {{ line.product.name }}" name="qty" value="{{ line.qty|add:'-1' }}">−</button>
         <input type="number" value="{{ line.qty }}" min="0" readonly aria-label="Quantity of {{ line.product.name }}">
-        <button type="submit" aria-label="Increase quantity of {{ line.product.name }}" name="qty" value="{{ line.qty|add:'1' }}">+</button>
+        <button type="submit" aria-label="Increase quantity of {{ line.product.name }}" name="qty" value="{{ line.qty|add:'1' }}"{% if line.qty >= line.product.stock %} disabled title="Only {{ line.product.stock }} available"{% endif %}>+</button>
       </form>
       <div class="cart-drawer__total">
         <span class="cart-drawer__total-label">Line total</span>

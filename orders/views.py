@@ -12,7 +12,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 
 from .models import Order, OrderItem
 from products.models import Product
-from products.services import can_purchase_product, cart_restriction_errors, line_totals
+from products.services import can_purchase_product, cart_restriction_errors, cart_stock_errors, line_totals
 from customers.models import Customer
 from core.utils import cart_from_session, save_cart, cart_items
 from .services import cart_delivery
@@ -268,6 +268,12 @@ def checkout_submit(request):
         allowed, reason = can_purchase_product(request.user, it["product"])
         if not allowed and reason != "member_only":
             rerrors.append(f"“{it['product'].name}” is currently unavailable or out of stock.")
+    # Stock is re-checked against the database here, at order submission. The
+    # cart quantity alone is never proof that the units still exist.
+    rerrors.extend(cart_stock_errors(items))
+    # Keep the first occurrence of each message, preserving order.
+    seen_errors = set()
+    rerrors = [e for e in rerrors if not (e in seen_errors or seen_errors.add(e))]
     if rerrors:
         for e in rerrors:
             messages.error(request, e)

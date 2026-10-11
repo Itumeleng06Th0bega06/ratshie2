@@ -104,6 +104,22 @@ class Order(models.Model):
     payment_reference = models.CharField(max_length=40, blank=True)
     payfast_transaction_id = models.CharField(max_length=64, blank=True)
 
+    stock_deducted = models.BooleanField(
+        "Stock deducted",
+        default=False,
+        help_text=(
+            "Set automatically when the confirmed payment deducts this order's "
+            "stock. Guarantees a duplicate payment notification cannot deduct "
+            "the same units twice."
+        ),
+    )
+    stock_deducted_at = models.DateTimeField(
+        "Stock deducted at",
+        null=True,
+        blank=True,
+        help_text="Server timestamp of the stock deduction. Not client-supplied.",
+    )
+
     notes = models.TextField(blank=True)
     terms_accepted = models.BooleanField(
         "Terms & Conditions accepted",

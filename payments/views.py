@@ -13,6 +13,7 @@ import logging
 
 from django.shortcuts import render, get_object_or_404
 from django.conf import settings
+from django.db import transaction
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -146,18 +147,29 @@ def _update_payment_from_itn(data):
         return payment
 
     if new_status == "success":
-        payment.status = "success"
-        payment.payfast_transaction_id = data.get("pf_payment_id", "")
-        payment.raw_response = data
-        payment.save(update_fields=["status", "payfast_transaction_id", "raw_response", "updated_at"])
+        with transaction.atomic():
+            payment.status = "success"
+            payment.payfast_transaction_id = data.get("pf_payment_id", "")
+            payment.raw_response = data
+            payment.save(update_fields=["status", "payfast_transaction_id", "raw_response", "updated_at"])
+
+            if payment.order:
+                order = payment.order
+                order.status = Order.Status.PAID
+                order.payment_status = Order.Status.PAID
+                order.payfast_transaction_id = data.get("pf_payment_id", "")
+                order.save(update_fields=["status", "payment_status", "payfast_transaction_id", "updated_at"])
+
+                # Reduce stock now that the order is confirmed paid. This is
+                # idempotent (guarded by Order.stock_deducted) and atomic, so a
+                # duplicate ITN cannot deduct twice and concurrent buyers cannot
+                # oversell. A shortfall is clamped at zero, never negative.
+                from products.stock import deduct_stock_for_order
+
+                deduct_stock_for_order(order)
 
         if payment.order:
             order = payment.order
-            order.status = Order.Status.PAID
-            order.payment_status = Order.Status.PAID
-            order.payfast_transaction_id = data.get("pf_payment_id", "")
-            order.save(update_fields=["status", "payment_status", "payfast_transaction_id", "updated_at"])
-
             # Ensure a delivery estimate exists and notify the customer of the
             # paid order (idempotent: duplicate ITNs will not re-send).
             try:

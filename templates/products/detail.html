@@ -68,6 +68,9 @@
         {% endif %}
 
         <div class="pd__pricing">
+          {% if product.stock_warning_label %}
+            <span class="badge {{ product.stock_badge_class }}" style="margin-bottom:6px">{{ product.stock_warning_label }}</span>
+          {% endif %}
           {% if product.is_on_sale %}
             <span class="badge badge--sale" style="margin-bottom:6px">SALE · {{ product.discount_percent }}% OFF</span>
             <div class="pd__price"><span class="was" style="color:var(--muted);text-decoration:line-through;font-size:0.8em;margin-right:8px">R {{ product.original_price|floatformat:2 }}</span><span class="now" style="font-size:1.5em;font-weight:800;color:var(--accent)">R {{ product.price|floatformat:2 }}</span></div>
@@ -111,9 +114,12 @@
             {% if enabled_cart and product.in_stock %}
             <span class="qty">
               <button type="button" data-dec aria-label="Decrease quantity">−</button>
-              <input type="number" name="quantity" value="1" min="1" aria-label="Quantity">
+              <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" aria-label="Quantity">
               <button type="button" data-inc aria-label="Increase quantity">+</button>
             </span>
+            {% if product.stock_status == 'limited' %}
+            <span style="color:#b3560b;font-weight:600;font-size:14px">Only {{ product.stock }} left</span>
+            {% endif %}
             <button type="submit" class="btn btn--gold">Add to Cart</button>
             <button type="submit" name="action" value="buy_now" class="btn btn--dark" formaction="{% url 'products:buy_now' product.slug %}">Buy Now</button>
             {% else %}

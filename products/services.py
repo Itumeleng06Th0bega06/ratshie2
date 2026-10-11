@@ -52,6 +52,59 @@ def cart_restriction_errors(user, product_lines):
     return errors
 
 
+def available_quantity(product):
+    """Return the largest quantity of ``product`` that can be bought right now."""
+    if product is None or not getattr(product, "is_available", True):
+        return 0
+    try:
+        return max(0, int(getattr(product, "stock", 0) or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def clamp_quantity(product, desired):
+    """Clamp ``desired`` so it never exceeds the units actually available."""
+    try:
+        desired = int(desired)
+    except (TypeError, ValueError):
+        desired = 0
+    return max(0, min(desired, available_quantity(product)))
+
+
+def cart_stock_errors(product_lines):
+    """Return messages for cart lines whose quantity exceeds available stock.
+
+    ``can_purchase_product`` already blocks a sold-out line; this catches the
+    subtler case where a line's quantity is larger than the remaining stock, so
+    the order cannot be submitted for more units than are on the shelf.
+    """
+    errors = []
+    for line in product_lines or []:
+        if isinstance(line, dict):
+            p = line.get("product")
+            qty = int(line.get("qty", 0) or 0)
+        else:
+            p = line
+            qty = 1
+        if p is None:
+            continue
+        stock = available_quantity(p)
+        if qty > stock:
+            if stock <= 0:
+                errors.append(
+                    f"“{p.name}” is out of stock. Please remove it from your cart."
+                )
+            elif stock == 1:
+                errors.append(
+                    f"Only 1 of “{p.name}” is available. Please reduce the quantity."
+                )
+            else:
+                errors.append(
+                    f"Only {stock} of “{p.name}” are available. Please reduce the quantity."
+                )
+    return errors
+
+
 def line_totals(price, original_price, qty):
     """Compute line subtotal + discount used consistently in cart/checkout."""
     price = Decimal(str(price or 0))

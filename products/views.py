@@ -15,7 +15,7 @@ from django.contrib import messages
 
 from .models import Product, ProductEnquiry, ProductGroup
 from customers.models import Customer
-from .services import can_purchase_product
+from .services import can_purchase_product, clamp_quantity
 from orders.services import product_delivery
 from core.utils import (
     product_whatsapp_message,
@@ -146,12 +146,22 @@ def cart_add(request, slug):
         messages.error(request, "Sorry, this item is currently unavailable.")
         return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
 
-    if product.is_available and product.stock and not product.in_stock:
+    # Never let the cart hold more units than are actually available. The clamp
+    # is server-side so a doctored form or an over-clicked button cannot reserve
+    # stock that does not exist.
+    available = clamp_quantity(product, product.stock)
+    current = int(cart.get(str(product.pk), {}).get("qty", 0))
+    new_qty = clamp_quantity(product, current + qty)
+    if new_qty < current + qty:
+        messages.warning(
+            request,
+            f"Only {available} of “{product.name}” "
+            f"{'is' if available == 1 else 'are'} available.",
+        )
+    if new_qty <= 0:
         messages.error(request, "Sorry, this item is currently out of stock.")
         return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
-
-    current = int(cart.get(str(product.pk), {}).get("qty", 0))
-    cart[str(product.pk)] = {"qty": current + qty}
+    cart[str(product.pk)] = {"qty": new_qty}
     save_cart(request, cart)
 
     if "ajax" in request.POST or request.headers.get("HX-Request") or request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -178,7 +188,7 @@ def cart_add_partial(request, slug):
         return HttpResponse("", status=409)
     cart = cart_from_session(request)
     current = int(cart.get(str(product.pk), {}).get("qty", 0))
-    cart[str(product.pk)] = {"qty": current + 1}
+    cart[str(product.pk)] = {"qty": clamp_quantity(product, current + 1)}
     save_cart(request, cart)
     count = sum(int(v.get("qty", 0)) for v in cart.values())
     html = '<span class="cart-badge js-cart-count">{}</span>'.format(count)
@@ -203,8 +213,20 @@ def buy_now(request, slug):
         messages.error(request, "Sorry, this item is currently unavailable.")
         return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
 
+    # Buy Now must not add more units than exist, either.
     current = int(cart.get(str(product.pk), {}).get("qty", 0))
-    cart[str(product.pk)] = {"qty": current + qty}
+    new_qty = clamp_quantity(product, current + qty)
+    if new_qty < current + qty:
+        available = clamp_quantity(product, product.stock)
+        messages.warning(
+            request,
+            f"Only {available} of “{product.name}” "
+            f"{'is' if available == 1 else 'are'} available.",
+        )
+    if new_qty <= 0:
+        messages.error(request, "Sorry, this item is currently out of stock.")
+        return HttpResponseRedirect(reverse("products:detail", kwargs={"slug": product.slug}))
+    cart[str(product.pk)] = {"qty": new_qty}
     save_cart(request, cart)
     return HttpResponseRedirect(reverse("orders:checkout"))
 

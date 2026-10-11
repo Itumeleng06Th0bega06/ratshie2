@@ -130,6 +130,22 @@ class OrderAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id, form_url="", extra_context=None):
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
+    def save_related(self, request, form, formsets, change):
+        """After an order and its items are saved, reflect a paid status in stock.
+
+        Staff can mark an order paid here (or via list_editable on the
+        changelist). Covering ``save_related`` means the inline items are
+        already saved, so deduction sees the final quantities. The deduction is
+        idempotent, so a later PayFast ITN (or any re-save) cannot deduct twice.
+        """
+        super().save_related(request, form, formsets, change)
+        order = getattr(form, "instance", None)
+        if order is not None and order.pk:
+            if order.payment_status == Order.Status.PAID or order.status == Order.Status.PAID:
+                from products.stock import deduct_stock_for_order
+
+                deduct_stock_for_order(order)
+
     @admin.display(description="# Items")
     def items_count(self, obj):
         return obj.items.count()

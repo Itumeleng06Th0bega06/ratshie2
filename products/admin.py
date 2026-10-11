@@ -69,13 +69,14 @@ class ProductAdminForm(forms.ModelForm):
             self.fields["delivery_mode"].help_text = "Delivery timeframe, not the cost."
         if "availability" in self.fields:
             self.fields["availability"].help_text = (
-                "Shown to customers. In Stock / Limited Stock / Backorder items are "
-                "only buyable when the stock quantity below is greater than 0."
+                "Derived automatically from the stock quantity. In Stock / "
+                "Limited Stock / Out of Stock are never chosen by hand."
             )
         if "stock" in self.fields:
             self.fields["stock"].help_text = (
-                "How many you have. Must be greater than 0 for the Add to Cart button "
-                "to appear on the storefront. Use 0 to mark an item sold out."
+                "How many units you physically have. 10 or more shows no warning "
+                "badge; 1–9 shows 'Limited Stock'; 0 shows 'Out of Stock' and "
+                "blocks purchase. The badge is automatic."
             )
 
     def clean(self):
@@ -222,6 +223,30 @@ class ProductGroupAdmin(admin.ModelAdmin):
         return obj.products.count()
 
 
+class StockStatusFilter(admin.SimpleListFilter):
+    """Filter the product list by the automatic stock status."""
+
+    title = "stock status"
+    parameter_name = "stock_status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("out", "Out of Stock (0)"),
+            ("limited", "Limited Stock (1–9)"),
+            ("in", "In Stock (10+)"),
+        )
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == "out":
+            return queryset.filter(stock__lte=0)
+        if value == "limited":
+            return queryset.filter(stock__gte=1, stock__lt=Product.STOCK_LIMITED_MIN)
+        if value == "in":
+            return queryset.filter(stock__gte=Product.STOCK_LIMITED_MIN)
+        return queryset
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
@@ -234,6 +259,7 @@ class ProductAdmin(admin.ModelAdmin):
         "price",
         "sale_price_display",
         "delivery_summary",
+        "stock",
         "stock_badge",
         "is_active",
     )
@@ -241,8 +267,10 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = (
         "product_group",
         "price",
+        "stock",
         "is_active",
     )
+    list_filter = (StockStatusFilter,)
     search_fields = ("name", "sku", "brand", "description", "short_description", "vehicle_makes")
     list_per_page = 50
     prepopulated_fields = {"slug": ("name",)}
@@ -265,11 +293,12 @@ class ProductAdmin(admin.ModelAdmin):
         (
             "Pricing, availability & stock",
             {
-                "fields": ("original_price", "price", "discount_display", "availability", "stock"),
+                "fields": ("original_price", "price", "discount_display", "stock", "availability"),
                 "description": (
-                    "The Add to Cart button only shows when Availability is In Stock / "
-                    "Limited Stock / Backorder AND Stock is greater than 0. Set Stock to "
-                    "0 to mark an item sold out."
+                    "The badge is automatic and cannot be set by hand: 10 or more "
+                    "shows no warning, 1–9 shows 'Limited Stock', and 0 shows "
+                    "'Out of Stock' and blocks purchase. Set the Stock quantity "
+                    "below to change the status."
                 ),
             },
         ),
@@ -315,6 +344,7 @@ class ProductAdmin(admin.ModelAdmin):
         "image_status",
         "member_only_note",
         "delivery_summary",
+        "availability",
     )
 
     def get_readonly_fields(self, request, obj=None):
@@ -402,19 +432,26 @@ class ProductAdmin(admin.ModelAdmin):
         return "—"
 
     @safe_display()
-    @admin.display(description="Stock")
+    @admin.display(description="Stock status", ordering="stock")
     def stock_badge(self, obj):
-        availability = obj.availability
-        if availability == "out_of_stock":
-            color = "#c62828"
-        elif availability == "in_stock":
-            color = "#1a7f37"
-        else:
-            color = "#b3560b"
-        label = obj.get_availability_display()
-        if obj.in_stock and obj.stock:
-            label = f"{label} · {obj.stock}"
-        return format_html('<span style="color:{};font-weight:600">{}</span>', color, label)
+        """Automatic stock badge, derived from the real quantity.
+
+        Colours match the storefront badge palette. ``10+`` reads 'In Stock'
+        in the admin (for filtering clarity) even though the customer badge is
+        omitted, so staff can tell at a glance that nothing is wrong.
+        """
+        color = {
+            "out": "#c62828",
+            "limited": "#b3560b",
+            "in": "#1a7f37",
+        }.get(obj.stock_status, "#666")
+        label = obj.stock_warning_label or "In Stock"
+        return format_html(
+            '<span style="color:{};font-weight:600">{} · {}</span>',
+            color,
+            label,
+            obj.stock,
+        )
 
     @safe_display()
     @admin.display(description="Sale price", empty_value="—")

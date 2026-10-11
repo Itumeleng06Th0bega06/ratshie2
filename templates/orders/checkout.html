@@ -17,6 +17,11 @@
             <div>
               <strong>{{ line.product.name }}</strong>
               <div style="color:var(--muted);font-size:14px">Qty: {{ line.qty }}</div>
+              {% if line.product.stock_warning_label %}
+              <div style="color:{% if line.product.stock_status == 'out' %}#c62828{% else %}#b3560b{% endif %};font-size:13px;font-weight:600">
+                {{ line.product.stock_warning_label }}{% if line.product.stock_status == 'limited' %} — only {{ line.product.stock }} left{% endif %}
+              </div>
+              {% endif %}
             </div>
             <div style="font-weight:700">R {{ line.line_total|floatformat:2 }}</div>
           </div>

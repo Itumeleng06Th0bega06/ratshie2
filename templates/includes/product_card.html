@@ -9,6 +9,7 @@
       {% if p.is_on_sale %}<span class="badge badge--sale">{{ p.discount_percent }}% Off</span>{% endif %}
       {% if p.is_new %}<span class="badge badge--gold">New</span>{% endif %}
       {% if p.is_genuine %}<span class="badge badge--nyc">Genuine</span>{% endif %}
+      {% if p.stock_warning_label %}<span class="badge {{ p.stock_badge_class }}">{{ p.stock_warning_label }}</span>{% endif %}
     </div>
     {% if p.public_image %}
       <img src="{{ p.public_image.image.url }}" alt="{{ p.name }}" loading="lazy">
