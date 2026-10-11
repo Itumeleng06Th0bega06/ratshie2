@@ -22,9 +22,12 @@
 
    1. `.container`: main.css defines the site container (max-width 1240px,
       centred, 24px side padding). Tailwind's generated `.container` (with
-      responsive max-width steps) must not clobber it.
+      responsive max-width steps) must not clobber it. The header uses
+      `.container.nav__inner` and reserves right-hand space for the floating
+      WhatsApp button, so that element is excluded here or the padding would
+      cancel the reserve (this file loads after main.css).
    2. `.visible` / `.collapse`: main.css relies on `.visible` for scroll
       reveal; Tailwind's `.visibility` utility would change it.
    ========================================================================= */
-.container { width: 100%; max-width: var(--maxw, 1240px); margin: 0 auto; padding: 0 24px; }
+.container:not(.nav__inner) { width: 100%; max-width: var(--maxw, 1240px); margin: 0 auto; padding: 0 24px; }
 .container--wide { max-width: 1440px; }

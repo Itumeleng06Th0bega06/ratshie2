@@ -295,7 +295,8 @@ p { margin: 0; }
 .product-card:hover .product-card__media img { transform: scale(1.03); }
 .product-card__media::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(240,160,0,0.0); transition: box-shadow 0.22s; pointer-events: none; }
 .product-card:hover .product-card__media::after { box-shadow: inset 0 0 0 1px rgba(240,160,0,0.28); }
-.product-card__badges { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+/* Tags sit in the card body, above the title, never over the product image. */
+.product-card__badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .badge { font-family: var(--font-display); font-weight: 700; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 5px 9px; border-radius: 7px; }
 .badge--gold { background: var(--gold); color: #161600; }
 .badge--nyc { background: #111; color: #fff; }
@@ -334,7 +335,10 @@ p { margin: 0; }
 .products-grid--compact .product-card__media { aspect-ratio: 1 / 1; border-radius: 12px; }
 .products-grid--compact .product-card__body { padding: 8px 2px 0; }
 .products-grid--compact .product-card__foot { margin-top: 0; padding-top: 6px; }
-.products-grid--compact .product-card__price { font-size: 13px; }
+/* The related rail sits on a dark section, so the price needs light ink. */
+.products-grid--compact .product-card__price { font-size: 13px; color: #fff; }
+.products-grid--compact .product-card__price .now { color: #fff; }
+.products-grid--compact .product-card__price .was { color: var(--muted-on-dark); }
 .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.16s; }
 .icon-btn svg { width: 18px; height: 18px; }
 .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
@@ -1454,6 +1458,10 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
    button (extra right padding on .nav__inner clears the space); on <=1024px,
    where the header CTAs are hidden, it drops to the bottom-left above the
    mobile bar so it never covers the account/cart controls. */
+/* site.min.css is loaded after main.css and re-declares `.container{padding:0
+   24px}` on this same element, cancelling the reserve. A two-class selector
+   keeps the gap in front of the floating button regardless of load order. */
+.nav .nav__inner { padding-right: 68px; }
 .wa-float { position: fixed; top: 15px; right: 22px; z-index: 100; width: 46px; height: 46px; border-radius: 50%; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px rgba(37,211,102,0.45); transition: transform 0.2s var(--ease); }
 .wa-float:hover { transform: translateY(-3px) scale(1.06); }
 .wa-float svg { width: 24px; height: 24px; }
@@ -1527,7 +1535,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   /* Header CTAs are hidden here, so the WhatsApp float drops to the
      bottom-left (clear of the account/cart controls) and the header gives up
      the space reserved for it on desktop. */
-  .nav__inner { padding-right: 0; }
+  .nav .nav__inner { padding-right: 0; }
   .wa-float { top: auto; right: auto; left: 16px; bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
   .to-top { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
 
@@ -1584,7 +1592,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
      stretched desktop list. */
   .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .product-card__media { aspect-ratio: 1 / 1; }
-  .product-card__badges { top: 6px; left: 6px; gap: 4px; }
+  .product-card__badges { gap: 4px; margin-bottom: 6px; }
   .product-card__badges .badge { font-size: 9px; padding: 3px 6px; letter-spacing: 0.02em; }
   .product-card__body { padding: 10px; gap: 0; }
   .product-card__cat { font-size: 10px; letter-spacing: 0.05em; }
