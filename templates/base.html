@@ -32,6 +32,10 @@
   <link rel="stylesheet" href="{% static 'css/site.min.css' %}">
   {% block extra_css %}{% endblock %}
 
+  <!-- Fetch the header logo early so it is never the bottleneck on a slow
+       connection (preload starts it before the stylesheets render). -->
+  <link rel="preload" as="image" href="{% static 'img/brand/logo.png' %}" fetchpriority="high">
+
   {% block structured_data %}{% endblock %}
 </head>
 <body>
@@ -42,7 +46,7 @@
     <span class="nav__accent-line" aria-hidden="true"></span>
     <div class="container nav__inner">
       <a href="{% url 'products:shop' %}" class="brand" aria-label="{{ site_config.site_name }} shop">
-        <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" class="logo-mark" width="67" height="44" loading="eager">
+        {% include "includes/brand_logo.html" with logo_fetchpriority="high" %}
       </a>
 
       <nav class="nav__menu" aria-label="Primary">
@@ -102,7 +106,7 @@
       <div class="footer__top">
         <div class="footer__about">
           <div class="footer__logo">
-            <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" class="logo-mark" width="1200" height="791" loading="lazy">
+            {% include "includes/brand_logo.html" with logo_w=61 logo_h=40 logo_loading="lazy" %}
           </div>
           <p class="footer__tagline">
             {{ site_config.tagline }} Specialising in mechanical repairs, diagnostics,

@@ -147,6 +147,22 @@ p { margin: 0; }
 .nav__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 76px; padding-right: 68px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand img.logo-mark { height: 44px; width: auto; }
+/* Logo resilience: if the static logo ever fails to load (slow connection,
+   unavailable asset), the inline onerror handler hides the broken <img> and
+   reveals the text wordmark that sits behind it. The [hidden] rule keeps the
+   wordmark off by default so the image remains the primary brand mark. */
+.logo-mark--failed { display: none; }
+.brand-fallback {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.brand-fallback[hidden] { display: none; }
+.brand .brand-fallback { font-size: 18px; }
+.footer__logo .brand-fallback { font-size: 16px; color: #fff; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 .brand-text .name { font-family: var(--font-display); font-weight: 700; color: var(--text); font-size: 18px; letter-spacing: 0.02em; }
 .brand-text .sub { color: var(--gold); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600; }
@@ -249,8 +265,11 @@ p { margin: 0; }
 /* `minmax(0, 1fr)` rather than `1fr`: a bare `1fr` track has an automatic
    minimum size, so one long word inside a card can push the track wider than
    the viewport and cause the whole page to scroll sideways. */
-/* Shop catalogue: dense half-size cards (twice as many columns as before). */
-.products-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 18px; }
+/* Shop catalogue: compact Takealot-style tiles — five columns on large
+   desktops, scaling down to a comfortable two-column grid on phones.
+   Columns are explicit (never auto-fill) so every row of cards keeps the
+   exact same width, image area and spacing. */
+.products-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px; }
 .products-grid > * { min-width: 0; }
 .product-card { position: relative; background: var(--paper); border: 1px solid #ece8e0; border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s; }
 .product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); border-color: var(--gold-line); }
@@ -274,7 +293,7 @@ p { margin: 0; }
   .product-card__skeleton { animation: none; }
   .product-card--loading .product-card__content { transition: none; }
 }
-.product-card__media { position: relative; aspect-ratio: 4 / 3; background: var(--paper); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.product-card__media { position: relative; aspect-ratio: 1 / 1; background: var(--paper); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .product-card__media .svg-art { width: 74px; height: 74px; color: var(--gold); opacity: 0.9; }
 .group-filter { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .group-filter::-webkit-scrollbar { display: none; }
@@ -291,7 +310,7 @@ p { margin: 0; }
 /* Real product photography must never be cropped, stretched or zoomed into.
    `contain` letterboxes the whole part inside the frame instead of cutting it
    off, and the padding keeps a consistent gutter around every image. */
-.product-card__media img { width: 100%; height: 100%; aspect-ratio: 4 / 3; object-fit: contain; padding: 10px; transition: transform 0.45s var(--ease), opacity 0.2s; }
+.product-card__media img { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: contain; padding: 10px; transition: transform 0.45s var(--ease), opacity 0.2s; }
 .product-card:hover .product-card__media img { transform: scale(1.03); }
 .product-card__media::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(240,160,0,0.0); transition: box-shadow 0.22s; pointer-events: none; }
 .product-card:hover .product-card__media::after { box-shadow: inset 0 0 0 1px rgba(240,160,0,0.28); }
@@ -1506,7 +1525,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
   .services-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .products-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .why-grid, .why-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1024px) {
@@ -1547,7 +1566,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 @media (max-width: 768px) {
   .container { padding: 0 16px; }
   .services-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   .why-grid, .why-grid--3 { grid-template-columns: 1fr; }
   .shop-cats { grid-template-columns: 1fr; }
   .trustbar__inner { grid-template-columns: repeat(2, 1fr); }
@@ -1589,11 +1608,8 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   .footer__top { gap: 24px 16px; }
   .footer h4 { margin-bottom: 14px; }
 
-  /* Two-column product grid kept all the way down to 320px. The single-column
-     fallback is what previously made the mobile catalogue look like a
-     stretched desktop list. */
-  .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-  .product-card__media { aspect-ratio: 1 / 1; }
+  /* Two-column product grid on phones, kept all the way down to 320px. */
+  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .product-card__badges { gap: 4px; margin-bottom: 6px; }
   .product-card__badges .badge { font-size: 9px; padding: 3px 6px; letter-spacing: 0.02em; }
   .product-card__body { padding: 10px; gap: 0; }
@@ -2085,6 +2101,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   border-radius: 50%; background: var(--gold-soft);
 }
 .auth-brand-panel__logo img { max-height: 60px; width: auto; height: auto; margin-bottom: 36px; }
+.auth-brand-panel__logo .brand-fallback { font-size: 20px; margin-bottom: 36px; }
 .auth-brand-panel__copy h1 { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.02em; margin-top: 14px; }
 .auth-brand-panel__copy p { color: var(--muted); margin-top: 16px; line-height: 1.6; }
 .auth-brand-panel__points { list-style: none; margin-top: 34px; display: grid; gap: 12px; position: relative; z-index: 1; }
@@ -2274,10 +2291,12 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   color: var(--gold);
 }
 
-/* Rating row on a product card. */
-.product-card__rating { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.product-card__rating .stars { font-size: 13px; }
-.product-card__rating-count { font-size: 12px; font-weight: 600; color: var(--muted); }
+/* Rating row on a product card: one gold star, the genuine average, and the
+   number of ratings. Rendered only when the product has real reviews. */
+.product-card__rating { display: flex; align-items: center; gap: 5px; margin-top: 8px; }
+.product-card__star { width: 13px; height: 13px; color: var(--gold); flex: 0 0 auto; }
+.product-card__rating-avg { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.product-card__rating-count { font-size: 12.5px; font-weight: 600; color: var(--muted); }
 
 /* Rating row on the product detail page. */
 #reviews { scroll-margin-top: 92px; }

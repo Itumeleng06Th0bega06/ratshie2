@@ -1,0 +1,26 @@
+{% load static %}
+{% comment %}
+Reusable brand logo with a resilient, local fallback:
+
+- Primary: the Django static img/brand/logo.png (a local asset, so the logo
+  loads normally with or without JavaScript).
+- If the request genuinely fails, the inline onerror handler hides the broken
+  <img> and reveals the text wordmark that sits beneath it. onerror is nulled
+  first, so a failing fallback can never loop.
+- width/height reserve the rendered size so the brand space never collapses
+  or shifts while the image loads.
+
+Expects (all optional): logo_class, logo_w, logo_h, logo_loading ("eager" or
+"lazy"), logo_fetchpriority ("high" for the header so it starts earliest).
+{% endcomment %}
+<img
+  src="{% static 'img/brand/logo.png' %}"
+  alt="{{ site_config.site_name }} logo"
+  class="logo-mark{% if logo_class %} {{ logo_class }}{% endif %}"
+  width="{{ logo_w|default:67 }}"
+  height="{{ logo_h|default:44 }}"
+  loading="{{ logo_loading|default:'eager' }}"
+  decoding="async"
+  {% if logo_fetchpriority %}fetchpriority="high"{% endif %}
+  onerror="this.onerror=null;this.classList.add('logo-mark--failed');var f=this.nextElementSibling;if(f&&f.classList.contains('brand-fallback')){f.hidden=false;}">
+<span class="brand-fallback" hidden>{{ site_config.site_name }}</span>

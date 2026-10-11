@@ -68,14 +68,12 @@
         <h1 class="pd__title" style="margin-top:10px">{{ product.name }}</h1>
         {% if product.sku %}<div class="pd__meta-row" style="color:var(--muted)">SKU / Part number: <strong style="color:var(--text)">{{ product.sku }}</strong></div>{% endif %}
 
+        {% if product.rating_count %}
         <div class="pd__rating">
           {% include "includes/rating_stars.html" with rating=product.average_rating %}
-          {% if product.rating_count %}
           <a class="pd__rating-link" href="#reviews">{{ product.rating_count }} review{{ product.rating_count|pluralize }}</a>
-          {% else %}
-          <a class="pd__rating-link" href="#reviews">No reviews yet — be the first</a>
-          {% endif %}
         </div>
+        {% endif %}
 
         {% if product.short_description or product.description %}
         <p class="pd__desc">{{ product.description|default:product.short_description }}</p>

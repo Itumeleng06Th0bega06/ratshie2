@@ -20,19 +20,20 @@
     </div>
     {% endif %}
     <h3><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
-    {% if p.short_description %}<p class="product-card__desc">{{ p.short_description }}</p>{% endif %}
-    <div class="product-card__rating">
-      {% include "includes/rating_stars.html" with rating=p.average_rating %}
-      {% if p.rating_count %}<span class="product-card__rating-count">{{ p.rating_count }}</span>{% endif %}
+    {% if p.rating_count %}
+    <div class="product-card__rating" role="img" aria-label="Rated {{ p.average_rating }} out of 5 from {{ p.rating_count }} review{{ p.rating_count|pluralize }}">
+      <svg class="product-card__star" aria-hidden="true"><use href="#i-star"></use></svg>
+      <span class="product-card__rating-avg">{{ p.average_rating }}</span>
+      <span class="product-card__rating-count">({{ p.rating_count }})</span>
     </div>
+    {% endif %}
     <div class="product-card__foot">
       <div class="product-card__price-row">
         <div class="product-card__price">
-          {% if p.is_on_sale %}
-            <span class="now">R {{ p.price|floatformat:2 }}</span>
-            <span class="was">R {{ p.original_price|floatformat:2 }}</span>
+          {% if p.price is not None %}
+            <span class="now{% if p.is_on_sale %} sale{% endif %}">R {{ p.price|floatformat:2 }}</span>
           {% else %}
-            <span class="now">R {{ p.price|floatformat:2 }}</span>
+            <span class="enq">Request a Quote</span>
           {% endif %}
         </div>
       </div>

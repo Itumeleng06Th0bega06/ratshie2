@@ -300,10 +300,10 @@ class ShopRatingTests(TestCase):
         self.assertContains(response, "product-card__rating")
         self.assertContains(response, "4.0")
 
-    def test_product_without_reviews_shows_empty_stars(self):
+    def test_product_without_reviews_hides_the_rating_row(self):
         make_product()
         response = self.client.get(reverse("products:shop"))
-        # The star row is always present so shoppers can see the rating at a
-        # glance; with no reviews it renders empty and without a count.
-        self.assertContains(response, "product-card__rating")
-        self.assertNotContains(response, "product-card__rating-count")
+        # No reviews means no rating row at all — never empty stars or a
+        # misleading zero rating.
+        self.assertNotContains(response, "product-card__rating")
+        self.assertNotContains(response, "No ratings yet")

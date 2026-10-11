@@ -6,7 +6,7 @@
   <div class="auth-hero__inner">
     <div class="auth-brand-panel">
       <div class="auth-brand-panel__logo">
-        <img src="{% static 'img/brand/logo.png' %}" alt="{{ site_config.site_name }} logo" width="1200" height="791">
+        {% include "includes/brand_logo.html" with logo_w=91 logo_h=60 %}
       </div>
       <div class="auth-brand-panel__copy">
         <span class="eyebrow">Join as a Member</span>
