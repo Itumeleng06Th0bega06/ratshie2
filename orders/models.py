@@ -56,8 +56,13 @@ class Order(models.Model):
         PROCESSING = "processing", "Processing"
         READY = "ready", "Ready"
         COMPLETED = "completed", "Completed"
+        DELIVERED = "delivered", "Delivered"
         CANCELLED = "cancelled", "Cancelled"
         REFUNDED = "refunded", "Refunded"
+
+    # An order counts as fulfilled once it is marked delivered. A buyer may only
+    # review the products on an order that has reached one of these statuses.
+    REVIEWABLE_STATUSES = (Status.DELIVERED,)
 
     class DeliveryChoice(models.TextChoices):
         COLLECTION = "collection", "Collect at Workshop"
@@ -162,6 +167,15 @@ class Order(models.Model):
         null=True,
         blank=True,
     )
+    delivered_at = models.DateTimeField(
+        "Delivered at",
+        null=True,
+        blank=True,
+        help_text=(
+            "Stamped automatically the first time the order is set to Delivered. "
+            "Unlocks product reviews for the buyer."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -174,6 +188,14 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.reference:
             self.reference = self._generate_reference()
+        # Stamp the delivery time the first time an order is marked delivered.
+        # Kept in save() so it applies from the admin change form, the changelist
+        # status dropdown and the dashboard's inline status update alike.
+        if self.status == self.Status.DELIVERED and self.delivered_at is None:
+            self.delivered_at = timezone.now()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {"delivered_at"}
         super().save(*args, **kwargs)
 
     @staticmethod

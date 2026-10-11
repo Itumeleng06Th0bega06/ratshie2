@@ -4,6 +4,8 @@ Covers:
 - Rating aggregation on the Product model (average, count, per-star
   distribution) and that hidden reviews are excluded everywhere.
 - One review per member per product (the unique constraint).
+- Verified-buyer gating: only members whose delivered order contains the
+  product may see the form or submit a review.
 - Anonymous visitors see a sign-in prompt; members see the form.
 - Creating, updating (never duplicating) and deleting a review.
 - Server-side validation of the rating and a useful comment.
@@ -19,6 +21,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Product, ProductReview
+from customers.models import Customer
+from orders.models import Order, OrderItem
 
 User = get_user_model()
 
@@ -38,6 +42,31 @@ def make_product(name="Oil Filter", **kwargs):
 def make_user(username="member", **kwargs):
     kwargs.setdefault("password", "test-pass-123")
     return User.objects.create_user(username, **kwargs)
+
+
+def make_delivered_order(user, product, status=Order.Status.DELIVERED):
+    """Create a delivered order so ``user`` qualifies to review ``product``."""
+    customer = Customer.objects.create(
+        full_name="Buyer",
+        phone="0820000000",
+        email=user.email or "buyer@example.com",
+        user=user,
+    )
+    order = Order.objects.create(
+        customer=customer,
+        customer_name="Buyer",
+        email=user.email or "buyer@example.com",
+        status=status,
+        payment_status=Order.Status.PAID,
+    )
+    OrderItem.objects.create(
+        order=order,
+        product=product,
+        product_name=product.name,
+        quantity=1,
+        unit_price=product.price,
+    )
+    return order
 
 
 class RatingAggregationTests(TestCase):
@@ -103,10 +132,28 @@ class ReviewDisplayTests(TestCase):
         )
 
     def test_member_sees_the_review_form(self):
+        make_delivered_order(self.user, self.product)
         self.client.force_login(self.user)
         response = self.client.get(self.product.get_absolute_url())
         self.assertContains(response, 'id="reviews"')
         self.assertContains(
+            response, reverse("products:review_submit", args=[self.product.slug])
+        )
+
+    def test_member_without_a_delivered_order_sees_no_form(self):
+        self.client.force_login(self.user)
+        response = self.client.get(self.product.get_absolute_url())
+        self.assertContains(response, "Reviews open after delivery")
+        self.assertNotContains(
+            response, reverse("products:review_submit", args=[self.product.slug])
+        )
+
+    def test_member_with_an_undelivered_order_sees_no_form(self):
+        make_delivered_order(self.user, self.product, status=Order.Status.PAID)
+        self.client.force_login(self.user)
+        response = self.client.get(self.product.get_absolute_url())
+        self.assertContains(response, "Reviews open after delivery")
+        self.assertNotContains(
             response, reverse("products:review_submit", args=[self.product.slug])
         )
 
@@ -120,6 +167,7 @@ class ReviewDisplayTests(TestCase):
         self.assertContains(response, "Thabo")
 
     def test_existing_review_prefills_the_picker_and_fields(self):
+        make_delivered_order(self.user, self.product)
         ProductReview.objects.create(
             product=self.product, user=self.user, rating=3, title="My headline", comment="My review body"
         )
@@ -151,12 +199,22 @@ class ReviewSubmitTests(TestCase):
     def setUp(self):
         self.product = make_product()
         self.user = make_user()
+        # This member is a verified buyer, so the submit gate allows the review.
+        make_delivered_order(self.user, self.product)
         self.url = reverse("products:review_submit", args=[self.product.slug])
 
     def test_requires_login(self):
         response = self.client.post(self.url, {"rating": "5", "comment": "A great product"})
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse("customers:login"), response.url)
+        self.assertFalse(ProductReview.objects.exists())
+
+    def test_non_buyer_cannot_submit(self):
+        outsider = make_user("outsider")
+        self.client.force_login(outsider)
+        response = self.client.post(self.url, {"rating": "5", "comment": "I never bought this"})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith("#reviews"))
         self.assertFalse(ProductReview.objects.exists())
 
     def test_get_is_not_allowed(self):
@@ -242,7 +300,10 @@ class ShopRatingTests(TestCase):
         self.assertContains(response, "product-card__rating")
         self.assertContains(response, "4.0")
 
-    def test_product_without_reviews_shows_no_stars(self):
+    def test_product_without_reviews_shows_empty_stars(self):
         make_product()
         response = self.client.get(reverse("products:shop"))
-        self.assertNotContains(response, "product-card__rating")
+        # The star row is always present so shoppers can see the rating at a
+        # glance; with no reviews it renders empty and without a count.
+        self.assertContains(response, "product-card__rating")
+        self.assertNotContains(response, "product-card__rating-count")

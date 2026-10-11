@@ -22,7 +22,32 @@ three times.
 """
 from decimal import Decimal
 
-from .models import ShippingSettings
+from django.db.models import Q
+
+from .models import Order, OrderItem, ShippingSettings
+
+
+def user_has_delivered_purchase(user, product):
+    """Return True when ``user`` may review ``product`` as a verified buyer.
+
+    A review is only unlocked once an order that *contains this product* has
+    been marked delivered (:attr:`Order.REVIEWABLE_STATUSES`). The order must
+    belong to the signed-in member, linked either through the customer account
+    (``Customer.user``) or, as a safety net, by matching the order email.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    owned = Q(order__customer__user=user)
+    if getattr(user, "email", ""):
+        owned |= Q(order__email__iexact=user.email)
+    return (
+        OrderItem.objects.filter(
+            product=product,
+            order__status__in=Order.REVIEWABLE_STATUSES,
+        )
+        .filter(owned)
+        .exists()
+    )
 
 
 def delivery_fee():

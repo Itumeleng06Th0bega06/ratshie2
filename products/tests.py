@@ -127,34 +127,20 @@ class ProductCardImagePlaceholderTests(TestCase):
         self.assertIn("#i-oil", html)
 
 
-class ProductCardAddToCartTests(TestCase):
-    def test_add_to_cart_shown_when_in_stock(self):
+class ProductCardNoAddToCartTests(TestCase):
+    """Add to Cart lives on the product detail page only; the shop grid is a
+    clean image/title/price tile so the dense catalogue stays readable."""
+
+    def test_shop_cards_have_no_add_to_cart_button(self):
         make_product("Available")
         html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertIn("data-add-to-cart", html)
+        self.assertNotIn("data-add-to-cart", html)
 
-    def test_add_to_cart_hidden_when_out_of_stock(self):
+    def test_shop_cards_have_no_unavailable_label(self):
         make_product("Sold out", stock=0)
         html = self.client.get(reverse("products:shop")).content.decode()
+        self.assertNotIn("UNAVAILABLE", html)
         self.assertNotIn("data-add-to-cart", html)
-        self.assertIn("UNAVAILABLE", html)
-
-    def test_member_only_anonymous_still_gets_add_to_cart_button(self):
-        """The card button is never hidden by auth status: an anonymous visitor
-        sees the same Add to Cart button for member-only/sale products. The
-        server decides the outcome on submit (redirect to sign-in)."""
-        make_product("Members only", is_member_only=True)
-        html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertIn("data-add-to-cart", html)
-        self.assertNotIn("SIGN IN TO BUY", html)
-
-    def test_member_only_signed_in_still_offers_add_to_cart(self):
-        from django.contrib.auth import get_user_model
-
-        make_product("Members only", is_member_only=True)
-        self.client.force_login(get_user_model().objects.create_user("u", password="p"))
-        html = self.client.get(reverse("products:shop")).content.decode()
-        self.assertIn("data-add-to-cart", html)
 
 
 class ProductAdminStockFieldTests(TestCase):
@@ -177,12 +163,17 @@ class ProductAdminStockFieldTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="stock"')
 
-    def test_setting_stock_via_admin_unlocks_add_to_cart(self):
+    def test_stock_controls_add_to_cart_on_the_detail_page(self):
         product = make_product("Counted later", stock=0)
-        self.assertNotIn("data-add-to-cart", self.client.get(reverse("products:shop")).content.decode())
+        detail = reverse("products:detail", kwargs={"slug": product.slug})
+        html = self.client.get(detail).content.decode()
+        self.assertNotIn(">Add to Cart<", html)
+        self.assertIn("Request This Item", html)
+
         product.stock = 3
         product.save()
-        self.assertIn("data-add-to-cart", self.client.get(reverse("products:shop")).content.decode())
+        html = self.client.get(detail).content.decode()
+        self.assertIn(">Add to Cart<", html)
 
 
 class ProductDetailAddToCartTests(TestCase):

@@ -1,10 +1,11 @@
 {% comment %}
 Star rating display (read-only). Expects: rating (float 0-5, optional).
-Renders five stars with a gold fill sized to the rating via widthratio.
+Renders five stars filled to the rating over a grey base; a missing or zero
+rating renders five empty stars, so cards always advertise their rating.
 {% endcomment %}
-{% if rating %}
-<span class="stars" role="img" aria-label="{{ rating|floatformat:1 }} out of 5 stars">
+{% with r=rating|default:0 %}
+<span class="stars" role="img" aria-label="{% if rating %}{{ rating|floatformat:1 }} out of 5 stars{% else %}No ratings yet{% endif %}">
   <span class="stars__base" aria-hidden="true">★★★★★</span>
-  <span class="stars__fill" style="width:{% widthratio rating 5 100 %}%" aria-hidden="true">★★★★★</span>
+  <span class="stars__fill" style="width:{% widthratio r 5 100 %}%" aria-hidden="true">★★★★★</span>
 </span>
-{% endif %}
+{% endwith %}

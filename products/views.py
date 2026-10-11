@@ -18,7 +18,7 @@ from .models import Product, ProductEnquiry, ProductGroup, ProductReview
 from .forms import ProductReviewForm
 from customers.models import Customer
 from .services import can_purchase_product, clamp_quantity
-from orders.services import product_delivery
+from orders.services import product_delivery, user_has_delivered_purchase
 from core.utils import (
     product_whatsapp_message,
     cart_from_session,
@@ -130,7 +130,11 @@ def _product_detail_context(request, product, **overrides):
     )
     user_review = None
     review_form = ProductReviewForm()
+    # Reviews are limited to verified buyers: a member can only review a product
+    # once one of their orders that contains it has been marked delivered.
+    can_review = False
     if request.user.is_authenticated:
+        can_review = user_has_delivered_purchase(request.user, product)
         user_review = ProductReview.objects.filter(product=product, user=request.user).first()
         if user_review:
             review_form = ProductReviewForm(instance=user_review)
@@ -146,10 +150,13 @@ def _product_detail_context(request, product, **overrides):
         # This product's own delivery charge, so the price shown here is the
         # price the customer pays for this item's delivery.
         "product_delivery": product_delivery(product),
-        "crumb_list": [("Shop", "products:shop"), (product.name, None)],
+        # page_hero.html already renders the "Shop" root crumb, so the list
+        # starts at the product to avoid a duplicated "Shop / Shop / …".
+        "crumb_list": [(product.name, None)],
         "reviews": reviews,
         "user_review": user_review,
         "review_form": review_form,
+        "can_review": can_review,
     }
     context.update(overrides)
     return context
@@ -173,6 +180,17 @@ def review_submit(request, product_slug):
     repeat submission edits their existing review rather than adding another.
     """
     product = get_object_or_404(_product_qs(), slug=product_slug)
+
+    # Verified-buyer gate (server-enforced): the member must have a delivered
+    # order containing this product. The form is never shown otherwise, but the
+    # POST is re-checked here so it cannot be replayed by hand.
+    if not user_has_delivered_purchase(request.user, product):
+        messages.error(
+            request,
+            "You can review this product once an order containing it has been "
+            "marked as delivered.",
+        )
+        return HttpResponseRedirect(product.get_absolute_url() + "#reviews")
 
     form = ProductReviewForm(request.POST)
     if not form.is_valid():

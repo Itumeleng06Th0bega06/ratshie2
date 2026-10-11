@@ -38,7 +38,7 @@ Expects (from the detail view context):
       </div>
       {% endif %}
 
-      {% if user.is_authenticated %}
+      {% if can_review %}
       <form method="post" action="{% url 'products:review_submit' product.slug %}" class="review-form reveal" novalidate>
         {% csrf_token %}
         <div class="review-form__head">
@@ -109,11 +109,20 @@ Expects (from the detail view context):
         {% csrf_token %}
       </form>
       {% endif %}
+      {% elif user.is_authenticated %}
+      <div class="review-form review-form--login reveal">
+        <svg class="review-form__icon" aria-hidden="true"><use href="#i-truck"></use></svg>
+        <h3>Reviews open after delivery</h3>
+        <p>Only verified buyers can review this product. Once an order containing it has been marked delivered, you'll be able to share your experience here.</p>
+        <div class="btn-row">
+          <a class="btn btn--ghost-dark btn--sm" href="{% url 'customers:account' %}">View my orders</a>
+        </div>
+      </div>
       {% else %}
       <div class="review-form review-form--login reveal">
         <svg class="review-form__icon" aria-hidden="true"><use href="#i-user"></use></svg>
         <h3>Share your experience</h3>
-        <p>Only registered members can review products — it takes less than a minute.</p>
+        <p>Reviews come from verified buyers. Sign in to review the products you've ordered from Ratshie.</p>
         <div class="btn-row">
           <a class="btn btn--gold btn--sm" href="{% url 'customers:login' %}?next={{ product.get_absolute_url }}#reviews">Sign in to review</a>
           <a class="btn btn--ghost-dark btn--sm" href="{% url 'customers:register' %}?next={{ product.get_absolute_url }}#reviews">Create a free account</a>

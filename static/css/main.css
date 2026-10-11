@@ -144,7 +144,7 @@ p { margin: 0; }
 .nav__accent-line { display: block; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: linear-gradient(90deg, var(--gold), var(--gold-2), var(--gold)); opacity: 0.9; }
 .nav.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-.nav__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 76px; }
+.nav__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 76px; padding-right: 68px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand img.logo-mark { height: 44px; width: auto; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
@@ -155,9 +155,7 @@ p { margin: 0; }
 .nav__link:hover { color: var(--gold); background: var(--gold-soft); }
 .nav__link.is-active { color: var(--gold); }
 .nav__actions { display: flex; align-items: center; gap: 10px; }
-.nav__cta { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-family: var(--font-display); font-weight: 600; font-size: 14px; }
-.nav__cta--wa { background: #25d366; color: #07330f; }
-.nav__cta--wa:hover { background: #3bdb78; }
+.nav__cta { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; font-family: var(--font-display); font-weight: 600; font-size: 13px; }
 .nav__cta--outline { border: 1px solid var(--gold-line); color: var(--gold); background: transparent; }
 .nav__cta--outline:hover { background: var(--gold-soft); color: #161600; }
 .nav__cart { position: relative; color: var(--text); display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 10px; border-radius: 10px; }
@@ -251,7 +249,8 @@ p { margin: 0; }
 /* `minmax(0, 1fr)` rather than `1fr`: a bare `1fr` track has an automatic
    minimum size, so one long word inside a card can push the track wider than
    the viewport and cause the whole page to scroll sideways. */
-.products-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+/* Shop catalogue: dense half-size cards (twice as many columns as before). */
+.products-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 18px; }
 .products-grid > * { min-width: 0; }
 .product-card { position: relative; background: var(--paper); border: 1px solid #ece8e0; border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s; }
 .product-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-md); border-color: var(--gold-line); }
@@ -306,11 +305,11 @@ p { margin: 0; }
    1-9 -> Limited Stock, 0 -> Out of Stock, 10+ -> no badge at all. */
 .badge--limited { background: #fff3e0; color: #b3560b; }
 .badge--out { background: #fdecec; color: #c62828; }
-.product-card__body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
+.product-card__body { padding: 14px; display: flex; flex-direction: column; flex: 1; }
 .product-card__cat { color: var(--gold); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.product-card h3 { font-size: 16px; margin-top: 8px; }
+.product-card h3 { font-size: 15px; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .product-card__sku { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-.product-card__desc { color: var(--muted); font-size: 13.5px; margin-top: 10px; }
+.product-card__desc { color: var(--muted); font-size: 12.5px; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .product-card__avail { margin-top: 12px; font-size: 12.5px; font-weight: 600; }
 .product-card__avail.in-stock { color: var(--green); }
 .product-card__avail.on-request { color: #b9791a; }
@@ -319,6 +318,23 @@ p { margin: 0; }
 .product-card__price { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
 .product-card__price .enq { font-size: 13px; color: var(--gold); font-weight: 600; }
 .product-card__actions { display: flex; gap: 8px; }
+/* Compact "related products" rail on the product page: image + price only,
+   kept deliberately tiny so it never competes with the main product. */
+.products-grid.products-grid--compact { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; }
+.products-grid--compact .product-card { border: 0; background: transparent; border-radius: 0; }
+.products-grid--compact .product-card:hover { transform: none; box-shadow: none; }
+.products-grid--compact .product-card__badges,
+.products-grid--compact .product-card__cat,
+.products-grid--compact .product-card h3,
+.products-grid--compact .product-card__desc,
+.products-grid--compact .product-card__rating,
+.products-grid--compact .product-card__actions,
+.products-grid--compact .card-add,
+.products-grid--compact .add-to-cart { display: none; }
+.products-grid--compact .product-card__media { aspect-ratio: 1 / 1; border-radius: 12px; }
+.products-grid--compact .product-card__body { padding: 8px 2px 0; }
+.products-grid--compact .product-card__foot { margin-top: 0; padding-top: 6px; }
+.products-grid--compact .product-card__price { font-size: 13px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--text); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.16s; }
 .icon-btn svg { width: 18px; height: 18px; }
 .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
@@ -1231,6 +1247,9 @@ p { margin: 0; }
 .qty button { width: 42px; height: 48px; background: #fff; border: 0; font-size: 20px; cursor: pointer; color: var(--text); }
 .qty button:hover { background: var(--cream); }
 .qty input { width: 54px; height: 48px; border: 0; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.qty input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.qty input::-webkit-outer-spin-button,
+.qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pd__ctas { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
 .pd__avail { margin-top: 14px; font-weight: 600; }
 .pd__avail.in { color: var(--green); }
@@ -1429,10 +1448,15 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 .footer__legal a { color: var(--muted-on-dark); }
 .footer__legal a:hover { color: var(--gold-2); }
 
-/* ---------- Floating WhatsApp ---------- */
-.wa-float { position: fixed; left: 22px; bottom: 24px; z-index: 55; width: 60px; height: 60px; border-radius: 50%; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 32px rgba(37,211,102,0.5); transition: transform 0.2s var(--ease); }
-.wa-float:hover { transform: translateY(-4px) scale(1.05); }
-.wa-float svg { width: 30px; height: 30px; }
+/* ---------- Floating WhatsApp ----------
+   The header's WhatsApp CTA was removed in favour of this single button. On
+   desktop it floats in the top-right corner next to the header's "Get a Quote"
+   button (extra right padding on .nav__inner clears the space); on <=1024px,
+   where the header CTAs are hidden, it drops to the bottom-left above the
+   mobile bar so it never covers the account/cart controls. */
+.wa-float { position: fixed; top: 15px; right: 22px; z-index: 100; width: 46px; height: 46px; border-radius: 50%; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px rgba(37,211,102,0.45); transition: transform 0.2s var(--ease); }
+.wa-float:hover { transform: translateY(-3px) scale(1.06); }
+.wa-float svg { width: 24px; height: 24px; }
 
 /* ---------- Scroll to top ---------- */
 .to-top { position: fixed; right: 22px; bottom: 24px; z-index: 55; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--gold-line); background: var(--coal); color: var(--gold); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 26px rgba(0,0,0,0.28); transition: transform 0.2s var(--ease), background 0.2s, color 0.2s; }
@@ -1471,7 +1495,8 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
-  .services-grid, .products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .services-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .products-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .why-grid, .why-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 1024px) {
@@ -1480,7 +1505,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
      links/CTAs that the bottom bar (or the WhatsApp float) already covers. */
   .nav__menu { display: none; }
   .nav__cart { display: none; }
-  .nav__cta--outline, .nav__cta--wa { display: none; }
+  .nav__cta--outline { display: none; }
   .nav__inner { gap: 12px; height: 62px; }
   .nav__actions { gap: 4px; }
   .account-link__ico { display: block; }
@@ -1499,7 +1524,11 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
      home-indicator inset) is reserved so nothing hides underneath it. */
   .mobile-bar { display: block; }
   body { padding-bottom: calc(var(--mbh) + env(safe-area-inset-bottom, 0px)); }
-  .wa-float { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
+  /* Header CTAs are hidden here, so the WhatsApp float drops to the
+     bottom-left (clear of the account/cart controls) and the header gives up
+     the space reserved for it on desktop. */
+  .nav__inner { padding-right: 0; }
+  .wa-float { top: auto; right: auto; left: 16px; bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
   .to-top { bottom: calc(var(--mbh) + 16px + env(safe-area-inset-bottom, 0px)); }
 
   /* Compact logo for the shorter header. */
@@ -1508,7 +1537,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
 @media (max-width: 768px) {
   .container { padding: 0 16px; }
   .services-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   .why-grid, .why-grid--3 { grid-template-columns: 1fr; }
   .shop-cats { grid-template-columns: 1fr; }
   .trustbar__inner { grid-template-columns: repeat(2, 1fr); }
@@ -1553,7 +1582,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   /* Two-column product grid kept all the way down to 320px. The single-column
      fallback is what previously made the mobile catalogue look like a
      stretched desktop list. */
-  .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
   .product-card__media { aspect-ratio: 1 / 1; }
   .product-card__badges { top: 6px; left: 6px; gap: 4px; }
   .product-card__badges .badge { font-size: 9px; padding: 3px 6px; letter-spacing: 0.02em; }
@@ -2045,7 +2074,7 @@ a.pay-badge:hover { border-color: var(--gold); color: var(--gold); }
   content: ""; position: absolute; right: -80px; bottom: -80px; width: 240px; height: 240px;
   border-radius: 50%; background: var(--gold-soft);
 }
-.auth-brand-panel__logo img { max-height: 60px; margin-bottom: 36px; }
+.auth-brand-panel__logo img { max-height: 60px; width: auto; height: auto; margin-bottom: 36px; }
 .auth-brand-panel__copy h1 { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.15; letter-spacing: -0.02em; margin-top: 14px; }
 .auth-brand-panel__copy p { color: var(--muted); margin-top: 16px; line-height: 1.6; }
 .auth-brand-panel__points { list-style: none; margin-top: 34px; display: grid; gap: 12px; position: relative; z-index: 1; }

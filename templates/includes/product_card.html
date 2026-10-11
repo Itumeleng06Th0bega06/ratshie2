@@ -20,15 +20,12 @@
     {% endif %}
   </a>
   <div class="product-card__body">
-    <span class="product-card__cat">{% if p.brand %}{{ p.brand }}{% else %}{{ p.product_type_name }}{% endif %}</span>
     <h3><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
     {% if p.short_description %}<p class="product-card__desc">{{ p.short_description }}</p>{% endif %}
-    {% if p.rating_count %}
     <div class="product-card__rating">
       {% include "includes/rating_stars.html" with rating=p.average_rating %}
-      <span class="product-card__rating-count">{{ p.rating_count }}</span>
+      {% if p.rating_count %}<span class="product-card__rating-count">{{ p.rating_count }}</span>{% endif %}
     </div>
-    {% endif %}
     <div class="product-card__foot">
       <div class="product-card__price-row">
         <div class="product-card__price">
@@ -39,19 +36,6 @@
             <span class="now">R {{ p.price|floatformat:2 }}</span>
           {% endif %}
         </div>
-        {% if not enabled_cart or not p.in_stock %}
-          <a class="btn btn--sm add-to-cart is-disabled" href="{{ p.get_absolute_url }}" aria-label="{{ p.name }} is unavailable">
-            <span>UNAVAILABLE</span>
-          </a>
-        {% else %}
-        <form action="{% url 'products:cart_add' p.slug %}" method="post" class="card-add" data-add-to-cart>
-          {% csrf_token %}
-          <button type="submit" class="btn btn--gold btn--sm add-to-cart" data-add-to-cart-url="{% url 'products:cart_add' p.slug %}" aria-label="Add {{ p.name }} to cart">
-            <svg class="ico" aria-hidden="true"><use href="#i-cart"></use></svg>
-            <span>ADD</span>
-          </button>
-        </form>
-        {% endif %}
       </div>
     </div>
   </div>
