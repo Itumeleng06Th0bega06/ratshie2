@@ -470,6 +470,43 @@ class Product(models.Model):
     def product_type_name(self):
         return self.get_product_type_display()
 
+    # ---- Reviews / ratings -------------------------------------------------
+    # The public site annotates querysets with `_rating_count` / `_rating_avg`
+    # (only VISIBLE reviews), and these properties fall back to live
+    # aggregation when the annotated value is absent, so every surface always
+    # agrees and no page pays for extra queries it already annotated.
+
+    @property
+    def rating_count(self):
+        cached = getattr(self, "_rating_count", None)
+        if cached is not None:
+            return int(cached)
+        return self.reviews.filter(is_visible=True).count()
+
+    @property
+    def average_rating(self):
+        """Mean rating of visible reviews (1 decimal), or None when none exist."""
+        cached = getattr(self, "_rating_avg", None)
+        if cached is not None:
+            return round(float(cached), 1) if cached is not None else None
+        stats = self.reviews.filter(is_visible=True).aggregate(
+            avg=models.Avg("rating"), total=models.Count("id")
+        )
+        if not stats["total"]:
+            return None
+        return round(float(stats["avg"]), 1)
+
+    @property
+    def rating_distribution(self):
+        """[(stars, count)] for 1..5 stars over VISIBLE reviews only."""
+        rows = (
+            self.reviews.filter(is_visible=True)
+            .values("rating")
+            .annotate(c=models.Count("id"))
+        )
+        counts = {r["rating"]: r["c"] for r in rows}
+        return [(star, counts.get(star, 0)) for star in range(1, 6)]
+
     # Delivery timeframe
     DELIVERY_MODES = [
         ("standard", "Use standard delivery"),
@@ -588,6 +625,49 @@ class Product(models.Model):
         if not (self.sku or "").strip():
             self.sku = self._next_unique_sku()
         super().save(*args, **kwargs)
+
+
+class ProductReview(models.Model):
+    """A verified-member rating and review for a product.
+
+    One review per registered user per product (``unique_together``). A review
+    is either visible to the public or hidden by an admin (``is_visible``). The
+    storefront only ever aggregates/renders visible reviews, so hiding a single
+    review immediately updates the product's average rating everywhere.
+    """
+
+    RATING_CHOICES = [(i, f"{i} star{'s' if i != 1 else ''}") for i in range(1, 6)]
+
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="reviews"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="product_reviews",
+        help_text="The registered member who wrote the review.",
+    )
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    title = models.CharField("Headline", max_length=120, blank=True)
+    comment = models.TextField(
+        "Review",
+        help_text="What did you think of the fit, quality, delivery or performance?",
+    )
+    is_visible = models.BooleanField(
+        default=True,
+        help_text="Uncheck to hide this review from the storefront (and from the product's average rating).",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        unique_together = ("product", "user")
+        verbose_name = "Product review"
+        verbose_name_plural = "Product reviews"
+
+    def __str__(self):
+        return f"{self.rating}★ {self.title or 'Review'} by {self.user} on {self.product.name}"
 
 
 class ProductEnquiry(models.Model):

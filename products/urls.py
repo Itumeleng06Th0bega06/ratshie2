@@ -10,6 +10,8 @@ urlpatterns = [
     path("add-to-cart/<slug:slug>/", views.cart_add, name="cart_add"),
     path("add-to-cart-partial/<slug:slug>/", views.cart_add_partial, name="cart_add_partial"),
     path("buy-now/<slug:slug>/", views.buy_now, name="buy_now"),
+    path("<slug:product_slug>/review/", views.review_submit, name="review_submit"),
+    path("<slug:product_slug>/review/delete/", views.review_delete, name="review_delete"),
     path("<slug:slug>/enquiry/", views.product_enquiry, name="product_enquiry"),
     path("<slug:slug>/", views.product_detail, name="detail"),
 ]

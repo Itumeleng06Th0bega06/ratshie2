@@ -23,6 +23,12 @@
     <span class="product-card__cat">{% if p.brand %}{{ p.brand }}{% else %}{{ p.product_type_name }}{% endif %}</span>
     <h3><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
     {% if p.short_description %}<p class="product-card__desc">{{ p.short_description }}</p>{% endif %}
+    {% if p.rating_count %}
+    <div class="product-card__rating">
+      {% include "includes/rating_stars.html" with rating=p.average_rating %}
+      <span class="product-card__rating-count">{{ p.rating_count }}</span>
+    </div>
+    {% endif %}
     <div class="product-card__foot">
       <div class="product-card__price-row">
         <div class="product-card__price">

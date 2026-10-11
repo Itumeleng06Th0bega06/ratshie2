@@ -18,7 +18,12 @@
     "priceCurrency": "ZAR",
     "availability": {% if product.in_stock %}"https://schema.org/InStock"{% else %}"https://schema.org/OutOfStock"{% endif %}
   }{% if product.public_image %},
-  "image": "{{ request.build_absolute_uri }}{{ product.public_image.image.url }}"{% endif %}
+  "image": "{{ request.build_absolute_uri }}{{ product.public_image.image.url }}"{% endif %}{% if product.rating_count %},
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.average_rating }}",
+    "reviewCount": "{{ product.rating_count }}"
+  }{% endif %}
 }
 </script>
 {% endblock %}
@@ -62,6 +67,13 @@
         <span class="product-card__cat">{{ product.product_type_name }}{% if product.brand %} · {{ product.brand }}{% endif %}</span>
         <h1 class="pd__title" style="margin-top:10px">{{ product.name }}</h1>
         {% if product.sku %}<div class="pd__meta-row" style="color:var(--muted)">SKU / Part number: <strong style="color:var(--text)">{{ product.sku }}</strong></div>{% endif %}
+
+        {% if product.rating_count %}
+        <div class="pd__rating">
+          {% include "includes/rating_stars.html" with rating=product.average_rating %}
+          <a class="pd__rating-link" href="#reviews">{{ product.rating_count }} review{{ product.rating_count|pluralize }}</a>
+        </div>
+        {% endif %}
 
         {% if product.short_description or product.description %}
         <p class="pd__desc">{{ product.description|default:product.short_description }}</p>
@@ -154,12 +166,13 @@
             <svg width="16" height="16" aria-hidden="true" style="color:var(--gold)"><use href="#i-lock"></use></svg>
             <span>Secure online payment available</span>
           </div>
-          Demo catalogue pricing. Prices are subject to verification before dispatch.
         </div>
       </div>
     </div>
   </div>
 </section>
+
+{% include "products/_reviews.html" %}
 
 <!-- Lightbox for image zoom -->
 <div class="image-lightbox" id="product-lightbox" role="dialog" aria-modal="true" aria-label="Product image zoom">
@@ -324,6 +337,32 @@
       else prevImage();
     }
   }
+})();
+
+// Star rating picker (review form). Radios stay the accessible source of
+// truth (keyboard/arrow keys work natively); the visual fill is synced from
+// them, plus hover preview while the member moves the cursor.
+(function () {
+  const picker = document.querySelector('[data-star-picker]');
+  if (!picker) return;
+  const inputs = Array.from(picker.querySelectorAll('input[type="radio"]'));
+  const stars = Array.from(picker.querySelectorAll('.star-picker__star'));
+
+  function valueOf() {
+    const checked = inputs.find(inp => inp.checked);
+    return checked ? Number(checked.value) : 0;
+  }
+  function paint(val) {
+    stars.forEach(star => star.classList.toggle('is-on', Number(star.dataset.value) <= val));
+  }
+  function sync() { paint(valueOf()); }
+
+  stars.forEach(star => {
+    star.addEventListener('mouseenter', () => paint(Number(star.dataset.value)));
+    star.addEventListener('mouseleave', sync);
+  });
+  inputs.forEach(inp => inp.addEventListener('change', sync));
+  sync();
 })();
 </script>
 {% endblock %}

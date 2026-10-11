@@ -1,0 +1,10 @@
+{% comment %}
+Star rating display (read-only). Expects: rating (float 0-5, optional).
+Renders five stars with a gold fill sized to the rating via widthratio.
+{% endcomment %}
+{% if rating %}
+<span class="stars" role="img" aria-label="{{ rating|floatformat:1 }} out of 5 stars">
+  <span class="stars__base" aria-hidden="true">★★★★★</span>
+  <span class="stars__fill" style="width:{% widthratio rating 5 100 %}%" aria-hidden="true">★★★★★</span>
+</span>
+{% endif %}

@@ -6,14 +6,16 @@ Part or Lubricant via product_type for admin management only.
 """
 from urllib.parse import quote
 
-from django.db.models import F
+from django.db.models import F, Q, Count, Avg
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
-from .models import Product, ProductEnquiry, ProductGroup
+from .models import Product, ProductEnquiry, ProductGroup, ProductReview
+from .forms import ProductReviewForm
 from customers.models import Customer
 from .services import can_purchase_product, clamp_quantity
 from orders.services import product_delivery
@@ -79,6 +81,12 @@ def shop_index(request):
     cart = request.session.get("cart", {})
     cart_quantities = {int(k): int(v.get("qty", 0)) for k, v in cart.items()}
 
+    # Pre-compute review counts/averages (visible reviews only) for the cards.
+    qs = qs.annotate(
+        _rating_count=Count("reviews", filter=Q(reviews__is_visible=True)),
+        _rating_avg=Avg("reviews__rating", filter=Q(reviews__is_visible=True)),
+    )
+
     context = {
         "products": qs,
         "cart_quantities": cart_quantities,
@@ -91,8 +99,12 @@ def shop_index(request):
     return render(request, "products/shop.html", context)
 
 
-def product_detail(request, slug):
-    product = get_object_or_404(_product_qs(), slug=slug)
+def _product_detail_context(request, product, **overrides):
+    """Build the full product-detail template context.
+
+    Shared by ``product_detail`` (GET) and ``review_submit`` (POST, which
+    re-renders the page with a bound, invalid form) so both always agree.
+    """
     related = (
         Product.objects.filter(product_type=product.product_type, is_active=True)
         .exclude(pk=product.pk)
@@ -108,23 +120,94 @@ def product_detail(request, slug):
     in_cart_qty = int(cart.get(str(product.pk), {}).get("qty", 0))
 
     chasing = request.GET.get("added")
+
+    # Reviews: only VISIBLE ones for the public list; the current member's own
+    # review prefills the form so they can edit instead of duplicating it.
+    reviews = (
+        ProductReview.objects.filter(product=product, is_visible=True)
+        .select_related("user")
+        .order_by("-created_at")
+    )
+    user_review = None
+    review_form = ProductReviewForm()
+    if request.user.is_authenticated:
+        user_review = ProductReview.objects.filter(product=product, user=request.user).first()
+        if user_review:
+            review_form = ProductReviewForm(instance=user_review)
+
+    context = {
+        "product": product,
+        "related": related,
+        "product_wa_msg": wa_msg,
+        "product_wa_link": product_wa_link(wa_msg),
+        "in_cart_qty": in_cart_qty,
+        "added": chasing == "1",
+        "delivery_estimate": product.delivery_estimate_display,
+        # This product's own delivery charge, so the price shown here is the
+        # price the customer pays for this item's delivery.
+        "product_delivery": product_delivery(product),
+        "crumb_list": [("Shop", "products:shop"), (product.name, None)],
+        "reviews": reviews,
+        "user_review": user_review,
+        "review_form": review_form,
+    }
+    context.update(overrides)
+    return context
+
+
+def product_detail(request, slug):
+    product = get_object_or_404(_product_qs(), slug=slug)
     return render(
         request,
         "products/detail.html",
-        {
-            "product": product,
-            "related": related,
-            "product_wa_msg": wa_msg,
-            "product_wa_link": product_wa_link(wa_msg),
-            "in_cart_qty": in_cart_qty,
-            "added": chasing == "1",
-            "delivery_estimate": product.delivery_estimate_display,
-            # This product's own delivery charge, so the price shown here is the
-            # price the customer pays for this item's delivery.
-            "product_delivery": product_delivery(product),
-            "crumb_list": [("Shop", "products:shop"), (product.name, None)],
+        _product_detail_context(request, product),
+    )
+
+
+@login_required
+@require_POST
+def review_submit(request, product_slug):
+    """Create or update the signed-in member's review for a product.
+
+    ``unique_together (product, user)`` guarantees one review per member, so a
+    repeat submission edits their existing review rather than adding another.
+    """
+    product = get_object_or_404(_product_qs(), slug=product_slug)
+
+    form = ProductReviewForm(request.POST)
+    if not form.is_valid():
+        # Re-render the detail page with the bound form so errors show up
+        # against the picker/fields the member just used.
+        return render(
+            request,
+            "products/detail.html",
+            _product_detail_context(request, product, review_form=form),
+        )
+
+    review, created = ProductReview.objects.update_or_create(
+        product=product,
+        user=request.user,
+        defaults={
+            "rating": form.cleaned_data["rating"],
+            "title": (form.cleaned_data.get("title") or "").strip(),
+            "comment": form.cleaned_data["comment"].strip(),
         },
     )
+    messages.success(
+        request,
+        "Thanks — your review is now live." if created else "Your review has been updated.",
+    )
+    return HttpResponseRedirect(product.get_absolute_url() + "#reviews")
+
+
+@login_required
+@require_POST
+def review_delete(request, product_slug):
+    """Remove the signed-in member's own review for a product."""
+    product = get_object_or_404(_product_qs(), slug=product_slug)
+    ProductReview.objects.filter(product=product, user=request.user).delete()
+    messages.success(request, "Your review has been removed.")
+    return HttpResponseRedirect(product.get_absolute_url() + "#reviews")
 
 
 @require_POST

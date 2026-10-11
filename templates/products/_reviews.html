@@ -1,0 +1,147 @@
+{% comment %}
+Product ratings & reviews section. Rendered on the product detail page.
+
+Expects (from the detail view context):
+  product      — the Product being reviewed
+  reviews      — queryset of the product's VISIBLE reviews
+  user_review  — the signed-in member's own review row (or None)
+  review_form  — bound ProductReviewForm (prefilled when user_review exists,
+                 bound-with-errors when a POST failed validation)
+{% endcomment %}
+<section class="section section--cream" id="reviews">
+  <div class="container">
+    <div class="reviews">
+      <div class="section-head reviews__head reveal">
+        <span class="eyebrow">Reviews</span>
+        <h2 class="section-title">Customer reviews</h2>
+        {% if product.rating_count %}
+        <p class="lead">Real feedback from registered members who bought from Ratshie.</p>
+        {% endif %}
+      </div>
+
+      {% if product.rating_count %}
+      <div class="reviews__summary reveal">
+        <div class="reviews__score">
+          <span class="reviews__score-num">{{ product.average_rating }}</span>
+          {% include "includes/rating_stars.html" with rating=product.average_rating %}
+          <span class="reviews__score-count">{{ product.rating_count }} review{{ product.rating_count|pluralize }}</span>
+        </div>
+        <div class="reviews__bars" aria-hidden="true">
+          {% for star, count in product.rating_distribution %}
+          <div class="rbar">
+            <span class="rbar__label">{{ star }}★</span>
+            <span class="rbar__track"><span class="rbar__fill" style="width:{% widthratio count product.rating_count 100 %}%"></span></span>
+            <span class="rbar__count">{{ count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+      <form method="post" action="{% url 'products:review_submit' product.slug %}" class="review-form reveal" novalidate>
+        {% csrf_token %}
+        <div class="review-form__head">
+          <div>
+            <h3>{% if user_review %}Update your review{% else %}Write a review{% endif %}</h3>
+            {% if user_review %}
+            <p>You've already reviewed this product — you can edit it below or remove it.</p>
+            {% else %}
+            <p>Share your experience to help other members choose with confidence.</p>
+            {% endif %}
+          </div>
+          {% if user_review %}
+          <span class="review-form__edit" aria-hidden="true">
+            <svg width="16" height="16"><use href="#i-pencil"></use></svg>
+          </span>
+          {% endif %}
+        </div>
+
+        {% if review_form.non_field_errors %}
+        <p class="field-error">{{ review_form.non_field_errors|join:" " }}</p>
+        {% endif %}
+
+        <fieldset class="star-picker" data-star-picker>
+          <legend class="star-picker__legend">Your rating</legend>
+          <div class="star-picker__row" role="radiogroup" aria-label="Your rating (1 star = poor, 5 stars = excellent)">
+            <input type="radio" id="review-star-5" name="rating" value="5" class="star-picker__input" {% if review_form.rating.value|stringformat:"s" == "5" %}checked{% endif %}>
+            <label for="review-star-5" class="star-picker__star" data-value="5" title="5 stars">★</label>
+            <input type="radio" id="review-star-4" name="rating" value="4" class="star-picker__input" {% if review_form.rating.value|stringformat:"s" == "4" %}checked{% endif %}>
+            <label for="review-star-4" class="star-picker__star" data-value="4" title="4 stars">★</label>
+            <input type="radio" id="review-star-3" name="rating" value="3" class="star-picker__input" {% if review_form.rating.value|stringformat:"s" == "3" %}checked{% endif %}>
+            <label for="review-star-3" class="star-picker__star" data-value="3" title="3 stars">★</label>
+            <input type="radio" id="review-star-2" name="rating" value="2" class="star-picker__input" {% if review_form.rating.value|stringformat:"s" == "2" %}checked{% endif %}>
+            <label for="review-star-2" class="star-picker__star" data-value="2" title="2 stars">★</label>
+            <input type="radio" id="review-star-1" name="rating" value="1" class="star-picker__input" {% if review_form.rating.value|stringformat:"s" == "1" %}checked{% endif %}>
+            <label for="review-star-1" class="star-picker__star" data-value="1" title="1 star">★</label>
+          </div>
+          {% if review_form.rating.errors %}
+          <p class="field-error">{{ review_form.rating.errors|join:" " }}</p>
+          {% endif %}
+        </fieldset>
+
+        <div class="field">
+          <label for="{{ review_form.title.id_for_label }}">Headline <span class="muted">(optional)</span></label>
+          {{ review_form.title }}
+          {% if review_form.title.errors %}
+          <p class="field-error">{{ review_form.title.errors|join:" " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label for="{{ review_form.comment.id_for_label }}">Your review</label>
+          {{ review_form.comment }}
+          {% if review_form.comment.errors %}
+          <p class="field-error">{{ review_form.comment.errors|join:" " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="review-form__actions">
+          <button type="submit" class="btn btn--gold">{% if user_review %}Update Review{% else %}Submit Review{% endif %}</button>
+          {% if user_review %}
+          <button type="submit" class="btn btn--ghost-dark review-form__delete" form="review-delete-form">Remove my review</button>
+          {% endif %}
+        </div>
+      </form>
+
+      {% if user_review %}
+      <form method="post" action="{% url 'products:review_delete' product.slug %}" class="review-form__delete-form" id="review-delete-form">
+        {% csrf_token %}
+      </form>
+      {% endif %}
+      {% else %}
+      <div class="review-form review-form--login reveal">
+        <svg class="review-form__icon" aria-hidden="true"><use href="#i-user"></use></svg>
+        <h3>Share your experience</h3>
+        <p>Only registered members can review products — it takes less than a minute.</p>
+        <div class="btn-row">
+          <a class="btn btn--gold btn--sm" href="{% url 'customers:login' %}?next={{ product.get_absolute_url }}#reviews">Sign in to review</a>
+          <a class="btn btn--ghost-dark btn--sm" href="{% url 'customers:register' %}?next={{ product.get_absolute_url }}#reviews">Create a free account</a>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="reviews__list">
+        {% for r in reviews %}
+        <article class="review reveal">
+          <div class="review__top">
+            <span class="review__avatar" aria-hidden="true">{{ r.user.first_name|default:r.user.username|slice:":1"|upper }}</span>
+            <div class="review__who">
+              <span class="review__name">{{ r.user.first_name|default:r.user.username }}</span>
+              <span class="review__date">{{ r.created_at|date:"j M Y" }}</span>
+            </div>
+            <div class="review__stars">{% include "includes/rating_stars.html" with rating=r.rating %}</div>
+            {% if user_review and user_review.pk == r.pk %}
+            <span class="review__mine" aria-label="This is your review">Yours</span>
+            {% endif %}
+          </div>
+          {% if r.title %}<h3 class="review__title">{{ r.title }}</h3>{% endif %}
+          <p class="review__text">{{ r.comment|linebreaksbr }}</p>
+        </article>
+        {% empty %}
+        <p class="reviews__empty reveal">No reviews yet — be the first to share your thoughts on this product.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>

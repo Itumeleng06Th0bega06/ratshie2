@@ -1,7 +1,14 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html, mark_safe
-from .models import Product, ProductEnquiry, ProductImage, ProductCategory, ProductGroup
+from .models import (
+    Product,
+    ProductEnquiry,
+    ProductImage,
+    ProductCategory,
+    ProductGroup,
+    ProductReview,
+)
 
 from core.admin_utils import fmt_money, safe_display
 from . import checks  # noqa: F401  (registers ratshie.admin system checks)
@@ -41,6 +48,24 @@ class ProductImageInline(admin.StackedInline):
         return mark_safe('<span style="color:#999">No image yet — use the Image field below to upload.</span>')
 
     preview.short_description = "Current image"
+
+
+class ProductReviewInline(admin.TabularInline):
+    model = ProductReview
+    extra = 0
+    raw_id_fields = ("user",)
+    fields = ("user", "rating", "title", "is_visible", "created_at")
+    readonly_fields = ("created_at", "comment_preview")
+    verbose_name_plural = "Member reviews (moderate here: uncheck 'Visible' to remove from the storefront)"
+
+    @safe_display()
+    def comment_preview(self, obj):
+        if obj.pk and obj.comment:
+            body = obj.comment if len(obj.comment) <= 120 else obj.comment[:120] + "…"
+            return format_html('<span style="color:#667085">“{}”</span>', body)
+        return "—"
+
+    comment_preview.short_description = "Comment"
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -226,7 +251,7 @@ class ProductGroupAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     form = ProductAdminForm
-    inlines = [ProductImageInline]
+    inlines = [ProductImageInline, ProductReviewInline]
     change_list_template = "admin/products/product/changelist.html"
     list_display = (
         "thumbnail",
@@ -545,3 +570,42 @@ class ProductEnquiryAdmin(admin.ModelAdmin):
     def mark_closed(self, request, queryset):
         queryset.update(status="closed")
         self.message_user(request, "Selected enquiries marked as Closed.")
+
+
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "rating_display",
+        "title",
+        "product",
+        "user",
+        "is_visible",
+        "updated_at",
+    )
+    list_display_links = ("title",)
+    list_filter = ("is_visible", "rating", "product__product_group")
+    search_fields = ("title", "comment", "user__username", "user__first_name", "user__last_name", "product__name", "product__sku")
+    list_select_related = ("product", "user")
+    raw_id_fields = ("product", "user")
+    date_hierarchy = "created_at"
+    readonly_fields = ("created_at", "updated_at")
+    actions = ["show_selected", "hide_selected"]
+
+    @safe_display()
+    @admin.display(description="Rating", ordering="rating")
+    def rating_display(self, obj):
+        return format_html(
+            '<span style="color:{};font-weight:700">{}</span>',
+            "#f0a000",
+            "★" * obj.rating,
+        )
+
+    @admin.action(description="Show selected reviews on the storefront")
+    def show_selected(self, request, queryset):
+        n = queryset.update(is_visible=True)
+        self.message_user(request, f"{n} review(s) are now visible.")
+
+    @admin.action(description="Hide selected reviews from the storefront")
+    def hide_selected(self, request, queryset):
+        n = queryset.update(is_visible=False)
+        self.message_user(request, f"{n} review(s) hidden from the storefront.")
